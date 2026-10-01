@@ -1,0 +1,175 @@
+# TÀI LIỆU HƯỚNG DẪN TÌM HIỂU CẤU TRÚC DỰ ÁN MEDICARE CLINIC
+
+Tài liệu này giúp các thành viên trong nhóm, đặc biệt là người lần đầu clone project, có thể nhìn vào cấu trúc source code và nắm bắt ngay lập tức hệ thống đang được tổ chức như thế nào.
+
+---
+
+## 1. Tổng quan hệ thống
+- **Tên dự án:** MediCare Clinic (Hệ thống Quản lý Phòng Khám)
+- **Frontend:** React + TypeScript
+- **Build/Development Tool:** Vite
+- **Backend:** Java 17 + Spring Boot 3.1.5
+- **Database:** MySQL
+- **Giao tiếp:** REST API + JSON
+
+**Lưu ý quan trọng:** Dự án hiện tại đang ở giai đoạn **skeleton (bộ khung khởi tạo)**. Rất nhiều class, entity, service và API hiện chỉ là khung rỗng chứa TODO, chưa được implement logic nghiệp vụ đầy đủ.
+
+---
+
+## 2. Cấu trúc Root của dự án
+Tại thư mục gốc `medicare-clinic/`, bạn sẽ thấy các thư mục và file sau:
+
+- `backend/`: Chứa toàn bộ source code của ứng dụng Spring Boot.
+- `frontend/`: Chứa toàn bộ source code của ứng dụng React.
+- `database/`: Chứa các script liên quan đến cơ sở dữ liệu (schema, file seed data...).
+- `docs/`: Chứa các tài liệu thiết kế chính thức của đồ án (SRS, Use Case, Class Diagram, Sequence Diagram, ERD, Screen Flow, API Contract...).
+- `context/`: Nơi lưu trữ các tài liệu tóm tắt, quy tắc nghiệp vụ quan trọng để thành viên nhóm (và các AI coding agent) đọc và nắm bắt nhanh dự án. Đây KHÔNG phải là tài liệu thiết kế gốc.
+- `tests/`: Nơi chứa các file test chung, tài nguyên kiểm thử của dự án.
+- `README.md`: Hướng dẫn cơ bản để chạy và setup dự án.
+- `PROJECT_STRUCTURE.txt`: Chính là file bạn đang đọc, mô tả kiến trúc dự án.
+
+---
+
+## 3. Kiến trúc 3 Lớp (3-Layer Architecture)
+Dự án áp dụng chặt chẽ **Kiến trúc 3 lớp (3-Layer Architecture)**. Dưới đây là phân bổ các thành phần theo từng layer:
+
+### 1. PRESENTATION LAYER
+Lớp giao diện chịu trách nhiệm tương tác với người dùng và tiếp nhận request.
+- **React UI (`frontend/src/`)**: Giao diện người dùng.
+- **`controller/` (Backend)**: Nhận HTTP request từ frontend. Phân tích request, validate cơ bản và gọi Service xử lý. Không nhét business logic hay viết SQL ở đây.
+
+### 2. BUSINESS LOGIC LAYER
+Lớp nghiệp vụ chịu trách nhiệm xử lý các quy tắc kinh doanh cốt lõi.
+- **`service/interfaces/`**: Khai báo các interface định nghĩa chức năng nghiệp vụ (ví dụ: `IThanhToanService`).
+- **`service/impl/`**: Nơi viết code thực thi (implement) logic nghiệp vụ của các Service interface.
+
+### 3. DATA ACCESS LAYER
+Lớp truy xuất dữ liệu chịu trách nhiệm đọc/ghi từ cơ sở dữ liệu.
+- **`repository/`**: Làm việc trực tiếp với CSDL MySQL thông qua Spring Data JPA. Lấy dữ liệu và trả về Entity. (Không bắt buộc mỗi Entity phải có một Repository).
+- **`entity/`**: Các class đại diện (ánh xạ) cho các bảng trong database (ví dụ: `LichKham`, `BenhNhan`). Thuộc phần dữ liệu được Data Access Layer sử dụng.
+- **MySQL**: Hệ quản trị cơ sở dữ liệu thực tế.
+
+*(Các package hỗ trợ bao gồm `dto/` dùng để truyền dữ liệu và `payment/` dùng để tích hợp thanh toán. Có package hỗ trợ không đồng nghĩa với việc hệ thống có thêm layer).*
+
+### Luồng xử lý một Request chuẩn (Dependency Flow):
+```text
+React UI
+   ↓ HTTP / JSON
+Controller
+   ↓
+Service Interface
+   ↓
+Service Implementation
+   ↓
+Repository
+   ↓
+Entity / JPA
+   ↓
+MySQL
+```
+*Kết quả response sẽ đi theo chiều ngược lại để trả về frontend.*
+
+---
+
+## 4. Cấu trúc Backend hiện tại
+Source code backend nằm tại: `backend/src/main/java/com/medicare/clinic/`
+
+- `controller/`: Nhận và xử lý HTTP request.
+- `dto/`: Package hỗ trợ truyền tải dữ liệu. Chứa `request/` và `response/`.
+- `entity/`: Các class ánh xạ sang database.
+- `payment/`: Package hỗ trợ tích hợp thanh toán (chứa `PaymentGateway.java` và thư mục `dto/`).
+- `repository/`: Làm việc với database.
+- `service/`: Chứa `interfaces/` và `impl/` để xử lý business logic.
+
+---
+
+## 5. Cấu trúc Frontend hiện tại
+Source code frontend nằm tại: `frontend/src/`
+
+- `pages/`: Các màn hình chính (ví dụ: trang chủ, đăng nhập, lịch khám).
+- `components/`: Các thành phần giao diện có thể tái sử dụng (Button, Table, Form...).
+- `routes/`: Khai báo route và điều hướng giữa các màn hình.
+- `services/`: Code frontend gọi REST API của backend.
+- `types/`: Kiểu dữ liệu/interface TypeScript dùng cho frontend.
+- `assets/`: Ảnh, icon và tài nguyên tĩnh.
+- `main.tsx`: Điểm khởi động ứng dụng React.
+
+---
+
+## 6. Kiến trúc Payment (Thanh Toán)
+Hệ thống hiện tại **chưa quyết định** sẽ dùng cổng thanh toán VNPay hay MoMo. Chưa implement cổng thanh toán thực tế.
+Cấu trúc hiện tại:
+```
+payment/
+├── PaymentGateway.java
+└── dto/
+    ├── PaymentRequest.java
+    └── PaymentResponse.java
+```
+- `PaymentGateway.java`: Là một Interface chung (abstraction) để sau này kết nối cổng thanh toán.
+
+---
+
+## 7. Cách một thành viên implement một Use Case
+Khi bạn được giao code một Use Case (Ví dụ: Đặt lịch khám), quy trình làm việc chuẩn nên là:
+
+1. Đọc mô tả **Use Case / SRS** để hiểu yêu cầu chi tiết.
+2. Xem bản thiết kế **Screen / UI / Wireframe** để hình dung các luồng giao diện màn hình.
+3. Tham khảo **Sequence Diagram** (nếu có) để hiểu logic gọi API tuần tự như thế nào.
+4. Tham khảo **Class Diagram** và **ERD / Data Design** để hiểu dữ liệu liên quan.
+5. Tiến hành Code:
+   - *Cập nhật Data:* Chỉ bổ sung Entity/relationship/Repository khi Use Case yêu cầu và phải đối chiếu ERD/Data Design trước khi sửa
+   - *Viết Logic:* Tạo phương thức trong Interface Service và viết code xử lý trong Service Impl.
+   - *Cung cấp API:* Định nghĩa DTO request/response, khai báo REST endpoint trong Controller.
+   - *Giao diện:* Xây dựng UI ở `frontend/src/pages`, gọi API thông qua `frontend/src/services`.
+
+---
+
+## 8. Quy tắc Cốt lõi của Dự án
+1. **Bám sát tài liệu thiết kế:** Không tự ý phát minh thêm Entity, Bảng (table), Cột (field) hay quy tắc nghiệp vụ chỉ để cho code thuận tiện.
+2. **Ưu tiên tài liệu mới nhất:** Ví dụ, Business rule mới nhất quy định mọi `LuotKham` đều phải xuất phát từ một `LichKham` (theo tài liệu thay đổi nghiệp vụ), thì phải code đúng theo yêu cầu đó.
+3. **Mâu thuẫn tài liệu:** Nếu phát hiện các tài liệu cũ và mới mâu thuẫn, hãy báo cáo cho nhóm thống nhất trước khi tự quyết định.
+4. **Repository:** Không tạo Repository một cách máy móc cho mọi Entity.
+5. **Bảo vệ Layer:**
+   - Không để Frontend gọi trực tiếp tới database.
+   - Không để Controller gọi trực tiếp tới Repository nếu cấu trúc hiện tại yêu cầu giao tiếp qua Service.
+6. **Bảo mật:** Không commit password, API key, token/secret, payment secret hay credential cá nhân lên GitHub. Frontend có thể dùng `.env` local. Backend có thể sử dụng biến môi trường hoặc cấu hình local không được commit. Chỉ commit file cấu hình mẫu như `.env.example` khi cần.
+
+---
+
+## 9. Git Workflow
+- Nhánh `main`: **Không push trực tiếp lên main.**
+- Nhánh `develop`: Nhánh làm việc chung. Sau khi hoàn thành chức năng và kiểm tra mới merge về develop.
+- Nhánh `feature`: Tạo từ develop để code chức năng của bạn. Ví dụ: `feature/uc-xx-ten-chuc-nang`
+
+**Commit convention:**
+`feat(scope): mô tả ngắn #UC-XX`
+*(Nếu chưa có hoặc chưa chốt số ID của UC, không tự phát minh số UC đó).*
+
+---
+
+## 10. Trạng thái dự án hiện tại (Skeleton Status)
+- **Project structure:** PASS
+- **3-Layer Architecture:** PASS
+- **Frontend skeleton:** PASS
+- **Frontend build:** PASS
+- **Backend skeleton:** PASS
+- **Backend compile:** PASS
+- **Backend test phase:** PASS (Lưu ý: Chỉ vòng đời test chạy thành công, hiện chưa có test case nghiệp vụ)
+- **Maven Wrapper:** PASS
+- **Entity mapping:** Chưa hoàn thiện
+- **Business logic:** Chưa implement
+- **Authentication/Authorization:** Chưa triển khai hoàn chỉnh
+- **Payment provider:** Chưa quyết định
+
+---
+
+## 11. Người mới vào team nên đọc gì đầu tiên?
+Nếu bạn vừa nhận project này, hãy tuân thủ thứ tự đọc sau để làm quen nhanh nhất:
+1. File `README.md` ở root.
+2. File `PROJECT_STRUCTURE.txt` (chính là tài liệu này).
+3. Các tài liệu quy định/tóm tắt nằm trong thư mục `context/`.
+4. Tìm đọc tài liệu Use Case / SRS tương ứng với Use Case mà bạn đang phụ trách.
+5. Xem các Sequence Diagram / Class Diagram liên quan tới Use Case của bạn.
+6. Mở sơ đồ ERD / Data Design.
+7. Đọc lướt qua source code skeleton hiện tại để tự tin bắt đầu làm việc!
