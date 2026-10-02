@@ -1,12 +1,22 @@
 package com.medicare.clinic.entity;
-
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 @Entity
+@Table(name = "le_tan")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class LeTan extends NhanVien {
-    // TODO: add specific fields
+public class LeTan {
+    @Id
+    @Column(name = "ma_nv")
+    private String maNv;
+    
+    @Column(name = "ca_lam_viec", nullable = false)
+    private String caLamViec;
+    
+    @Column(name = "quay_lam_viec")
+    private String quayLamViec;
+    
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "ma_nv")
+    private NhanVien nhanVien;
 }
