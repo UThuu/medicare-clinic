@@ -22,8 +22,8 @@ import {
     layDanhSachBenhNhanCho,
 } from "../services/DichVuLuotKham";
 
+import { XacNhanBenhNhan } from "./XacNhanBenhNhan";
 import GhiNhanSinhHieu from "./GhiNhanSinhHieu";
-
 import "./danhSachBenhNhanCho.css";
 
 function dinhDangNgay(ngay: string) {
@@ -60,37 +60,58 @@ function hienThiGioiTinh(gioiTinh: string) {
 export default function DanhSachBenhNhanCho() {
 
     // =========================
-    // DANH SÁCH BỆNH NHÂN
+    // BỆNH NHÂN CẦN XÁC NHẬN
+    // UC04
     // =========================
 
-    const [danhSachBenhNhan, setDanhSachBenhNhan] =
-        useState<BenhNhanCho[]>([]);
+    const [
+        benhNhanCanXacNhan,
+        setBenhNhanCanXacNhan,
+    ] = useState<BenhNhanCho | null>(null);
+
+    // =========================
+    // DANH SÁCH BỆNH NHÂN
+    // UC02
+    // =========================
+
+    const [
+        danhSachBenhNhan,
+        setDanhSachBenhNhan,
+    ] = useState<BenhNhanCho[]>([]);
 
     // =========================
     // TÌM KIẾM
     // =========================
 
-    const [tuKhoa, setTuKhoa] =
-        useState("");
+    const [
+        tuKhoa,
+        setTuKhoa,
+    ] = useState("");
 
     // =========================
     // NGÀY KHÁM
     // =========================
 
-    const [ngayKham, setNgayKham] =
-        useState(
-            () => new Date().toISOString().slice(0, 10)
-        );
+    const [
+        ngayKham,
+        setNgayKham,
+    ] = useState(
+        () => new Date().toISOString().slice(0, 10)
+    );
 
     // =========================
     // TRẠNG THÁI
     // =========================
 
-    const [dangTai, setDangTai] =
-        useState(false);
+    const [
+        dangTai,
+        setDangTai,
+    ] = useState(false);
 
-    const [loi, setLoi] =
-        useState("");
+    const [
+        loi,
+        setLoi,
+    ] = useState("");
 
     // =========================
     // BỆNH NHÂN ĐANG ĐƯỢC CHỌN
@@ -147,7 +168,6 @@ export default function DanhSachBenhNhanCho() {
         const tuKhoaTimKiem =
             tuKhoa.trim().toLowerCase();
 
-        // Không tìm kiếm
         if (!tuKhoaTimKiem) {
             return danhSachBenhNhan;
         }
@@ -185,8 +205,35 @@ export default function DanhSachBenhNhanCho() {
             : `Danh sách chờ (${danhSachBenhNhan.length})`;
 
     // =========================
-    // NẾU ĐÃ CHỌN BỆNH NHÂN
-    // → HIỂN THỊ UC03
+    // UC04
+    // XÁC NHẬN BỆNH NHÂN
+    // =========================
+
+    if (benhNhanCanXacNhan) {
+
+        return (
+            <XacNhanBenhNhan
+                benhNhan={benhNhanCanXacNhan}
+
+                onQuayLai={() => {
+                    setBenhNhanCanXacNhan(null);
+                }}
+
+                onXacNhan={() => {
+
+                    setBenhNhanDangChon(
+                        benhNhanCanXacNhan
+                    );
+
+                    setBenhNhanCanXacNhan(null);
+                }}
+            />
+        );
+    }
+
+    // =========================
+    // UC03
+    // GHI NHẬN SINH HIỆU
     // =========================
 
     if (benhNhanDangChon) {
@@ -201,10 +248,8 @@ export default function DanhSachBenhNhanCho() {
 
                 onLuuThanhCong={() => {
 
-                    // Quay về danh sách
                     setBenhNhanDangChon(null);
 
-                    // Tải lại danh sách
                     void taiDanhSach();
                 }}
             />
@@ -282,7 +327,7 @@ export default function DanhSachBenhNhanCho() {
         },
 
         // =========================
-        // NÚT UC03
+        // UC04 → UC03
         // =========================
 
         {
@@ -291,13 +336,15 @@ export default function DanhSachBenhNhanCho() {
             width: "170px",
 
             render: (row: BenhNhanCho) => (
+
                 <Button
                     onClick={() => {
-                        setBenhNhanDangChon(row);
+                        setBenhNhanCanXacNhan(row);
                     }}
                 >
                     Ghi nhận sinh hiệu
                 </Button>
+
             ),
         },
     ];
@@ -307,6 +354,7 @@ export default function DanhSachBenhNhanCho() {
     // =========================
 
     return (
+
         <MainLayout
             doctorName="Nguyễn Minh"
             roleLabel="Bác sĩ"
@@ -426,6 +474,7 @@ export default function DanhSachBenhNhanCho() {
                                 label="Tìm bệnh nhân"
                                 placeholder="Nhập mã hoặc tên bệnh nhân..."
                                 value={tuKhoa}
+
                                 onChange={(event) =>
                                     setTuKhoa(
                                         event.target.value
@@ -442,6 +491,7 @@ export default function DanhSachBenhNhanCho() {
                                 type="date"
                                 label="Ngày khám"
                                 value={ngayKham}
+
                                 onChange={(event) =>
                                     setNgayKham(
                                         event.target.value
@@ -476,6 +526,7 @@ export default function DanhSachBenhNhanCho() {
                     <Table
                         columns={cot}
                         data={danhSachLoc}
+
                         rowKey={(row) =>
                             row.idLuotKham
                         }

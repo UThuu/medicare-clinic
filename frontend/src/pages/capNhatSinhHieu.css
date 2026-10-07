@@ -1,0 +1,125 @@
+.cap-nhat-sinh-hieu {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px 48px;
+}
+
+.cap-nhat-sinh-hieu__header {
+    margin-bottom: 24px;
+}
+
+.cap-nhat-sinh-hieu__breadcrumb {
+    margin-bottom: 8px;
+    color: #0f8b8d;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cap-nhat-sinh-hieu__header h1 {
+    margin: 0;
+    color: #111827;
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+.cap-nhat-sinh-hieu__header p {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 15px;
+}
+
+.cap-nhat-sinh-hieu__patient {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.cap-nhat-sinh-hieu__patient > div {
+    padding: 14px 16px;
+    border: 1px solid #e5edf2;
+    border-radius: 10px;
+    background: #f7fafc;
+}
+
+.cap-nhat-sinh-hieu__patient span {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cap-nhat-sinh-hieu__patient strong {
+    color: #111827;
+    font-size: 15px;
+}
+
+.cap-nhat-sinh-hieu__form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.cap-nhat-sinh-hieu__loading {
+    padding: 28px;
+    text-align: center;
+    color: #64748b;
+}
+
+.cap-nhat-sinh-hieu__error {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #efb3b3;
+    border-radius: 8px;
+    background: #fff4f4;
+    color: #b42323;
+    font-size: 14px;
+}
+
+.cap-nhat-sinh-hieu__success {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #a8dfc5;
+    border-radius: 8px;
+    background: #effaf4;
+    color: #16794d;
+    font-size: 14px;
+}
+
+.cap-nhat-sinh-hieu__time {
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.cap-nhat-sinh-hieu__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5edf2;
+}
+
+.cap-nhat-sinh-hieu__back {
+    margin-top: 18px;
+}
+
+@media (max-width: 800px) {
+
+    .cap-nhat-sinh-hieu {
+        padding: 20px;
+    }
+
+    .cap-nhat-sinh-hieu__patient {
+        grid-template-columns: 1fr;
+    }
+
+    .cap-nhat-sinh-hieu__form {
+        grid-template-columns: 1fr;
+    }
+
+    .cap-nhat-sinh-hieu__actions {
+        flex-direction: column-reverse;
+    }
+}

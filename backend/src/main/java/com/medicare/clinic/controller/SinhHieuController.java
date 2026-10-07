@@ -3,6 +3,11 @@ package com.medicare.clinic.controller;
 import com.medicare.clinic.dto.request.GhiNhanSinhHieuRequest;
 import com.medicare.clinic.dto.response.PhanHoiSinhHieu;
 import com.medicare.clinic.service.interfaces.ISinhHieuService;
+import com.medicare.clinic.dto.request.CapNhatSinhHieuRequest;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import jakarta.validation.Valid;
 
@@ -49,5 +54,16 @@ public class SinhHieuController {
         }
 
         return ResponseEntity.ok(ketQua);
+    }
+
+    @PutMapping("/luot-kham/{idLuotKham}")
+    public PhanHoiSinhHieu capNhatSinhHieu(
+            @PathVariable String idLuotKham,
+            @Valid @RequestBody CapNhatSinhHieuRequest request
+    ) {
+        return sinhHieuService.capNhatSinhHieu(
+                idLuotKham,
+                request
+        );
     }
 }

@@ -19,3 +19,10 @@ export interface PhanHoiSinhHieu {
 
     thoiDiemDo: string;
 }
+
+export interface CapNhatSinhHieuRequest {
+    huyetApTamThu: number;
+    huyetApTamTruong: number;
+    canNang: number;
+    nhietDo: number;
+}

@@ -1,5 +1,6 @@
 package com.medicare.clinic.service.impl;
 
+import com.medicare.clinic.dto.request.CapNhatSinhHieuRequest;
 import com.medicare.clinic.dto.request.GhiNhanSinhHieuRequest;
 import com.medicare.clinic.dto.response.PhanHoiSinhHieu;
 import com.medicare.clinic.entity.DieuDuong;
@@ -25,6 +26,10 @@ public class SinhHieuService implements ISinhHieuService {
     private final SinhHieuRepository sinhHieuRepository;
     private final LuotKhamRepository luotKhamRepository;
     private final DieuDuongRepository dieuDuongRepository;
+
+    // =========================================================
+    // UC03 - GHI NHẬN SINH HIỆU
+    // =========================================================
 
     @Override
     @Transactional
@@ -86,13 +91,17 @@ public class SinhHieuService implements ISinhHieuService {
         // 5. Kiểm tra dữ liệu
         // ==============================
 
-        if (request.getHuyetApTamThu() <= 0) {
+        if (request.getHuyetApTamThu() == null
+                || request.getHuyetApTamThu() <= 0) {
+
             throw new IllegalArgumentException(
                     "Huyết áp tâm thu không hợp lệ."
             );
         }
 
-        if (request.getHuyetApTamTruong() <= 0) {
+        if (request.getHuyetApTamTruong() == null
+                || request.getHuyetApTamTruong() <= 0) {
+
             throw new IllegalArgumentException(
                     "Huyết áp tâm trương không hợp lệ."
             );
@@ -162,6 +171,10 @@ public class SinhHieuService implements ISinhHieuService {
         return chuyenSangPhanHoi(sinhHieuDaLuu);
     }
 
+    // =========================================================
+    // XEM SINH HIỆU MỚI NHẤT
+    // =========================================================
+
     @Override
     @Transactional(readOnly = true)
     public PhanHoiSinhHieu xemSinhHieuMoiNhat(
@@ -180,11 +193,127 @@ public class SinhHieuService implements ISinhHieuService {
         return chuyenSangPhanHoi(sinhHieu);
     }
 
+    // =========================================================
+    // UC05 - CHỈNH SỬA / CẬP NHẬT SINH HIỆU
+    // =========================================================
+
+    @Override
+    @Transactional
+    public PhanHoiSinhHieu capNhatSinhHieu(
+            String idLuotKham,
+            CapNhatSinhHieuRequest request
+    ) {
+
+        // ==============================
+        // 1. Tìm sinh hiệu hiện tại
+        // ==============================
+
+        SinhHieu sinhHieu = sinhHieuRepository
+                .findByLuotKham_IdLuotKham(idLuotKham)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Lượt khám này chưa có sinh hiệu để cập nhật."
+                        )
+                );
+
+        // ==============================
+        // 2. Kiểm tra lượt khám
+        // ==============================
+
+        if (sinhHieu.getLuotKham() == null) {
+            throw new IllegalStateException(
+                    "Sinh hiệu không thuộc lượt khám hợp lệ."
+            );
+        }
+
+        // ==============================
+        // 3. Kiểm tra dữ liệu mới
+        // ==============================
+
+        if (request.getHuyetApTamThu() == null
+                || request.getHuyetApTamThu() <= 0) {
+
+            throw new IllegalArgumentException(
+                    "Huyết áp tâm thu không hợp lệ."
+            );
+        }
+
+        if (request.getHuyetApTamTruong() == null
+                || request.getHuyetApTamTruong() <= 0) {
+
+            throw new IllegalArgumentException(
+                    "Huyết áp tâm trương không hợp lệ."
+            );
+        }
+
+        if (request.getCanNang() == null
+                || request.getCanNang().signum() <= 0) {
+
+            throw new IllegalArgumentException(
+                    "Cân nặng không hợp lệ."
+            );
+        }
+
+        if (request.getNhietDo() == null
+                || request.getNhietDo().signum() <= 0) {
+
+            throw new IllegalArgumentException(
+                    "Nhiệt độ không hợp lệ."
+            );
+        }
+
+        // ==============================
+        // 4. Cập nhật giá trị mới
+        // ==============================
+
+        sinhHieu.setHuyetApTamThu(
+                request.getHuyetApTamThu()
+        );
+
+        sinhHieu.setHuyetApTamTruong(
+                request.getHuyetApTamTruong()
+        );
+
+        sinhHieu.setCanNang(
+                request.getCanNang()
+        );
+
+        sinhHieu.setNhietDo(
+                request.getNhietDo()
+        );
+
+        // ==============================
+        // 5. Cập nhật thời điểm đo
+        // ==============================
+
+        sinhHieu.setThoiDiemDo(
+                LocalDateTime.now()
+        );
+
+        // ==============================
+        // 6. Lưu database
+        // ==============================
+
+        SinhHieu sinhHieuDaCapNhat =
+                sinhHieuRepository.save(sinhHieu);
+
+        // ==============================
+        // 7. Trả kết quả
+        // ==============================
+
+        return chuyenSangPhanHoi(sinhHieuDaCapNhat);
+    }
+
+    // =========================================================
+    // CHUYỂN ENTITY → RESPONSE
+    // =========================================================
+
     private PhanHoiSinhHieu chuyenSangPhanHoi(
             SinhHieu sinhHieu
     ) {
 
         return new PhanHoiSinhHieu(
+
                 sinhHieu.getIdSinhHieu(),
 
                 sinhHieu.getLuotKham()

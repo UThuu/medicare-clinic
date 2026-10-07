@@ -618,3 +618,22 @@
         font-size: 25px;
     }
 }
+
+.sinh-hieu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.sinh-hieu-header h2 {
+    margin: 0;
+    color: #0f3d56;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.sinh-hieu-header button {
+    flex-shrink: 0;
+}

@@ -18,4 +18,6 @@ public interface LuotKhamRepository
             TrangThaiLuotKham trangThai,
             LocalDate ngayKham
     );
+
+    boolean existsByLichKham_IdLichKham(String idLichKham);
 }

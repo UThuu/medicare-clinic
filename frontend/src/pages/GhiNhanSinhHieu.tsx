@@ -22,6 +22,8 @@ import {
 
 import "./ghiNhanSinhHieu.css";
 
+import CapNhatSinhHieu from "./CapNhatSinhHieu";
+
 interface GhiNhanSinhHieuProps {
     benhNhan: BenhNhanCho;
     onQuayLai?: () => void;
@@ -31,8 +33,11 @@ interface GhiNhanSinhHieuProps {
 function dinhDangNgay(ngay: string) {
     if (!ngay) return "—";
 
-    const [nam, thang, ngayTrongThang] =
-        ngay.split("-");
+    const [
+        nam,
+        thang,
+        ngayTrongThang,
+    ] = ngay.split("-");
 
     if (!nam || !thang || !ngayTrongThang) {
         return ngay;
@@ -67,33 +72,56 @@ export default function GhiNhanSinhHieu({
                                         }: GhiNhanSinhHieuProps) {
 
     // =========================
+    // UC05 - CHỈNH SỬA SINH HIỆU
+    // =========================
+
+    const [
+        dangChinhSua,
+        setDangChinhSua,
+    ] = useState(false);
+
+    // =========================
     // DỮ LIỆU FORM
     // =========================
 
-    const [huyetApTamThu, setHuyetApTamThu] =
-        useState("");
+    const [
+        huyetApTamThu,
+        setHuyetApTamThu,
+    ] = useState("");
 
-    const [huyetApTamTruong, setHuyetApTamTruong] =
-        useState("");
+    const [
+        huyetApTamTruong,
+        setHuyetApTamTruong,
+    ] = useState("");
 
-    const [canNang, setCanNang] =
-        useState("");
+    const [
+        canNang,
+        setCanNang,
+    ] = useState("");
 
-    const [nhietDo, setNhietDo] =
-        useState("");
+    const [
+        nhietDo,
+        setNhietDo,
+    ] = useState("");
 
     // =========================
     // TRẠNG THÁI
     // =========================
 
-    const [dangLuu, setDangLuu] =
-        useState(false);
+    const [
+        dangLuu,
+        setDangLuu,
+    ] = useState(false);
 
-    const [loi, setLoi] =
-        useState("");
+    const [
+        loi,
+        setLoi,
+    ] = useState("");
 
-    const [thanhCong, setThanhCong] =
-        useState("");
+    const [
+        thanhCong,
+        setThanhCong,
+    ] = useState("");
 
     // =========================
     // MÃ ĐIỀU DƯỠNG TEST
@@ -150,10 +178,7 @@ export default function GhiNhanSinhHieu({
     function datLai(
         event?: MouseEvent<HTMLButtonElement>
     ) {
-        /*
-         * Không cho nút Đặt lại
-         * submit form.
-         */
+
         event?.preventDefault();
 
         setHuyetApTamThu("");
@@ -166,7 +191,7 @@ export default function GhiNhanSinhHieu({
     }
 
     // =========================
-    // LƯU SINH HIỆU
+    // LƯU SINH HIỆU - UC03
     // =========================
 
     async function xuLyLuu(
@@ -239,6 +264,31 @@ export default function GhiNhanSinhHieu({
         }
     }
 
+    // =========================
+    // UC05
+    // =========================
+
+    if (dangChinhSua) {
+
+        return (
+            <CapNhatSinhHieu
+                benhNhan={benhNhan}
+
+                onQuayLai={() => {
+                    setDangChinhSua(false);
+                }}
+
+                onCapNhatThanhCong={() => {
+                    setDangChinhSua(false);
+                }}
+            />
+        );
+    }
+
+    // =========================
+    // GIAO DIỆN UC03
+    // =========================
+
     return (
         <MainLayout
             doctorName="Nguyễn Thùy Trang"
@@ -291,7 +341,6 @@ export default function GhiNhanSinhHieu({
 
                 </div>
 
-
                 {/* =========================
                     BỆNH NHÂN
                    ========================= */}
@@ -309,6 +358,7 @@ export default function GhiNhanSinhHieu({
                     <div className="patient-grid">
 
                         <div>
+
                             <span>
                                 Mã bệnh nhân
                             </span>
@@ -316,9 +366,11 @@ export default function GhiNhanSinhHieu({
                             <strong>
                                 {benhNhan.idBenhNhan}
                             </strong>
+
                         </div>
 
                         <div>
+
                             <span>
                                 Giới tính
                             </span>
@@ -328,9 +380,11 @@ export default function GhiNhanSinhHieu({
                                     benhNhan.gioiTinh
                                 )}
                             </strong>
+
                         </div>
 
                         <div>
+
                             <span>
                                 Ngày sinh
                             </span>
@@ -340,9 +394,11 @@ export default function GhiNhanSinhHieu({
                                     benhNhan.ngaySinh
                                 )}
                             </strong>
+
                         </div>
 
                         <div>
+
                             <span>
                                 Số điện thoại
                             </span>
@@ -350,12 +406,12 @@ export default function GhiNhanSinhHieu({
                             <strong>
                                 {benhNhan.soDienThoai || "—"}
                             </strong>
+
                         </div>
 
                     </div>
 
                 </Card>
-
 
                 {/* =========================
                     THÔNG TIN LƯỢT KHÁM
@@ -387,7 +443,9 @@ export default function GhiNhanSinhHieu({
                                 {dinhDangNgay(
                                     benhNhan.ngayKham
                                 )}
+
                                 {" - "}
+
                                 {dinhDangGio(
                                     benhNhan.gioKham
                                 )}
@@ -411,14 +469,36 @@ export default function GhiNhanSinhHieu({
 
                 </Card>
 
-
                 {/* =========================
                     FORM SINH HIỆU
                    ========================= */}
 
                 <form onSubmit={xuLyLuu}>
 
-                    <Card title="Sinh hiệu">
+                    <Card>
+
+                        {/* =========================
+                            TIÊU ĐỀ SINH HIỆU
+                           ========================= */}
+
+                        <div className="sinh-hieu-header">
+
+                            <h2>
+                                Sinh hiệu
+                            </h2>
+
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => {
+                                    setDangChinhSua(true);
+                                }}
+                                disabled={dangLuu}
+                            >
+                                Chỉnh sửa sinh hiệu
+                            </Button>
+
+                        </div>
 
                         <div className="vital-section">
 
@@ -468,7 +548,6 @@ export default function GhiNhanSinhHieu({
 
                             </div>
 
-
                             {/* CÂN NẶNG + NHIỆT ĐỘ */}
 
                             <div className="vital-fields">
@@ -495,7 +574,6 @@ export default function GhiNhanSinhHieu({
                                     </span>
 
                                 </div>
-
 
                                 <div className="vital-input">
 
@@ -524,7 +602,6 @@ export default function GhiNhanSinhHieu({
 
                         </div>
 
-
                         {/* =========================
                             LỖI
                            ========================= */}
@@ -545,7 +622,6 @@ export default function GhiNhanSinhHieu({
 
                         )}
 
-
                         {/* =========================
                             THÀNH CÔNG
                            ========================= */}
@@ -557,7 +633,6 @@ export default function GhiNhanSinhHieu({
                             </div>
 
                         )}
-
 
                         {/* =========================
                             BUTTON
@@ -573,7 +648,6 @@ export default function GhiNhanSinhHieu({
                             >
                                 Đặt lại
                             </Button>
-
 
                             <Button
                                 type="submit"
@@ -592,7 +666,6 @@ export default function GhiNhanSinhHieu({
                     </Card>
 
                 </form>
-
 
                 {/* =========================
                     QUAY LẠI
