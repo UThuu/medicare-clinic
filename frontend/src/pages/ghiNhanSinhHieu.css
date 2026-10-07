@@ -1,0 +1,620 @@
+/* ========================================
+   CONTAINER
+   ======================================== */
+
+.ghi-nhan-sinh-hieu {
+    width: 100%;
+    max-width: 1180px;
+
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 24px;
+
+    font-family: "Inter", Arial, sans-serif;
+}
+
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.ghi-nhan-sinh-hieu__header {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    padding: 4px 0;
+}
+
+.ghi-nhan-sinh-hieu__header h1 {
+    margin: 0;
+
+    color: #0f172a;
+
+    font-size: 30px;
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    letter-spacing: -0.6px;
+}
+
+.ghi-nhan-sinh-hieu__header p {
+    margin: 9px 0 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+    line-height: 1.6;
+
+    font-weight: 400;
+}
+
+
+/* ========================================
+   CARD
+   ======================================== */
+
+.ghi-nhan-sinh-hieu .mc-card {
+    border: 1px solid #e5edf2;
+
+    border-radius: 14px;
+
+    background: #ffffff;
+
+    box-shadow:
+            0 4px 16px rgba(32, 48, 64, 0.07);
+
+    transition:
+            box-shadow 0.2s ease,
+            transform 0.2s ease;
+}
+
+.ghi-nhan-sinh-hieu .mc-card:hover {
+    box-shadow:
+            0 7px 22px rgba(32, 48, 64, 0.09);
+}
+
+
+/* ========================================
+   TIÊU ĐỀ CARD
+   ======================================== */
+
+.ghi-nhan-sinh-hieu .mc-card__title {
+    display: flex;
+
+    align-items: center;
+
+    margin-bottom: 24px;
+
+    color: #0f172a;
+
+    font-size: 17px;
+    line-height: 1.4;
+
+    font-weight: 700;
+}
+
+.ghi-nhan-sinh-hieu .mc-card__title::before {
+    content: "";
+
+    width: 4px;
+    height: 20px;
+
+    margin-right: 10px;
+
+    border-radius: 999px;
+
+    background: #0f8b8d;
+}
+
+
+/* ========================================
+   BỆNH NHÂN
+   ======================================== */
+
+.patient-heading {
+    display: inline-flex;
+
+    align-items: center;
+
+    margin-bottom: 12px;
+
+    padding: 5px 10px;
+
+    border-radius: 6px;
+
+    background: #e7f6f5;
+
+    color: #0b7f81;
+
+    font-size: 11px;
+    line-height: 1.3;
+
+    font-weight: 800;
+
+    letter-spacing: 0.08em;
+}
+
+.patient-name {
+    margin-bottom: 28px;
+
+    color: #0f172a;
+
+    font-size: 24px;
+    line-height: 1.3;
+
+    font-weight: 800;
+
+    letter-spacing: -0.3px;
+}
+
+
+/* ========================================
+   THÔNG TIN BỆNH NHÂN
+   ======================================== */
+
+.patient-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 16px;
+}
+
+.patient-grid > div {
+    min-height: 72px;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 13px 15px;
+
+    border: 1px solid #edf2f5;
+
+    border-radius: 9px;
+
+    background: #fafcfd;
+
+    transition:
+            background 0.2s ease,
+            border-color 0.2s ease;
+}
+
+.patient-grid > div:hover {
+    border-color: #c8ecea;
+
+    background: #f4fbfa;
+}
+
+.patient-grid span {
+    color: #64748b;
+
+    font-size: 12px;
+    line-height: 1.3;
+
+    font-weight: 500;
+}
+
+.patient-grid strong {
+    color: #1e293b;
+
+    font-size: 14px;
+    line-height: 1.4;
+
+    font-weight: 700;
+}
+
+
+/* ========================================
+   THÔNG TIN LƯỢT KHÁM
+   ======================================== */
+
+.visit-grid {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1.35fr 2fr;
+
+    gap: 16px;
+}
+
+.visit-grid > div {
+    min-height: 76px;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 14px 16px;
+
+    border-radius: 9px;
+
+    background: #f7fafc;
+
+    border: 1px solid #edf2f5;
+}
+
+.visit-grid span {
+    color: #64748b;
+
+    font-size: 12px;
+
+    font-weight: 500;
+}
+
+.visit-grid strong {
+    color: #1e293b;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+/* ========================================
+   SINH HIỆU
+   ======================================== */
+
+.vital-section {
+    display: flex;
+    flex-direction: column;
+
+    gap: 28px;
+}
+
+.vital-group {
+    display: flex;
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+.vital-group__title {
+    display: flex;
+
+    align-items: center;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+.vital-group__title::before {
+    content: "♥";
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+
+    margin-right: 9px;
+
+    border-radius: 7px;
+
+    background: #e7f6f5;
+
+    color: #0f8b8d;
+
+    font-size: 13px;
+}
+
+
+/* ========================================
+   HUYẾT ÁP
+   ======================================== */
+
+.blood-pressure-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr)
+        auto;
+
+    align-items: end;
+
+    gap: 16px;
+}
+
+.vital-unit {
+    min-height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding-bottom: 2px;
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* ========================================
+   CÂN NẶNG + NHIỆT ĐỘ
+   ======================================== */
+
+.vital-fields {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    gap: 20px;
+}
+
+.vital-input {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto;
+
+    align-items: end;
+
+    gap: 12px;
+}
+
+.vital-input__unit {
+    min-height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding-bottom: 2px;
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* ========================================
+   LABEL INPUT
+   ======================================== */
+
+.ghi-nhan-sinh-hieu .mc-label {
+    margin-bottom: 8px;
+
+    color: #334155;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+/* ========================================
+   INPUT
+   ======================================== */
+
+.ghi-nhan-sinh-hieu .mc-input {
+    min-height: 44px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 0 13px;
+
+    border: 1px solid #d8e2e8;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            background 0.2s ease;
+}
+
+.ghi-nhan-sinh-hieu .mc-input::placeholder {
+    color: #94a3b8;
+
+    opacity: 1;
+}
+
+.ghi-nhan-sinh-hieu .mc-input:hover {
+    border-color: #b8cbd4;
+}
+
+.ghi-nhan-sinh-hieu .mc-input:focus {
+    border-color: #0f8b8d;
+
+    outline: none;
+
+    background: #ffffff;
+
+    box-shadow:
+            0 0 0 3px rgba(15, 139, 141, 0.12);
+}
+
+
+/* ========================================
+   KHU VỰC BUTTON
+   ======================================== */
+
+.ghi-nhan-sinh-hieu__actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    margin-top: 30px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #e5edf2;
+}
+
+
+/* ========================================
+   ERROR
+   ======================================== */
+
+.ghi-nhan-sinh-hieu__error {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin-top: 22px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #f1b5b5;
+
+    border-radius: 9px;
+
+    background: #fff7f7;
+
+    color: #b42318;
+
+    font-size: 13px;
+}
+
+.ghi-nhan-sinh-hieu__error strong {
+    font-weight: 700;
+}
+
+
+/* ========================================
+   SUCCESS
+   ======================================== */
+
+.ghi-nhan-sinh-hieu__success {
+    margin-top: 22px;
+
+    padding: 14px 16px;
+
+    border: 1px solid #b8e4d2;
+
+    border-radius: 9px;
+
+    background: #f2fbf7;
+
+    color: #16794f;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+/* ========================================
+   NÚT
+   ======================================== */
+
+.ghi-nhan-sinh-hieu .mc-button {
+    min-height: 40px;
+
+    border-radius: 8px;
+
+    font-family: "Inter", Arial, sans-serif;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+/* ========================================
+   QUAY LẠI
+   ======================================== */
+
+.ghi-nhan-sinh-hieu__back {
+    display: flex;
+
+    justify-content: flex-start;
+
+    margin-top: -8px;
+}
+
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 900px) {
+
+    .patient-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .visit-grid {
+        grid-template-columns: 1fr;
+
+        gap: 16px;
+    }
+
+    .vital-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .ghi-nhan-sinh-hieu__header {
+        flex-direction: column;
+    }
+
+    .patient-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .blood-pressure-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vital-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .ghi-nhan-sinh-hieu__actions {
+        flex-direction: column-reverse;
+
+        align-items: stretch;
+    }
+
+    .ghi-nhan-sinh-hieu__header h1 {
+        font-size: 25px;
+    }
+}

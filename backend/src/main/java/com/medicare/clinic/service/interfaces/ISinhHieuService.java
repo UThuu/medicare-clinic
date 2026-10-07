@@ -1,5 +1,16 @@
 package com.medicare.clinic.service.interfaces;
 
+import com.medicare.clinic.dto.request.GhiNhanSinhHieuRequest;
+import com.medicare.clinic.dto.response.PhanHoiSinhHieu;
+
 public interface ISinhHieuService {
-    // TODO: implement service methods
+
+    PhanHoiSinhHieu ghiNhanSinhHieu(
+            String idLuotKham,
+            GhiNhanSinhHieuRequest request
+    );
+
+    PhanHoiSinhHieu xemSinhHieuMoiNhat(
+            String idLuotKham
+    );
 }
