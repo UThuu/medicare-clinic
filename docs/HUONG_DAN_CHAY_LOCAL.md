@@ -43,3 +43,8 @@ Các tài khoản mẫu sau đã được xác nhận hoạt động với mật
 - **Mật khẩu:** \Medicare@123\
 
 > **Ghi chú:** Không sử dụng \s01\ vì dữ liệu seed chưa ánh xạ chính xác với mã này. Chỉ dùng các tài khoản đã liệt kê ở trên.
+## 5. Hướng dẫn tính năng (UC-06: Xem Lịch Khám)
+- Sau khi đăng nhập với tài khoản Bác sĩ (\s_an\), bạn sẽ được chuyển đến trang Dashboard (Tổng quan hôm nay).
+- Mặc định hệ thống tải lịch khám của ngày hiện tại. Do cơ sở dữ liệu mẫu có thể không chứa lịch khám trong ngày hôm nay, **danh sách trên Dashboard có thể trống**.
+- Để xem dữ liệu mẫu, bạn hãy chuyển sang mục **Lịch khám** trên Sidebar (mở rộng ở phiên bản sau) hoặc dựa theo ngày khám thực tế trong file \seed_v1.2.sql\ (ví dụ: ngày \2026-10-01\ đối với tài khoản \s_an\).
+- Trang Tổng quan có cơ chế tự động làm mới lịch mỗi 1 phút khi tab đang mở và hiển thị thống kê tổng quan các trạng thái lịch khám.
