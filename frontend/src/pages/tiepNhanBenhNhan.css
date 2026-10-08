@@ -1,0 +1,544 @@
+.tiep-nhan {
+    min-height: 100vh;
+    padding: 32px 40px 48px;
+    background: #f5f8fa;
+    color: #0f172a;
+}
+
+.tiep-nhan__header {
+    margin-bottom: 28px;
+}
+
+.tiep-nhan__header h1 {
+    margin: 0 0 8px;
+    color: #0f3d56;
+    font-size: 30px;
+    line-height: 1.25;
+    font-weight: 700;
+}
+
+.tiep-nhan__header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* SEARCH */
+
+.tiep-nhan__search-card {
+    padding: 28px 30px;
+    margin-bottom: 0;
+}
+
+.tiep-nhan__search-title {
+    margin-bottom: 22px;
+}
+
+.tiep-nhan__search-title h2,
+.tiep-nhan__section-title h2 {
+    margin: 0 0 5px;
+    color: #0f3d56;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.tiep-nhan__search-title p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.tiep-nhan__search-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+
+.tiep-nhan__search-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+
+.tiep-nhan__field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.tiep-nhan__field label {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tiep-nhan__field input {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s;
+}
+
+.tiep-nhan__field input:hover {
+    border-color: #94a3b8;
+}
+
+.tiep-nhan__field input:focus {
+    border-color: #0f8b8d;
+    box-shadow: 0 0 0 3px rgba(15, 139, 141, 0.12);
+}
+
+.tiep-nhan__or {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.tiep-nhan__or::before,
+.tiep-nhan__or::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: #e2e8f0;
+}
+
+.tiep-nhan__search-action {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+/* ALERT */
+
+.tiep-nhan__alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0;
+    padding: 13px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.tiep-nhan__alert--error {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.tiep-nhan__alert--success {
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.tiep-nhan__alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    border-radius: 50%;
+    font-weight: 700;
+}
+
+/* RESULT */
+
+.tiep-nhan__result,
+.tiep-nhan__appointments {
+    margin-top: 28px;
+}
+
+.tiep-nhan__section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.tiep-nhan__section-title span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.tiep-nhan__patient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* PATIENT */
+
+.tiep-nhan__patient-card {
+    padding: 22px 24px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
+    transition: 0.2s;
+}
+
+.tiep-nhan__patient-card:hover,
+.tiep-nhan__patient-card--selected {
+    border-color: #b8dfe0;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+}
+
+.patient-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eef2f5;
+}
+
+.patient-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.patient-card__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #e7f6f5;
+    color: #0f8b8d;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.patient-card__identity h3 {
+    margin: 0 0 4px;
+    color: #0f3d56;
+    font-size: 16px;
+}
+
+.patient-card__identity span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.patient-card__code {
+    padding: 6px 11px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.patient-card__info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.patient-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.patient-info--address {
+    grid-column: 1 / -1;
+}
+
+.patient-info span {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.patient-info strong {
+    color: #334155;
+    font-size: 14px;
+}
+
+.patient-card__action {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 16px;
+    border-top: 1px solid #eef2f5;
+}
+
+/* APPOINTMENTS */
+
+.appointment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.appointment-card {
+    display: grid;
+    grid-template-columns: 90px 1fr auto 36px;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    padding: 18px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.appointment-card:hover:not(:disabled) {
+    border-color: #9dd3d4;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.appointment-card--selected {
+    border-color: #0f8b8d;
+    background: #f0fbfb;
+}
+
+.appointment-card--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.appointment-card__time {
+    color: #0f8b8d;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.appointment-card__title {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.appointment-card__doctor {
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.appointment-card__id {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.appointment-card__status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.appointment-status {
+    padding: 6px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.appointment-status--da_dat {
+    background: #e7f6f5;
+    color: #0b6f71;
+}
+
+.appointment-status--da_tiep_nhan {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.appointment-status--da_huy {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.appointment-card__note {
+    color: #94a3b8;
+    font-size: 10px;
+}
+
+.appointment-card__radio {
+    display: flex;
+    justify-content: center;
+}
+
+.appointment-radio {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.appointment-radio--selected {
+    border-color: #0f8b8d;
+    background: #0f8b8d;
+}
+
+/* CONFIRM */
+
+.tiep-nhan__confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 16px;
+    padding: 18px 20px;
+    border: 1px solid #d9eeee;
+    border-radius: 12px;
+    background: #f7fcfc;
+}
+
+.tiep-nhan__confirm > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.tiep-nhan__confirm strong {
+    color: #0f3d56;
+    font-size: 14px;
+}
+
+.tiep-nhan__confirm span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+/* EMPTY */
+
+.tiep-nhan__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 40px 20px;
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.tiep-nhan__empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.tiep-nhan__empty h3 {
+    margin: 0;
+    color: #334155;
+    font-size: 15px;
+}
+
+.tiep-nhan__empty p {
+    margin: 0 0 8px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.tiep-nhan__loading {
+    padding: 40px;
+    border-radius: 12px;
+    background: #fff;
+    color: #64748b;
+    text-align: center;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+    .tiep-nhan {
+        padding: 24px 18px 40px;
+    }
+
+    .tiep-nhan__header h1 {
+        font-size: 24px;
+    }
+
+    .tiep-nhan__search-card {
+        padding: 22px 18px;
+    }
+
+    .tiep-nhan__search-row {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-card__info {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-info--address {
+        grid-column: auto;
+    }
+
+    .patient-card__top {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .appointment-card {
+        grid-template-columns: 70px 1fr 28px;
+    }
+
+    .appointment-card__status {
+        display: none;
+    }
+
+    .tiep-nhan__confirm {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tiep-nhan__confirm button {
+        width: 100%;
+    }
+}
+
+.tiep-nhan__confirm button {
+    background: #ffffff !important;
+    color: #0f8b8d !important;
+    border: 1px solid #0f8b8d !important;
+}
+
+.tiep-nhan__confirm button:hover:not(:disabled) {
+    background: #e7f6f5 !important;
+    color: #0b6f71 !important;
+}
+
+.tiep-nhan__confirm button:disabled {
+    background: #ffffff !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
+    opacity: 1;
+}

@@ -1,6 +1,7 @@
-package com.medicare.clinic.repository;
+﻿package com.medicare.clinic.repository;
 
 import com.medicare.clinic.entity.LichKham;
+import com.medicare.clinic.entity.enums.TrangThaiLichKham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,17 @@ import java.util.List;
 
 @Repository
 public interface LichKhamRepository extends JpaRepository<LichKham, String> {
+
+    List<LichKham> findByBenhNhan_IdBenhNhanAndNgayKhamOrderByGioKhamAsc(
+            String idBenhNhan,
+            LocalDate ngayKham
+    );
+
+    List<LichKham> findByBenhNhan_IdBenhNhanAndNgayKhamAndTrangThaiOrderByGioKhamAsc(
+            String idBenhNhan,
+            LocalDate ngayKham,
+            TrangThaiLichKham trangThai
+    );
 
     @Query("SELECT lk FROM LichKham lk " +
            "LEFT JOIN FETCH lk.luotKham " +
