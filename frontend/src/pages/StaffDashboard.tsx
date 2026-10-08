@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 
-
+import { DoctorDashboard } from './DoctorDashboard';
 
 export const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
