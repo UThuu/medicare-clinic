@@ -4,9 +4,9 @@
 -- Chạy sau schema.sql V1.2 trên database sạch.
 -- Không chạy file này lên database đã được seed/migrate trước đó.
 --
--- Cơ chế hash password: Chưa triển khai chính thức.
--- Placeholder BCrypt:
--- '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan'
+-- Cơ chế hash password: Đã cập nhật mật khẩu hợp lệ cho môi trường phát triển.
+-- Mật khẩu chung cho tất cả tài khoản mẫu: Medicare@123
+-- Hash: $2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy
 -- ============================================================
 
 USE medicare_clinic;
@@ -56,18 +56,18 @@ INSERT INTO benh_nhan
 -- 4. TAI KHOAN
 INSERT INTO tai_khoan
 (id_tai_khoan, id_nhan_vien, id_benh_nhan, ten_dang_nhap, mat_khau_hash, trang_thai) VALUES
-('TK_NV001', 'NV001', NULL, 'bs_an', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV002', 'NV002', NULL, 'bs_nam', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV003', 'NV003', NULL, 'bs_ha', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV004', 'NV004', NULL, 'dd_nhu', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV005', 'NV005', NULL, 'dd_thang', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV006', 'NV006', NULL, 'lt_lan', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV007', 'NV007', NULL, 'lt_tu', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV008', 'NV008', NULL, 'tn_yen', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_NV009', 'NV009', NULL, 'tn_huy', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'KHOA'),
-('TK_BN001', NULL, 'BN001', 'bn_quyet', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_BN002', NULL, 'BN002', 'bn_oanh', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'HOAT_DONG'),
-('TK_BN003', NULL, 'BN003', 'bn_dung', '$2a$10$demoHashPlaceholderChoTatCaTaiKhoan', 'KHOA');
+('TK_NV001', 'NV001', NULL, 'bs_an', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV002', 'NV002', NULL, 'bs_nam', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV003', 'NV003', NULL, 'bs_ha', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV004', 'NV004', NULL, 'dd_nhu', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV005', 'NV005', NULL, 'dd_thang', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV006', 'NV006', NULL, 'lt_lan', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV007', 'NV007', NULL, 'lt_tu', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV008', 'NV008', NULL, 'tn_yen', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_NV009', 'NV009', NULL, 'tn_huy', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'KHOA'),
+('TK_BN001', NULL, 'BN001', 'bn_quyet', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_BN002', NULL, 'BN002', 'bn_oanh', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'HOAT_DONG'),
+('TK_BN003', NULL, 'BN003', 'bn_dung', '$2a$10$aCSumRzc22GMA0eOF1b/ievriSlliKWPhWzzRfYkgsvd6yC9EFAvy', 'KHOA');
 
 -- 5. BENH NHAN DI UNG
 INSERT INTO benh_nhan_di_ung (id_benh_nhan, thanh_phan, ghi_chu) VALUES
