@@ -196,3 +196,8 @@ Dự án hiện đang ở giai đoạn **Initial Project Skeleton** (Khởi tạ
 - Luôn đối chiếu tài liệu trước khi implement Use Case.
 - Nếu tài liệu có sự mâu thuẫn, trao đổi với nhóm trước khi code.
 - Không commit secret.
+
+## Hu?ng d?n c�i d?t v� ch?y ?ng d?ng
+
+Vui l�ng xem chi ti?t t?i: [Hu?ng d?n ch?y local](docs/HUONG_DAN_CHAY_LOCAL.md)
+
