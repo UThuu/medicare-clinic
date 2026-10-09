@@ -29,4 +29,7 @@ public class LuotKham {
     
     @Column(name = "chan_doan")
     private String chanDoan;
+
+    @OneToOne(mappedBy = "luotKham", fetch = FetchType.LAZY)
+    private SinhHieu sinhHieu;
 }

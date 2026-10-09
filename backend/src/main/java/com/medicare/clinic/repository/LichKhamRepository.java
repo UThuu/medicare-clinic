@@ -1,4 +1,4 @@
-﻿package com.medicare.clinic.repository;
+package com.medicare.clinic.repository;
 
 import com.medicare.clinic.entity.LichKham;
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;
@@ -31,4 +31,10 @@ public interface LichKhamRepository extends JpaRepository<LichKham, String> {
            "ORDER BY lk.gioKham ASC, lk.idLichKham ASC")
     List<LichKham> findScheduleByDoctorAndDate(@Param("maNv") String maNv, @Param("ngayKham") LocalDate ngayKham);
 
+    @Query("SELECT lk FROM LichKham lk " +
+           "JOIN FETCH lk.benhNhan " +
+           "JOIN FETCH lk.bacSi " +
+           "LEFT JOIN FETCH lk.luotKham " +
+           "WHERE lk.idLichKham = :idLichKham")
+    java.util.Optional<LichKham> findByIdWithDetails(@Param("idLichKham") String idLichKham);
 }
