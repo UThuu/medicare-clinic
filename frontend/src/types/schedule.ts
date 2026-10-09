@@ -18,4 +18,11 @@ export interface DoctorScheduleResponse {
   
   idLuotKham: string | null;
   trangThaiLuotKham: TrangThaiLuotKham | null;
+  
+  lyDoKham: string | null;
+  huyetApTamThu: number | null;
+  huyetApTamTruong: number | null;
+  nhietDo: number | null;
+  canNang: number | null;
+  thoiDiemDoSinhHieu: string | null;
 }
