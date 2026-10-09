@@ -22,3 +22,29 @@ Thumbs.db
 !backend/mvnw
 !backend/mvnw.cmd
 !backend/.mvn/
+
+# Local reference documents & project context (keep local only, do not push to git)
+docs/*
+!docs/.gitkeep
+context/*
+!context/.gitkeep
+AGENTS.md
+
+# Local database scripts (keep local for dev/testing, managed by TV1)
+database/*
+!database/.gitkeep
+
+# Local backend configuration (keep private, only push .example)
+backend/src/main/resources/application.properties
+!backend/src/main/resources/application.properties.example
+
+# Local helper / test data initializer (managed locally by dev)
+backend/src/main/java/com/medicare/clinic/config/
+
+# Logs & temp cache
+*.log
+.vite/
+
+
+
+
