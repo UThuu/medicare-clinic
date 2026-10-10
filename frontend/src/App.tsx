@@ -7,6 +7,7 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
+import { BenhNhanTaoMoi } from './pages/BenhNhanTaoMoi';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -34,7 +35,21 @@ const App: React.FC = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+
+        {/* UC29: route xem thử không gọi API, không yêu cầu đăng nhập */}
+        <Route path="/dev/uc29" element={<BenhNhanTaoMoi demoMode />} />
+
+        {/* UC29: route nghiệp vụ thật chỉ dành cho lễ tân */}
+        <Route
+          path="/staff/patient-create"
+          element={
+            <ProtectedRoute allowedRoles={['LE_TAN']}>
+              <BenhNhanTaoMoi />
+            </ProtectedRoute>
+          }
+        />
         
+
         <Route 
           path="/patient" 
           element={
