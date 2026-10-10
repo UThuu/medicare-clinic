@@ -66,6 +66,7 @@ export const ThanhToanOnlinePage: React.FC = () => {
       setProcessing(true);
       const res = await thanhToanService.taoGiaoDichVNPay(thongTin.idHoaDon);
       if (res.paymentUrl) {
+        sessionStorage.setItem('vnpay_source_role', 'patient');
         showToast('Đang chuyển hướng sang Cổng thanh toán VNPay...', 'success');
         window.location.href = res.paymentUrl;
       } else {

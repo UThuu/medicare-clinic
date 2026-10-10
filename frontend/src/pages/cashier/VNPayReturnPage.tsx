@@ -66,6 +66,9 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
     result?.trangThai === 'THANH_CONG' ||
     result?.maPhanHoi === '00';
 
+  const sourceRole = sessionStorage.getItem('vnpay_source_role') || 'patient';
+  const isPatient = sourceRole === 'patient';
+
   return (
     <div style={{ padding: '40px 20px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="vnpay-return-card">
@@ -90,7 +93,7 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
             </div>
             <div style={{ padding: '24px', textAlign: 'center' }}>
               <Button variant="primary" onClick={onBackToBilling}>
-                Quay lại Quầy Thu Ngân
+                {isPatient ? '🏠 Về Cổng Bệnh Nhân' : 'Quay lại Quầy Thu Ngân'}
               </Button>
             </div>
           </div>
@@ -171,11 +174,13 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
 
               <div style={{ marginTop: '28px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
                 <Button variant="primary" onClick={onBackToBilling}>
-                  {isSuccess ? 'Quay lại Quản Lý Thu Ngân' : 'Quay lại Thử Lại Thanh Toán'}
+                  {isPatient
+                    ? (isSuccess ? '🏠 Về Cổng Bệnh Nhân' : 'Quay lại Cổng Bệnh Nhân')
+                    : (isSuccess ? 'Quay lại Quầy Thu Ngân' : 'Quay lại Thử Lại Thanh Toán')}
                 </Button>
                 {isSuccess && (
                   <Button variant="secondary" onClick={() => window.print()}>
-                    🖨️ In Biên Lai
+                    🖨️ In Biên Lai Điện Tử
                   </Button>
                 )}
               </div>

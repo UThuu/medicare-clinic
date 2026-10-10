@@ -182,6 +182,7 @@ export const ThanhToanPage: React.FC = () => {
         setProcessing(true);
         const res = await thanhToanService.taoGiaoDichVNPay(selectedHoaDonId);
         if (res.paymentUrl) {
+          sessionStorage.setItem('vnpay_source_role', 'cashier');
           showToast('Đang chuyển hướng sang Cổng thanh toán VNPay...', 'success');
           window.location.href = res.paymentUrl;
         } else {

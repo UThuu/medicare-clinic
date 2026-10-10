@@ -8,7 +8,17 @@ import { VNPayReturnPage } from './pages/cashier/VNPayReturnPage';
 import { thanhToanService } from './services/thanhToanService';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cho-lap' | 'thanh-toan' | 'da-lap' | 'benh-nhan-online'>('thanh-toan');
+  const queryParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = queryParams.get('tab') as
+    | 'cho-lap'
+    | 'thanh-toan'
+    | 'da-lap'
+    | 'benh-nhan-online'
+    | null;
+
+  const [activeTab, setActiveTab] = useState<'cho-lap' | 'thanh-toan' | 'da-lap' | 'benh-nhan-online'>(
+    tabFromUrl || 'thanh-toan'
+  );
   const [unpaidCount, setUnpaidCount] = useState<number>(0);
 
   // Kiểm tra nếu đang ở trang callback của VNPay Gateway
@@ -27,7 +37,16 @@ export const App: React.FC = () => {
     return (
       <div className="app-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
         <div style={{ flex: 1 }}>
-          <VNPayReturnPage onBackToBilling={() => { window.location.href = '/'; }} />
+          <VNPayReturnPage
+            onBackToBilling={() => {
+              const role = sessionStorage.getItem('vnpay_source_role') || 'patient';
+              if (role === 'patient') {
+                window.location.href = '/?tab=benh-nhan-online';
+              } else {
+                window.location.href = '/?tab=thanh-toan';
+              }
+            }}
+          />
         </div>
       </div>
     );
