@@ -1,36 +1,7 @@
-export interface BenhNhanTimKiemTaiQuay {
-  idBenhNhan: string;
-  hoTen: string;
-  ngaySinh: string;
-  gioiTinh: string;
-  soDienThoai: string;
-  diaChi?: string;
-}
-
-export interface LichKhamDatTaiQuayRequest {
-  idBenhNhan: string;
-  maBacSi: string;
-  ngayKham: string;
-  gioKham: string;
-}
-
-export interface LichKhamKiemTraTrongResponse {
-  maBacSi: string;
-  ngayKham: string;
-  gioKham: string;
-  conTrong: boolean;
-  thongBao: string;
-}
-
-export interface LichKhamDatTaiQuayResponse {
-  thongBao: string;
-  idLichKham: string;
-  idBenhNhan: string;
-  hoTenBenhNhan: string;
-  maBacSi: string;
-  hoTenBacSi?: string | null;
-  ngayKham: string;
-  gioKham: string;
-  trangThai: string;
-  phuongThucDatLich: string;
+export interface BacSiDatLich { maBacSi: string; hoTen: string; chuyenKhoa: string }
+export interface KhungGioTrong { maBacSi: string; ngayKham: string; gioTrong: string[]; ngayGoiY: string[] }
+export interface LichKhamDatTaiQuayRequest { idBenhNhan: string; maBacSi: string; ngayKham: string; gioKham: string }
+export interface LichKhamDatTaiQuayResponse extends LichKhamDatTaiQuayRequest {
+  thongBao: string; idLichKham: string; hoTenBenhNhan: string; hoTenBacSi: string;
+  trangThai: 'DA_DAT'; phuongThucDatLich: 'TRUC_TIEP';
 }

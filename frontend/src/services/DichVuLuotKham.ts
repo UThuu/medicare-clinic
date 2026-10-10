@@ -1,6 +1,6 @@
 import type { BenhNhanCho } from "../types/LuotKham";
 
-const DIA_CHI_API = "http://localhost:8080/api";
+const DIA_CHI_API = "/api";
 
 export async function layDanhSachBenhNhanCho(
     ngayKham: string

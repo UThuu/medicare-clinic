@@ -2,6 +2,7 @@ export { Button } from './common/Button';
 export { Card } from './common/Card';
 export { ConfirmDialog } from './common/ConfirmDialog';
 export { Input } from './common/Input';
+export { Textarea } from './common/Textarea';
 export { Modal } from './common/Modal';
 export { SearchBox } from './common/SearchBox';
 export { SearchSelect } from './common/SearchSelect';

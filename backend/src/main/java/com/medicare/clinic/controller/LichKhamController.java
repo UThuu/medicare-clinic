@@ -1,94 +1,39 @@
 package com.medicare.clinic.controller;
 
 import com.medicare.clinic.dto.auth.LoginResponse;
-import com.medicare.clinic.dto.request.BacSiGoiYDaTungKhamRequest;
 import com.medicare.clinic.dto.request.LichKhamDatTaiQuayRequest;
-import com.medicare.clinic.dto.request.LichKhamDatTrucTuyenRequest;
-import com.medicare.clinic.dto.request.LichKhamGoiYKhungGioThayTheRequest;
-import com.medicare.clinic.dto.request.LichKhamKiemTraTrongRequest;
 import com.medicare.clinic.service.interfaces.ILichKhamService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.ConcurrencyFailureException;
+import java.time.LocalDate;
 import java.util.Map;
+import java.util.function.Supplier;
 
-@RestController
-@RequestMapping("/api/lichkham")
-@RequiredArgsConstructor
+@RestController @RequestMapping("/api/lichkham") @RequiredArgsConstructor
 public class LichKhamController {
     private final ILichKhamService lichkhamService;
-
-    @PostMapping("/kiem-tra-trong")
-    public ResponseEntity<?> kiemTraLichTrong(@RequestBody LichKhamKiemTraTrongRequest request,
-                                               HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BENH_NHAN", "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.kiemTraLichTrong(request));
+    @GetMapping("/bac-si")
+    public ResponseEntity<?> doctors(HttpServletRequest http) { return execute(http, () -> lichkhamService.danhSachBacSi()); }
+    @GetMapping("/khung-gio")
+    public ResponseEntity<?> slots(@RequestParam String maBacSi, @RequestParam LocalDate ngayKham, HttpServletRequest http) {
+        return execute(http, () -> lichkhamService.khungGioTrong(maBacSi, ngayKham));
     }
-
-    @PostMapping("/bac-si-da-kham")
-    public ResponseEntity<?> goiYBacSiDaTungKham(@RequestBody(required = false) BacSiGoiYDaTungKhamRequest request,
-                                                   HttpServletRequest httpRequest) {
-        LoginResponse user = currentUser(httpRequest);
-        if (user == null) return unauthorized();
-        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
-        return execute(() -> lichkhamService.goiYBacSiDaTungKham(user.getIdBenhNhan(), request));
-    }
-
-    @PostMapping("/goi-y-khung-gio-thay-the")
-    public ResponseEntity<?> goiYKhungGioThayThe(@RequestBody LichKhamGoiYKhungGioThayTheRequest request,
-                                                  HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BENH_NHAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.goiYKhungGioThayThe(request));
-    }
-
-    @PostMapping("/dat-truc-tuyen")
-    public ResponseEntity<?> datLichKhamTrucTuyen(@RequestBody LichKhamDatTrucTuyenRequest request,
-                                                   HttpServletRequest httpRequest) {
-        LoginResponse user = currentUser(httpRequest);
-        if (user == null) return unauthorized();
-        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
-        return execute(() -> lichkhamService.datLichKhamTrucTuyen(user.getIdBenhNhan(), request));
-    }
-
     @PostMapping("/dat-tai-quay")
-    public ResponseEntity<?> datLichKhamTaiQuay(@RequestBody LichKhamDatTaiQuayRequest request,
-                                                HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.datLichKhamTaiQuay(request));
+    public ResponseEntity<?> book(@RequestBody LichKhamDatTaiQuayRequest request, HttpServletRequest http) {
+        return execute(http, () -> lichkhamService.datLichKhamTaiQuay(request));
     }
-
-    private LoginResponse currentUser(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) return null;
-        Object user = session.getAttribute("AUTH_USER");
-        return user instanceof LoginResponse ? (LoginResponse) user : null;
-    }
-
-    private ResponseEntity<?> requireRole(HttpServletRequest request, String... roles) {
-        LoginResponse user = currentUser(request);
-        if (user == null) return unauthorized();
-        for (String role : roles) if (role.equals(user.getVaiTro())) return null;
-        return forbidden();
-    }
-
-    private ResponseEntity<?> execute(java.util.function.Supplier<Object> action) {
+    private ResponseEntity<?> execute(HttpServletRequest http, Supplier<Object> action) {
+        HttpSession session = http.getSession(false);
+        Object value = session == null ? null : session.getAttribute("AUTH_USER");
+        if (!(value instanceof LoginResponse user)) return ResponseEntity.status(401).body(Map.of("message", "Bạn chưa đăng nhập."));
+        if (!"LE_TAN".equals(user.getVaiTro())) return ResponseEntity.status(403).body(Map.of("message", "Chỉ lễ tân có quyền đặt lịch tại quầy."));
         try { return ResponseEntity.ok(action.get()); }
-        catch (IllegalStateException e) { return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage())); }
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
-    }
-
-    private ResponseEntity<?> unauthorized() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."));
-    }
-
-    private ResponseEntity<?> forbidden() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Bạn không có quyền truy cập tính năng này."));
+        catch (IllegalStateException | ConcurrencyFailureException e) { return ResponseEntity.status(409).body(Map.of("message", "Khung giờ vừa được đặt bởi người khác, vui lòng chọn lại.")); }
+        catch (DataAccessException e) { return ResponseEntity.status(503).body(Map.of("message", "Không thể đặt lịch, vui lòng thử lại.")); }
     }
 }

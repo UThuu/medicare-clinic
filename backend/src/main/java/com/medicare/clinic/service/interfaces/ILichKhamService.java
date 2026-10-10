@@ -1,33 +1,10 @@
 package com.medicare.clinic.service.interfaces;
-
-import com.medicare.clinic.dto.request.BacSiGoiYDaTungKhamRequest;
 import com.medicare.clinic.dto.request.LichKhamDatTaiQuayRequest;
-import com.medicare.clinic.dto.request.LichKhamDatTrucTuyenRequest;
-import com.medicare.clinic.dto.request.LichKhamGoiYKhungGioThayTheRequest;
-import com.medicare.clinic.dto.request.LichKhamKiemTraTrongRequest;
-import com.medicare.clinic.dto.response.BacSiGoiYDaTungKhamResponse;
-import com.medicare.clinic.dto.response.LichKhamDatTaiQuayResponse;
-import com.medicare.clinic.dto.response.LichKhamDatTrucTuyenResponse;
-import com.medicare.clinic.dto.response.LichKhamGoiYKhungGioThayTheResponse;
-import com.medicare.clinic.dto.response.LichKhamKiemTraTrongResponse;
-
+import com.medicare.clinic.dto.response.*;
+import java.time.LocalDate;
+import java.util.List;
 public interface ILichKhamService {
-
-    LichKhamKiemTraTrongResponse kiemTraLichTrong(LichKhamKiemTraTrongRequest request);
-
-    BacSiGoiYDaTungKhamResponse goiYBacSiDaTungKham(
-            String idBenhNhan,
-            BacSiGoiYDaTungKhamRequest request
-    );
-
-    LichKhamGoiYKhungGioThayTheResponse goiYKhungGioThayThe(
-            LichKhamGoiYKhungGioThayTheRequest request
-    );
-
-    LichKhamDatTrucTuyenResponse datLichKhamTrucTuyen(
-            String idBenhNhan,
-            LichKhamDatTrucTuyenRequest request
-    );
-
+    List<BacSiDatLichResponse> danhSachBacSi();
+    LichKhamKhungGioResponse khungGioTrong(String maBacSi, LocalDate ngayKham);
     LichKhamDatTaiQuayResponse datLichKhamTaiQuay(LichKhamDatTaiQuayRequest request);
 }
