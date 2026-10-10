@@ -6,6 +6,9 @@ import { Button } from '../components/common/Button';
 import { PatientSummary } from '../components/common/PatientSummary';
 import { medicalRecordService } from '../services/medicalRecordService';
 import { MedicalRecordResponse } from '../types/MedicalRecord';
+import { Modal } from '../components/common/Modal';
+import { khamBenhService } from '../services/khamBenhService';
+
 import './patientRecord.css';
 
 export const PatientRecord: React.FC = () => {
@@ -18,6 +21,57 @@ export const PatientRecord: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('tong_quan');
+
+    const [isRecordingModalOpen, setIsRecordingModalOpen] = useState(false);
+    const [trieuChung, setTrieuChung] = useState('');
+    const [ketQuaKham, setKetQuaKham] = useState('');
+    const [chanDoan, setChanDoan] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    const handleOpenRecordModal = () => {
+        setTrieuChung(record?.luotKhamHienTai?.trieuChung || '');
+        setKetQuaKham(record?.luotKhamHienTai?.ketQuaKham || '');
+        setChanDoan(record?.luotKhamHienTai?.chanDoan || '');
+        setSaveError(null);
+        setIsRecordingModalOpen(true);
+    };
+
+    const handleSaveRecord = async () => {
+        if (!trieuChung.trim() || !ketQuaKham.trim() || !chanDoan.trim()) {
+            setSaveError('Vui lòng nhập đầy đủ Triệu chứng, Kết quả khám và Chẩn đoán.');
+            return;
+        }
+        setIsSaving(true);
+        setSaveError(null);
+        try {
+            await khamBenhService.saveKetQuaKham({
+                idLichKham: idLuotKham,
+                trieuChung,
+                ketQuaKham,
+                chanDoan
+            });
+            setIsRecordingModalOpen(false);
+            
+            // Reload data after save
+            try {
+                setLoading(true);
+                const data = await medicalRecordService.getMedicalRecord(idLuotKham);
+                setRecord(data);
+                setError(null);
+            } catch (err) {
+                console.error('Error reloading record:', err);
+            } finally {
+                setLoading(false);
+            }
+
+        } catch (err: any) {
+            setSaveError(err.message || 'Có lỗi xảy ra khi lưu kết quả khám.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     useEffect(() => {
         if (!idLuotKham) return;
@@ -48,7 +102,76 @@ export const PatientRecord: React.FC = () => {
                 ]}
             >
                 <div style={{ padding: '2rem' }}>Đang tải...</div>
-            </MainLayout>
+    
+            <Modal
+                open={isRecordingModalOpen}
+                title="Ghi nhận kết quả khám"
+                onClose={() => setIsRecordingModalOpen(false)}
+                width="lg"
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
+                        <Button variant="ghost" onClick={() => setIsRecordingModalOpen(false)} disabled={isSaving}>
+                            Hủy bỏ
+                        </Button>
+                        <Button variant="primary" onClick={handleSaveRecord} disabled={isSaving}>
+                            {isSaving ? 'Đang lưu...' : 'Lưu kết quả'}
+                        </Button>
+                    </div>
+                }
+            >
+                {saveError && (
+                    <div style={{ padding: '12px', backgroundColor: '#FEF2F2', color: '#B91C1C', borderRadius: '6px', marginBottom: '16px', border: '1px solid #F87171' }}>
+                        {saveError}
+                    </div>
+                )}
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                        <h4 style={{ margin: '0 0 12px 0', color: '#0F172A', fontSize: '1rem' }}>Thông tin bệnh nhân</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem' }}>
+                            <div><strong>Bệnh nhân:</strong> {record?.benhNhan?.hoTen}</div>
+                            <div><strong>Mã BN:</strong> {record?.benhNhan?.idBenhNhan}</div>
+                            <div><strong>Giới tính:</strong> {record?.benhNhan?.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</div>
+                            <div><strong>Năm sinh:</strong> {record?.benhNhan?.ngaySinh?.substring(0, 4)}</div>
+                        </div>
+                    </div>
+
+                    <div className="mc-field">
+                        <label className="mc-label">Triệu chứng <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={trieuChung}
+                            onChange={(e) => setTrieuChung(e.target.value)}
+                            placeholder="Nhập triệu chứng của bệnh nhân..."
+                        />
+                    </div>
+                    
+                    <div className="mc-field">
+                        <label className="mc-label">Kết quả khám <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '120px', resize: 'vertical' }}
+                            value={ketQuaKham}
+                            onChange={(e) => setKetQuaKham(e.target.value)}
+                            placeholder="Nhập kết quả khám lâm sàng..."
+                        />
+                    </div>
+                    
+                    <div className="mc-field">
+                        <label className="mc-label">Chẩn đoán <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={chanDoan}
+                            onChange={(e) => setChanDoan(e.target.value)}
+                            placeholder="Nhập kết luận chẩn đoán..."
+                        />
+                    </div>
+                </div>
+            </Modal>
+        </MainLayout>
+
         );
     }
 
@@ -68,7 +191,76 @@ export const PatientRecord: React.FC = () => {
                         Quay lại
                     </Button>
                 </div>
-            </MainLayout>
+    
+            <Modal
+                open={isRecordingModalOpen}
+                title="Ghi nhận kết quả khám"
+                onClose={() => setIsRecordingModalOpen(false)}
+                width="lg"
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
+                        <Button variant="ghost" onClick={() => setIsRecordingModalOpen(false)} disabled={isSaving}>
+                            Hủy bỏ
+                        </Button>
+                        <Button variant="primary" onClick={handleSaveRecord} disabled={isSaving}>
+                            {isSaving ? 'Đang lưu...' : 'Lưu kết quả'}
+                        </Button>
+                    </div>
+                }
+            >
+                {saveError && (
+                    <div style={{ padding: '12px', backgroundColor: '#FEF2F2', color: '#B91C1C', borderRadius: '6px', marginBottom: '16px', border: '1px solid #F87171' }}>
+                        {saveError}
+                    </div>
+                )}
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                        <h4 style={{ margin: '0 0 12px 0', color: '#0F172A', fontSize: '1rem' }}>Thông tin bệnh nhân</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem' }}>
+                            <div><strong>Bệnh nhân:</strong> {record?.benhNhan?.hoTen}</div>
+                            <div><strong>Mã BN:</strong> {record?.benhNhan?.idBenhNhan}</div>
+                            <div><strong>Giới tính:</strong> {record?.benhNhan?.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</div>
+                            <div><strong>Năm sinh:</strong> {record?.benhNhan?.ngaySinh?.substring(0, 4)}</div>
+                        </div>
+                    </div>
+
+                    <div className="mc-field">
+                        <label className="mc-label">Triệu chứng <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={trieuChung}
+                            onChange={(e) => setTrieuChung(e.target.value)}
+                            placeholder="Nhập triệu chứng của bệnh nhân..."
+                        />
+                    </div>
+                    
+                    <div className="mc-field">
+                        <label className="mc-label">Kết quả khám <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '120px', resize: 'vertical' }}
+                            value={ketQuaKham}
+                            onChange={(e) => setKetQuaKham(e.target.value)}
+                            placeholder="Nhập kết quả khám lâm sàng..."
+                        />
+                    </div>
+                    
+                    <div className="mc-field">
+                        <label className="mc-label">Chẩn đoán <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={chanDoan}
+                            onChange={(e) => setChanDoan(e.target.value)}
+                            placeholder="Nhập kết luận chẩn đoán..."
+                        />
+                    </div>
+                </div>
+            </Modal>
+        </MainLayout>
+
         );
     }
 
@@ -125,10 +317,17 @@ export const PatientRecord: React.FC = () => {
         >
             <style dangerouslySetInnerHTML={{ __html: ".mc-shell { height: calc(100vh - 64px); overflow: hidden; } .mc-main { padding: 0 !important; display: flex; flex-direction: column; overflow: hidden; height: 100%; }" }}></style>
             <div className="patient-record-container">
-                <div className="breadcrumb">
-                    <span className="back-link" onClick={() => navigate('/staff/schedules')}>Lịch khám</span>
-                    <span className="separator">›</span>
-                    <span className="current">Hồ sơ bệnh nhân</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <div className="breadcrumb" style={{ margin: 0 }}>
+                        <span className="back-link" onClick={() => navigate('/staff/schedules')}>Lịch khám</span>
+                        <span className="separator">›</span>
+                        <span className="current">Hồ sơ bệnh nhân</span>
+                    </div>
+                    {record?.luotKhamHienTai && record.luotKhamHienTai.trangThai !== 'HOAN_TAT' && (
+                        <Button variant="primary" onClick={handleOpenRecordModal}>
+                            Ghi nhận kết quả khám
+                        </Button>
+                    )}
                 </div>
 
                 <div className="patient-summary-wrapper">
@@ -356,6 +555,75 @@ export const PatientRecord: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <Modal
+                open={isRecordingModalOpen}
+                title="Ghi nhận kết quả khám"
+                onClose={() => setIsRecordingModalOpen(false)}
+                width="lg"
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', width: '100%' }}>
+                        <Button variant="ghost" onClick={() => setIsRecordingModalOpen(false)} disabled={isSaving}>
+                            Hủy bỏ
+                        </Button>
+                        <Button variant="primary" onClick={handleSaveRecord} disabled={isSaving}>
+                            {isSaving ? 'Đang lưu...' : 'Lưu kết quả'}
+                        </Button>
+                    </div>
+                }
+            >
+                {saveError && (
+                    <div style={{ padding: '12px', backgroundColor: '#FEF2F2', color: '#B91C1C', borderRadius: '6px', marginBottom: '16px', border: '1px solid #F87171' }}>
+                        {saveError}
+                    </div>
+                )}
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                        <h4 style={{ margin: '0 0 12px 0', color: '#0F172A', fontSize: '1rem' }}>Thông tin bệnh nhân</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9rem' }}>
+                            <div><strong>Bệnh nhân:</strong> {record?.benhNhan?.hoTen}</div>
+                            <div><strong>Mã BN:</strong> {record?.benhNhan?.idBenhNhan}</div>
+                            <div><strong>Giới tính:</strong> {record?.benhNhan?.gioiTinh === 'NAM' ? 'Nam' : 'Nữ'}</div>
+                            <div><strong>Năm sinh:</strong> {record?.benhNhan?.ngaySinh?.substring(0, 4)}</div>
+                        </div>
+                    </div>
+
+                    <div className="mc-field">
+                        <label className="mc-label">Triệu chứng <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={trieuChung}
+                            onChange={(e) => setTrieuChung(e.target.value)}
+                            placeholder="Nhập triệu chứng của bệnh nhân..."
+                        />
+                    </div>
+                    
+                    <div className="mc-field">
+                        <label className="mc-label">Kết quả khám <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '120px', resize: 'vertical' }}
+                            value={ketQuaKham}
+                            onChange={(e) => setKetQuaKham(e.target.value)}
+                            placeholder="Nhập kết quả khám lâm sàng..."
+                        />
+                    </div>
+                    
+                    <div className="mc-field">
+                        <label className="mc-label">Chẩn đoán <span className="mc-required">*</span></label>
+                        <textarea 
+                            className="mc-input" 
+                            style={{ minHeight: '80px', resize: 'vertical' }}
+                            value={chanDoan}
+                            onChange={(e) => setChanDoan(e.target.value)}
+                            placeholder="Nhập kết luận chẩn đoán..."
+                        />
+                    </div>
+                </div>
+            </Modal>
         </MainLayout>
+
     );
 };
