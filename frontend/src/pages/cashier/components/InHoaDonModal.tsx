@@ -42,7 +42,328 @@ export const InHoaDonModal: React.FC<InHoaDonModalProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    const printArea = document.getElementById('printable-invoice-content');
+    if (!printArea) {
+      window.print();
+      return;
+    }
+
+    // Cơ chế Hidden Iframe: Giải pháp chuẩn nhất cho in ấn web
+    // Đảm bảo không bị popup blocker của Cốc Cốc/Chrome chặn,
+    // và không bị ảnh hưởng bởi Dark Mode hay CSS layout của trang chính.
+    let iframe = document.getElementById('invoice-print-frame') as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'invoice-print-frame';
+      iframe.style.position = 'fixed';
+      iframe.style.top = '-9999px';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '0px';
+      iframe.style.height = '0px';
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+    }
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      window.print();
+      return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(`
+      <!DOCTYPE html>
+      <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <title>Hoa_Don_${data?.idHoaDon || 'MediCare'}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            @page {
+              size: A4 portrait;
+              margin: 10mm 14mm;
+            }
+            body {
+              font-family: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+              background-color: #ffffff !important;
+              color: #0f172a !important;
+              padding: 8mm 12mm;
+              font-size: 13px;
+              line-height: 1.5;
+            }
+            .invoice-print-area {
+              width: 100%;
+              background: #ffffff !important;
+            }
+            .invoice-header-section {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              gap: 20px;
+            }
+            .clinic-info {
+              flex: 1;
+            }
+            .clinic-logo-row {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 6px;
+            }
+            .clinic-icon { font-size: 26px; }
+            .clinic-name {
+              font-size: 17px;
+              font-weight: 800;
+              color: #0369a1 !important;
+            }
+            .clinic-detail-item {
+              font-size: 12px;
+              color: #475569 !important;
+              line-height: 1.5;
+            }
+            .invoice-meta-card {
+              text-align: right;
+              min-width: 230px;
+              padding: 10px 14px;
+              background-color: #f8fafc !important;
+              border: 1px solid #cbd5e1 !important;
+              border-radius: 8px;
+            }
+            .invoice-code-badge {
+              font-size: 11px;
+              font-weight: 700;
+              color: #64748b !important;
+            }
+            .invoice-code-text {
+              font-family: monospace, Courier, sans-serif;
+              font-size: 17px;
+              font-weight: 800;
+              color: #0284c7 !important;
+              margin-bottom: 4px;
+            }
+            .invoice-date-row {
+              font-size: 11.5px;
+              color: #475569 !important;
+              display: flex;
+              justify-content: space-between;
+              gap: 8px;
+              margin-top: 3px;
+            }
+            .invoice-paid-stamp {
+              display: inline-block;
+              margin-top: 8px;
+              padding: 4px 12px;
+              background-color: #dcfce7 !important;
+              color: #15803d !important;
+              font-weight: 800;
+              font-size: 12px;
+              border-radius: 9999px;
+              border: 1px dashed #16a34a !important;
+            }
+            .invoice-divider {
+              height: 1px;
+              background-color: #cbd5e1 !important;
+              margin: 16px 0;
+            }
+            .invoice-title-block {
+              text-align: center;
+              margin-bottom: 18px;
+            }
+            .invoice-main-title {
+              font-size: 20px;
+              font-weight: 800;
+              color: #0f172a !important;
+              letter-spacing: 0.5px;
+            }
+            .invoice-sub-title {
+              font-size: 12px;
+              font-weight: 600;
+              color: #64748b !important;
+              text-transform: uppercase;
+              margin-top: 4px;
+            }
+            .patient-info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 12px 24px;
+              background-color: #f8fafc !important;
+              border: 1px solid #cbd5e1 !important;
+              border-radius: 8px;
+              padding: 12px 16px;
+              margin-bottom: 16px;
+            }
+            .info-row {
+              display: flex;
+              font-size: 12.5px;
+              line-height: 1.6;
+            }
+            .info-label {
+              color: #64748b !important;
+              width: 130px;
+              flex-shrink: 0;
+            }
+            .info-value {
+              color: #0f172a !important;
+              font-weight: 500;
+              flex: 1;
+            }
+            .patient-name-bold {
+              font-weight: 800 !important;
+              color: #0284c7 !important;
+              text-transform: uppercase;
+            }
+            .font-mono {
+              font-family: monospace, Courier, sans-serif;
+            }
+            .table-responsive {
+              margin-top: 14px;
+              overflow: visible;
+            }
+            .invoice-table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12.5px;
+              margin-top: 8px;
+            }
+            .invoice-table th {
+              background-color: #f1f5f9 !important;
+              color: #0f172a !important;
+              font-weight: 700;
+              padding: 9px 10px;
+              border: 1px solid #94a3b8 !important;
+              text-align: left;
+            }
+            .invoice-table td {
+              padding: 8px 10px;
+              border: 1px solid #cbd5e1 !important;
+              color: #0f172a !important;
+              background-color: #ffffff !important;
+            }
+            .invoice-summary-box {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              gap: 20px;
+              margin-top: 14px;
+              padding: 12px 16px;
+              background-color: #f8fafc !important;
+              border: 1px solid #cbd5e1 !important;
+              border-radius: 8px;
+            }
+            .payment-method-box {
+              border-left: 3px solid #0284c7;
+              padding-left: 10px;
+            }
+            .summary-right {
+              min-width: 280px;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              font-size: 13px;
+              padding: 3px 0;
+              color: #475569 !important;
+            }
+            .total-row {
+              border-top: 2px solid #94a3b8 !important;
+              margin-top: 6px;
+              padding-top: 6px;
+              font-weight: 800;
+              color: #0f172a !important;
+              font-size: 15px;
+            }
+            .total-amount-highlight {
+              color: #0284c7 !important;
+              font-size: 17px;
+              font-weight: 800;
+            }
+            .words-amount-box {
+              margin-top: 12px;
+              padding: 10px 14px;
+              background-color: #f8fafc !important;
+              border: 1px dashed #94a3b8 !important;
+              border-radius: 6px;
+              font-size: 12.5px;
+            }
+            .words-label {
+              font-weight: 700;
+              color: #475569 !important;
+            }
+            .words-content {
+              font-weight: 700;
+              color: #0f172a !important;
+              font-style: italic;
+            }
+            .invoice-note {
+              margin-top: 10px;
+              font-size: 11.5px;
+              color: #64748b !important;
+            }
+            .signature-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 24px;
+              margin-top: 28px;
+              text-align: center;
+            }
+            .signature-date {
+              font-size: 11.5px;
+              font-style: italic;
+              color: #64748b !important;
+              margin-bottom: 4px;
+            }
+            .signature-role {
+              font-weight: 700;
+              font-size: 12.5px;
+              color: #0f172a !important;
+            }
+            .signature-sub {
+              font-size: 11px;
+              color: #64748b !important;
+            }
+            .signature-spacing {
+              height: 55px;
+            }
+            .signature-name {
+              font-weight: 700;
+              font-size: 13px;
+              color: #0f172a !important;
+            }
+            .invoice-footer-msg {
+              text-align: center;
+              font-size: 11.5px;
+              font-style: italic;
+              color: #64748b !important;
+              margin-top: 22px;
+              border-top: 1px dotted #cbd5e1 !important;
+              padding-top: 10px;
+            }
+          </style>
+        </head>
+        <body>
+          ${printArea.outerHTML}
+        </body>
+      </html>
+    `);
+    iframeDoc.close();
+
+    // Chờ 250ms để nội dung và font render ổn định rồi kích hoạt in
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error('Lỗi khi kích hoạt in qua iframe:', err);
+        window.print();
+      }
+    }, 250);
   };
 
   if (!isOpen) return null;

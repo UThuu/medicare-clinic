@@ -1621,30 +1621,67 @@ body {
    CSS PRINT MODE (Trình duyệt in - Chuẩn A4/A5 không dính giao diện hệ thống)
    ========================================================================== */
 @media print {
-  /* Ẩn toàn bộ UI trang web */
-  body * {
-    visibility: hidden !important;
+  /* Thiết lập nền trắng cho toàn trang in */
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
   }
 
+  /* Ẩn toàn bộ phần tử khác */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Ẩn các UI layout không in */
   .no-print,
-  .modal-overlay,
   .modal-header,
   .modal-footer,
   .sidebar,
   .top-header,
   header,
   nav,
-  button {
+  button,
+  .toast-msg {
     display: none !important;
   }
 
-  /* Chỉ hiển thị đúng phần hóa đơn */
+  /* QUAN TRỌNG: Giữ các thẻ cha của modal hiển thị block để không làm mất phần tử con bên trong */
+  .modal-overlay,
+  #in-hoadon-modal-overlay,
+  .modal-content,
+  .print-modal-content,
+  #in-hoadon-modal-content,
+  .modal-body {
+    visibility: visible !important;
+    display: block !important;
+    position: static !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Chỉ hiển thị trọn vẹn bản in hóa đơn */
   #printable-invoice-content,
   #printable-invoice-content * {
     visibility: visible !important;
   }
 
   #printable-invoice-content {
+    display: block !important;
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
@@ -1654,25 +1691,80 @@ body {
     border: none !important;
     box-shadow: none !important;
     background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .invoice-table th {
+  /* Đảm bảo chữ, bảng và border trên giấy in luôn đen/đậm rõ nét kể cả khi trình duyệt đang ở Dark Mode */
+  #printable-invoice-content .clinic-name,
+  #printable-invoice-content .invoice-main-title,
+  #printable-invoice-content .patient-name-bold,
+  #printable-invoice-content .total-row,
+  #printable-invoice-content .signature-name {
+    color: #0f172a !important;
+  }
+
+  #printable-invoice-content .invoice-code-text,
+  #printable-invoice-content .total-amount-highlight {
+    color: #0284c7 !important;
+  }
+
+  #printable-invoice-content .clinic-detail-item,
+  #printable-invoice-content .info-row,
+  #printable-invoice-content .info-label,
+  #printable-invoice-content .info-value,
+  #printable-invoice-content .words-amount-box,
+  #printable-invoice-content .signature-role,
+  #printable-invoice-content .signature-date {
+    color: #334155 !important;
+  }
+
+  #printable-invoice-content .patient-info-grid,
+  #printable-invoice-content .invoice-meta-card,
+  #printable-invoice-content .invoice-summary-box {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+
+  #printable-invoice-content .invoice-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #printable-invoice-content .invoice-table th {
     background-color: #f1f5f9 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    color: #0f172a !important;
+    border: 1px solid #94a3b8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .invoice-paid-stamp {
+  #printable-invoice-content .invoice-table td {
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+  }
+
+  #printable-invoice-content .invoice-paid-stamp {
     background-color: #dcfce7 !important;
     color: #15803d !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    border: 1px dashed #16a34a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #printable-invoice-content .words-amount-box {
+    background-color: #f8fafc !important;
+    border: 1px dashed #94a3b8 !important;
   }
 
   @page {
-    size: auto;
-    margin: 12mm 15mm;
+    size: A4 portrait;
+    margin: 10mm 12mm;
   }
 }
+
 
 
