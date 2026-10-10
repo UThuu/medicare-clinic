@@ -1,9 +1,11 @@
 package com.medicare.clinic.service.interfaces;
 
+import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.GiaoDichResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
+import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 
 import java.util.List;
@@ -24,6 +26,11 @@ public interface IThanhToanService {
      * UC-17: Xác nhận thanh toán cho một hóa đơn
      */
     KetQuaThanhToanResponse xacNhanThanhToan(XacNhanThanhToanRequest request);
+
+    /**
+     * UC-18: Xác nhận thanh toán tiền mặt tại quầy (tính tiền thừa/thối lại)
+     */
+    ThanhToanTienMatResponse thanhToanTienMat(ThanhToanTienMatRequest request);
 
     /**
      * Lấy lịch sử tất cả các lần thử giao dịch thanh toán của hóa đơn

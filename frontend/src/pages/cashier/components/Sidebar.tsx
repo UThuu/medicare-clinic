@@ -4,6 +4,7 @@ interface SidebarProps {
   activeTab: 'cho-lap' | 'thanh-toan' | 'da-lap';
   onTabChange: (tab: 'cho-lap' | 'thanh-toan' | 'da-lap') => void;
   pendingCount: number;
+  unpaidCount?: number;
   totalInvoiceCount: number;
 }
 
@@ -11,6 +12,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
   pendingCount,
+  unpaidCount,
   totalInvoiceCount,
 }) => {
   return (
@@ -55,7 +57,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onTabChange('thanh-toan')}
         >
           <span>💳</span>
-          <span style={{ flex: 1 }}>2. Thanh toán (UC-17)</span>
+          <span style={{ flex: 1 }}>2. Thanh toán (UC-17, UC-18)</span>
+          {unpaidCount !== undefined && unpaidCount > 0 && (
+            <span
+              style={{
+                background: '#d97706',
+                color: 'white',
+                borderRadius: '10px',
+                fontSize: '11px',
+                padding: '2px 7px',
+                fontWeight: 700,
+              }}
+            >
+              {unpaidCount}
+            </span>
+          )}
         </div>
 
         <div

@@ -1,9 +1,11 @@
 package com.medicare.clinic.controller;
 
+import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.GiaoDichResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
+import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.service.interfaces.IThanhToanService;
 import lombok.RequiredArgsConstructor;
@@ -73,6 +75,30 @@ public class ThanhToanController {
             log.error("Lỗi khi xác nhận thanh toán: ", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Không thể hoàn tất thanh toán: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * API UC-18: Xác nhận thanh toán tiền mặt tại quầy (tính tiền thối lại)
+     */
+    @PostMapping("/tien-mat")
+    public ResponseEntity<?> thanhToanTienMat(@RequestBody ThanhToanTienMatRequest request) {
+        try {
+            ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (IllegalStateException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            log.error("Lỗi khi thanh toán tiền mặt: ", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Không thể hoàn tất thanh toán tiền mặt: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

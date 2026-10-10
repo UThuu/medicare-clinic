@@ -1,5 +1,6 @@
 package com.medicare.clinic.service.impl;
 
+import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.*;
 import com.medicare.clinic.entity.*;
@@ -176,6 +177,96 @@ public class ThanhToanService implements IThanhToanService {
                 .trangThai("THANH_CONG")
                 .thoiGian(giaoDich.getThoiGian())
                 .thongBao("Xác nhận thanh toán thành công cho hóa đơn " + hoaDon.getId())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ThanhToanTienMatResponse thanhToanTienMat(ThanhToanTienMatRequest request) {
+        log.info("Bắt đầu xử lý thanh toán tiền mặt cho hóa đơn: {}", request.getIdHoaDon());
+
+        if (request.getIdHoaDon() == null || request.getIdHoaDon().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
+        }
+
+        HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + request.getIdHoaDon()));
+
+        // Chặn thanh toán lại nếu hóa đơn đã thanh toán hoàn tất (E3)
+        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
+        }
+
+        BigDecimal tongTien = hoaDon.getTongTien();
+        BigDecimal tienKhachDua = request.getTienKhachDua();
+
+        if (tienKhachDua == null) {
+            throw new IllegalArgumentException("Vui lòng nhập số tiền khách đưa!");
+        }
+
+        // Kiểm tra số tiền khách đưa không được nhỏ hơn tổng tiền (E2)
+        if (tienKhachDua.compareTo(tongTien) < 0) {
+            BigDecimal conThieu = tongTien.subtract(tienKhachDua);
+            throw new IllegalArgumentException("Số tiền khách đưa không đủ để thanh toán hóa đơn! Còn thiếu: "
+                    + conThieu.stripTrailingZeros().toPlainString() + " đ");
+        }
+
+        BigDecimal tienThoiLai = tienKhachDua.subtract(tongTien);
+
+        // Tìm hoặc tạo mới bản ghi ThanhToan (1-1 với HoaDon)
+        ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
+                .orElseGet(() -> {
+                    ThanhToan tt = new ThanhToan();
+                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setHoaDon(hoaDon);
+                    tt.setSoTien(hoaDon.getTongTien());
+                    tt.setNgayTao(LocalDateTime.now());
+                    tt.setTrangThai("DANG_XU_LY");
+                    return thanhToanRepository.save(tt);
+                });
+
+        // Tạo bản ghi GiaoDichThanhToan tiền mặt
+        String maGiaoDich = "CASH-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        GiaoDichThanhToan giaoDich = new GiaoDichThanhToan();
+        giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        giaoDich.setThanhToan(thanhToan);
+        giaoDich.setMaGiaoDich(maGiaoDich);
+        giaoDich.setPhuongThuc("TIEN_MAT");
+        giaoDich.setSoTien(tongTien);
+        giaoDich.setTrangThai("THANH_CONG");
+        giaoDich.setThoiGian(LocalDateTime.now());
+        giaoDichThanhToanRepository.save(giaoDich);
+
+        // Cập nhật trạng thái ThanhToan -> THANH_CONG
+        thanhToan.setTrangThai("THANH_CONG");
+        thanhToanRepository.save(thanhToan);
+
+        // Cập nhật trạng thái HoaDon -> DA_THANH_TOAN
+        hoaDon.setTrangThai("DA_THANH_TOAN");
+        hoaDonRepository.save(hoaDon);
+
+        // Cập nhật trạng thái LuotKham -> HOAN_TAT
+        LuotKham luotKham = hoaDon.getLuotKham();
+        if (luotKham != null) {
+            luotKham.setTrangThai("HOAN_TAT");
+            luotKhamRepository.save(luotKham);
+        }
+
+        log.info("Thanh toán tiền mặt thành công cho hóa đơn: {}, tiền khách đưa: {}, tiền thối lại: {}",
+                hoaDon.getId(), tienKhachDua, tienThoiLai);
+
+        return ThanhToanTienMatResponse.builder()
+                .idThanhToan(thanhToan.getId())
+                .idGiaoDich(giaoDich.getIdGiaoDich())
+                .maGiaoDich(giaoDich.getMaGiaoDich())
+                .idHoaDon(hoaDon.getId())
+                .tongTien(tongTien)
+                .tienKhachDua(tienKhachDua)
+                .tienThoiLai(tienThoiLai)
+                .phuongThuc("TIEN_MAT")
+                .trangThai("THANH_CONG")
+                .thoiGian(giaoDich.getThoiGian())
+                .thongBao("Thanh toán tiền mặt thành công! Tiền thối lại cho khách: " + tienThoiLai.stripTrailingZeros().toPlainString() + " đ")
                 .build();
     }
 

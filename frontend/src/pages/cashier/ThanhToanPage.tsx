@@ -18,6 +18,7 @@ export const ThanhToanPage: React.FC = () => {
 
   // Form thanh toán
   const [phuongThuc, setPhuongThuc] = useState<string>('TIEN_MAT');
+  const [tienKhachDuaInput, setTienKhachDuaInput] = useState<string>('');
   const [ghiChu, setGhiChu] = useState<string>('');
   const [processing, setProcessing] = useState<boolean>(false);
 
@@ -57,10 +58,15 @@ export const ThanhToanPage: React.FC = () => {
     setLoadingDetail(true);
     setPhuongThuc('TIEN_MAT');
     setGhiChu('');
+    setTienKhachDuaInput('');
 
     try {
       const data = await thanhToanService.layThongTinThanhToan(idHoaDon);
       setThongTinThanhToan(data);
+      // Mặc định gợi ý đúng số tiền
+      if (data && data.tongTien) {
+        setTienKhachDuaInput(data.tongTien.toString());
+      }
     } catch (err: any) {
       showToast('Không thể tải chi tiết thanh toán: ' + (err.response?.data?.error || err.message), 'error');
       setIsModalOpen(false);
@@ -69,27 +75,66 @@ export const ThanhToanPage: React.FC = () => {
     }
   };
 
+  const tongTien = thongTinThanhToan?.tongTien || 0;
+  const tienKhachDuaNumber = parseFloat(tienKhachDuaInput) || 0;
+  const tienThoiLai = tienKhachDuaNumber - tongTien;
+  const isDuTien = tienKhachDuaNumber >= tongTien;
+  const isChuaNhap = !tienKhachDuaInput.trim() || tienKhachDuaNumber === 0;
+
   const handleXacNhanThanhToan = async () => {
     if (!selectedHoaDonId || !thongTinThanhToan) return;
 
-    try {
-      setProcessing(true);
-      const res = await thanhToanService.xacNhanThanhToan({
-        idHoaDon: selectedHoaDonId,
-        phuongThuc,
-        soTien: thongTinThanhToan.tongTien,
-        ghiChu: ghiChu.trim() || undefined,
-      });
+    if (phuongThuc === 'TIEN_MAT') {
+      if (isChuaNhap) {
+        showToast('Vui lòng nhập số tiền khách đưa!', 'error');
+        return;
+      }
+      if (!isDuTien) {
+        showToast(`Số tiền khách đưa chưa đủ! Còn thiếu: ${formatVND(Math.abs(tienThoiLai))}`, 'error');
+        return;
+      }
 
-      showToast(`✓ Thanh toán thành công hóa đơn ${res.idHoaDon}! Mã GD: ${res.maGiaoDich}`, 'success');
-      setIsModalOpen(false);
-      setSelectedHoaDonId(null);
-      setThongTinThanhToan(null);
-      fetchDanhSach();
-    } catch (err: any) {
-      showToast('Thanh toán thất bại: ' + (err.response?.data?.error || err.message), 'error');
-    } finally {
-      setProcessing(false);
+      try {
+        setProcessing(true);
+        const res = await thanhToanService.thanhToanTienMat({
+          idHoaDon: selectedHoaDonId,
+          tienKhachDua: tienKhachDuaNumber,
+          ghiChu: ghiChu.trim() || undefined,
+        });
+
+        showToast(
+          `✓ Thanh toán tiền mặt thành công! HĐ: ${res.idHoaDon} | Tiền thối lại: ${formatVND(res.tienThoiLai)}`,
+          'success'
+        );
+        setIsModalOpen(false);
+        setSelectedHoaDonId(null);
+        setThongTinThanhToan(null);
+        fetchDanhSach();
+      } catch (err: any) {
+        showToast('Thanh toán tiền mặt thất bại: ' + (err.response?.data?.error || err.message), 'error');
+      } finally {
+        setProcessing(false);
+      }
+    } else {
+      try {
+        setProcessing(true);
+        const res = await thanhToanService.xacNhanThanhToan({
+          idHoaDon: selectedHoaDonId,
+          phuongThuc,
+          soTien: thongTinThanhToan.tongTien,
+          ghiChu: ghiChu.trim() || undefined,
+        });
+
+        showToast(`✓ Thanh toán thành công hóa đơn ${res.idHoaDon}! Mã GD: ${res.maGiaoDich}`, 'success');
+        setIsModalOpen(false);
+        setSelectedHoaDonId(null);
+        setThongTinThanhToan(null);
+        fetchDanhSach();
+      } catch (err: any) {
+        showToast('Thanh toán thất bại: ' + (err.response?.data?.error || err.message), 'error');
+      } finally {
+        setProcessing(false);
+      }
     }
   };
 
@@ -121,7 +166,7 @@ export const ThanhToanPage: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
         <div className="med-card" style={{ margin: 0, padding: '20px' }}>
           <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
-            Hóa đơn chờ thanh toán (UC-17)
+            Hóa đơn chờ thanh toán (UC-17, UC-18)
           </div>
           <div style={{ fontSize: '28px', fontWeight: 800, color: '#0284c7', marginTop: '4px' }}>
             {danhSachHoaDon.length}
@@ -279,8 +324,11 @@ export const ThanhToanPage: React.FC = () => {
                 variant="primary"
                 onClick={handleXacNhanThanhToan}
                 loading={processing}
+                disabled={processing || (phuongThuc === 'TIEN_MAT' && (!isDuTien || isChuaNhap))}
               >
-                ✓ Xác nhận thanh toán ({formatVND(thongTinThanhToan.tongTien)})
+                {phuongThuc === 'TIEN_MAT'
+                  ? `✓ Xác nhận thu tiền mặt (${formatVND(thongTinThanhToan.tongTien)})`
+                  : `✓ Xác nhận thanh toán (${formatVND(thongTinThanhToan.tongTien)})`}
               </Button>
             </>
           )
@@ -435,6 +483,100 @@ export const ThanhToanPage: React.FC = () => {
                 </label>
               </div>
             </div>
+
+            {/* Chi tiết thanh toán tiền mặt (UC-18) */}
+            {phuongThuc === 'TIEN_MAT' && (
+              <div className="cash-payment-box" id="box-thanh-toan-tien-mat">
+                <div className="cash-header">
+                  <div className="cash-title">
+                    <span>💵</span>
+                    <span>Chi Tiết Thu Tiền Mặt (UC-18)</span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>
+                    Tự động tính tiền thối lại cho khách
+                  </span>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="input-tien-khach-dua"
+                    style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
+                  >
+                    Số tiền khách đưa:
+                  </label>
+                  <div className="cash-input-wrapper">
+                    <input
+                      id="input-tien-khach-dua"
+                      type="number"
+                      className="cash-input-field"
+                      placeholder="Nhập số tiền khách đưa..."
+                      value={tienKhachDuaInput}
+                      onChange={(e) => setTienKhachDuaInput(e.target.value)}
+                      min={0}
+                      step={1000}
+                    />
+                    <span className="cash-input-currency">VNĐ</span>
+                  </div>
+
+                  {/* Nút gợi ý mệnh giá tiền nhanh */}
+                  <div className="quick-cash-row">
+                    <button
+                      type="button"
+                      className={`quick-cash-btn ${tienKhachDuaNumber === tongTien ? 'active' : ''}`}
+                      onClick={() => setTienKhachDuaInput(tongTien.toString())}
+                      id="btn-quick-exact"
+                    >
+                      🎯 Đúng số tiền ({formatVND(tongTien)})
+                    </button>
+                    {[100000, 200000, 500000, 1000000]
+                      .filter((val) => val !== tongTien)
+                      .map((val) => (
+                        <button
+                          key={val}
+                          type="button"
+                          className={`quick-cash-btn ${tienKhachDuaNumber === val ? 'active' : ''}`}
+                          onClick={() => setTienKhachDuaInput(val.toString())}
+                          id={`btn-quick-${val}`}
+                        >
+                          {formatVND(val)}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Kết quả tiền thối hoặc cảnh báo thiếu */}
+                {isChuaNhap ? (
+                  <div className="cash-change-card neutral">
+                    <span className="change-label">Vui lòng nhập số tiền khách đưa để tính tiền thối</span>
+                    <span className="change-amount">0 đ</span>
+                  </div>
+                ) : isDuTien ? (
+                  <div className="cash-change-card success" id="card-tien-thoi-lai">
+                    <div>
+                      <div className="change-label">✓ Tiền thối lại cho khách:</div>
+                      <div style={{ fontSize: '11px', color: '#166534', marginTop: '2px' }}>
+                        Khách đưa: {formatVND(tienKhachDuaNumber)} | Tổng cần thu: {formatVND(tongTien)}
+                      </div>
+                    </div>
+                    <div className="change-amount" id="val-tien-thoi-lai">
+                      {formatVND(tienThoiLai)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="cash-change-card warning" id="card-tien-thieu">
+                    <div>
+                      <div className="change-label">⚠️ Khách đưa chưa đủ tiền!</div>
+                      <div style={{ fontSize: '11px', color: '#9f1239', marginTop: '2px' }}>
+                        Còn thiếu so với hóa đơn
+                      </div>
+                    </div>
+                    <div className="change-amount" id="val-tien-thieu">
+                      - {formatVND(Math.abs(tienThoiLai))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Ghi chú giao dịch */}
             <div style={{ marginTop: '14px' }}>

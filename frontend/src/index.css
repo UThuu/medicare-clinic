@@ -803,3 +803,155 @@ body {
   animation: slideInRight 0.3s ease;
 }
 
+/* ==========================================================================
+   UC-18: THANH TOÁN TIỀN MẶT & TÍNH TIỀN THỐI LẠI
+   ========================================================================== */
+.cash-payment-box {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-top: 16px;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+.cash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cash-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cash-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cash-input-field {
+  width: 100%;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 12px 60px 12px 16px;
+  border: 2px solid var(--slate-300);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.cash-input-field:focus {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+}
+
+.cash-input-currency {
+  position: absolute;
+  right: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-500);
+  pointer-events: none;
+}
+
+.quick-cash-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.quick-cash-btn {
+  background: #ffffff;
+  border: 1px solid var(--slate-300);
+  color: var(--slate-700);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-cash-btn:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-500);
+  color: var(--primary-700);
+  transform: translateY(-1px);
+}
+
+.quick-cash-btn.active {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  color: #ffffff;
+}
+
+.cash-change-card {
+  margin-top: 14px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.cash-change-card.success {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+}
+
+.cash-change-card.warning {
+  background: #fff1f2;
+  border: 1.5px solid #fecdd3;
+}
+
+.cash-change-card.neutral {
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+}
+
+.change-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cash-change-card.success .change-label {
+  color: #166534;
+}
+
+.cash-change-card.warning .change-label {
+  color: #9f1239;
+}
+
+.cash-change-card.neutral .change-label {
+  color: #64748b;
+}
+
+.change-amount {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.cash-change-card.success .change-amount {
+  color: #15803d;
+}
+
+.cash-change-card.warning .change-amount {
+  color: #e11d48;
+}
+
+.cash-change-card.neutral .change-amount {
+  color: #94a3b8;
+}
+

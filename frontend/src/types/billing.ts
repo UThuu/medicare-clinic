@@ -118,3 +118,23 @@ export interface KetQuaThanhToanResponse {
   thongBao: string;
 }
 
+export interface ThanhToanTienMatRequest {
+  idHoaDon: string;
+  tienKhachDua: number;
+  ghiChu?: string;
+}
+
+export interface ThanhToanTienMatResponse {
+  idThanhToan: string;
+  idGiaoDich: string;
+  maGiaoDich: string;
+  idHoaDon: string;
+  tongTien: number;
+  tienKhachDua: number;
+  tienThoiLai: number;
+  phuongThuc: string;
+  trangThai: string;
+  thoiGian: string;
+  thongBao: string;
+}
+

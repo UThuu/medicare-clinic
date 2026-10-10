@@ -1,8 +1,10 @@
 package com.medicare.clinic.service;
 
+import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
+import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.*;
@@ -151,6 +153,114 @@ public class ThanhToanServiceTest {
                 .build();
 
         assertThrows(IllegalArgumentException.class, () -> thanhToanService.xacNhanThanhToan(request));
+        verify(giaoDichThanhToanRepository, never()).save(any());
+    }
+
+    // ==========================================
+    // CÁC TEST CASES CHO UC-18 (THANH TOÁN TIỀN MẶT)
+    // ==========================================
+
+    @Test
+    @DisplayName("UC-18: Thanh toán tiền mặt thành công khi khách đưa vừa đủ tiền")
+    void testThanhToanTienMat_VuaDuTien_ThanhCong() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
+        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+        when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+
+        ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
+                .idHoaDon("HD-001")
+                .tienKhachDua(BigDecimal.valueOf(200000)) // Khách đưa đúng 200k
+                .ghiChu("Khách thanh toán tiền mặt đủ")
+                .build();
+
+        ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
+
+        assertNotNull(response);
+        assertEquals("HD-001", response.getIdHoaDon());
+        assertEquals("TIEN_MAT", response.getPhuongThuc());
+        assertEquals("THANH_CONG", response.getTrangThai());
+        assertEquals(BigDecimal.valueOf(200000), response.getTongTien());
+        assertEquals(BigDecimal.valueOf(200000), response.getTienKhachDua());
+        assertEquals(BigDecimal.ZERO, response.getTienThoiLai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        verify(hoaDonRepository, times(1)).save(mockHoaDon);
+        verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
+    }
+
+    @Test
+    @DisplayName("UC-18: Thanh toán tiền mặt thành công và tính chính xác tiền thối lại khi khách đưa thừa")
+    void testThanhToanTienMat_KhachDuaThua_TinhTienThoiChinhXac() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
+        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+        when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+
+        ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
+                .idHoaDon("HD-001")
+                .tienKhachDua(BigDecimal.valueOf(500000)) // Hóa đơn 200k, khách đưa tờ 500k
+                .build();
+
+        ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
+
+        assertNotNull(response);
+        assertEquals(BigDecimal.valueOf(500000), response.getTienKhachDua());
+        assertEquals(BigDecimal.valueOf(300000), response.getTienThoiLai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
+        assertTrue(response.getThongBao().contains("300000"));
+    }
+
+    @Test
+    @DisplayName("UC-18 (E2): Báo lỗi khi tiền khách đưa nhỏ hơn tổng tiền hóa đơn")
+    void testThanhToanTienMat_ThieuTien_BaoLoi() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
+                .idHoaDon("HD-001")
+                .tienKhachDua(BigDecimal.valueOf(150000)) // Hóa đơn 200k, khách đưa 150k
+                .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> thanhToanService.thanhToanTienMat(request));
+
+        assertTrue(ex.getMessage().contains("không đủ"));
+        assertTrue(ex.getMessage().contains("50000"));
+        verify(giaoDichThanhToanRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("UC-18: Báo lỗi khi tiền khách đưa là null")
+    void testThanhToanTienMat_TienNull_BaoLoi() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
+                .idHoaDon("HD-001")
+                .tienKhachDua(null)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> thanhToanService.thanhToanTienMat(request));
+
+        assertTrue(ex.getMessage().contains("Vui lòng nhập"));
+        verify(giaoDichThanhToanRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("UC-18 (E3): Báo lỗi nếu hóa đơn đã được thanh toán trước đó")
+    void testThanhToanTienMat_DaThanhToan_BaoLoi() {
+        mockHoaDon.setTrangThai("DA_THANH_TOAN");
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
+                .idHoaDon("HD-001")
+                .tienKhachDua(BigDecimal.valueOf(200000))
+                .build();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> thanhToanService.thanhToanTienMat(request));
+
+        assertTrue(ex.getMessage().contains("đã được thanh toán"));
         verify(giaoDichThanhToanRepository, never()).save(any());
     }
 }

@@ -4,6 +4,8 @@ import {
   ThongTinThanhToanResponse,
   XacNhanThanhToanRequest,
   KetQuaThanhToanResponse,
+  ThanhToanTienMatRequest,
+  ThanhToanTienMatResponse,
   GiaoDichResponse,
 } from '../types/billing';
 
@@ -31,6 +33,16 @@ export const thanhToanService = {
     payload: XacNhanThanhToanRequest
   ): Promise<KetQuaThanhToanResponse> => {
     const res = await api.post<KetQuaThanhToanResponse>('/thanhtoan/xac-nhan', payload);
+    return res.data;
+  },
+
+  /**
+   * UC-18: Xác nhận thanh toán bằng tiền mặt tại quầy (tính tiền thối lại)
+   */
+  thanhToanTienMat: async (
+    payload: ThanhToanTienMatRequest
+  ): Promise<ThanhToanTienMatResponse> => {
+    const res = await api.post<ThanhToanTienMatResponse>('/thanhtoan/tien-mat', payload);
     return res.data;
   },
 
