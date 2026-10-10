@@ -7,6 +7,7 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
+import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -71,6 +72,18 @@ const App: React.FC = () => {
           } 
         />
         
+        <Route
+          path="/staff/patient-search"
+          element={
+            <ProtectedRoute allowedRoles={['LE_TAN']}>
+              <BenhNhanTimKiem />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Route xem thử UC28 bằng dữ liệu mẫu, không yêu cầu đăng nhập và không gọi API. Xóa trước khi merge chính thức. */}
+        <Route path="/dev/uc28" element={<BenhNhanTimKiem preview />} />
+
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
