@@ -1,0 +1,165 @@
+/* ============================================================
+   RECORD EXAM PAGE  –  recordExam.css
+   All selectors are prefixed with "re-" to avoid conflicts.
+   ============================================================ */
+
+/* Page wrapper – same padding as .mc-main so PatientSummary aligns */
+.re-page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Breadcrumb */
+.re-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #64748B;
+    margin-bottom: 2px;
+}
+.re-bc-link {
+    cursor: pointer;
+    color: #14B8A6;
+    font-weight: 500;
+}
+.re-bc-link:hover { text-decoration: underline; }
+.re-bc-sep  { color: #CBD5E1; }
+.re-bc-current { color: #475569; font-weight: 500; }
+
+/* Base card */
+.re-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Section title */
+.re-card-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748B;
+    margin: 0 0 12px 0;
+}
+
+/* ---- Info row (Lượt khám | Sinh hiệu) ---- */
+.re-info-row {
+    display: flex;
+    gap: 14px;
+}
+
+.re-info-card {
+    padding: 16px 20px;
+}
+
+.re-visit-card  { flex: 2; }
+.re-vitals-card { flex: 1; }
+
+.re-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.re-span-2 { grid-column: 1 / -1; }
+
+.re-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.re-info-label {
+    font-size: 0.775rem;
+    color: #94A3B8;
+    font-weight: 500;
+}
+.re-info-val {
+    font-size: 0.9rem;
+    color: #1E293B;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+
+.re-vitals-row {
+    display: flex;
+    gap: 12px;
+}
+.re-vital-val {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0F172A;
+    background: #F0FDFA;
+    border-color: #99F6E4;
+    text-align: center;
+}
+
+/* ---- Result card ---- */
+.re-result-card {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ---- 3-column fields ---- */
+.re-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    /* Height: viewport - header(64) - mc-main-padding(64) - breadcrumb(28)
+                - patient-card(~80) - info-row(~100) - card-title(28)
+                - gaps(~80) - actions(52) ≈ 254px  */
+    min-height: 220px;
+}
+
+.re-fields .mc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.re-textarea {
+    flex: 1;
+    min-height: 220px;   /* explicit min, no reliance on flex stretch */
+    resize: vertical;    /* allow user to resize if needed */
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #1E293B;
+    line-height: 1.6;
+    background: #FFFFFF;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    width: 100%;
+}
+.re-textarea:hover  { border-color: #94A3B8; }
+.re-textarea:focus  {
+    border-color: #14B8A6;
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.15);
+    outline: none;
+}
+.re-textarea::placeholder { color: #94A3B8; font-style: italic; }
+
+/* ---- Actions ---- */
+.re-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #F1F5F9;
+}
+
+.re-textarea:disabled { background: #F8FAFC; cursor: not-allowed; }
+@media (max-width: 1100px) {
+    .re-info-row { flex-direction: column; }
+    .re-vitals-row { flex-wrap: wrap; }
+    .re-fields { grid-template-columns: 1fr; }
+    .re-textarea { min-height: 130px; }
+}

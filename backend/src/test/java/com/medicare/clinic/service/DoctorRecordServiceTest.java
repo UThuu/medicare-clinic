@@ -87,6 +87,20 @@ public class DoctorRecordServiceTest {
     }
 
     @Test
+    void getMedicalRecord_CurrentVitalsIncludeVisitId() {
+        LuotKham visit = new LuotKham();
+        visit.setIdLuotKham("LK_VISIT_CURRENT");
+        mockLichKham.setLuotKham(visit);
+        SinhHieu vitals = new SinhHieu();
+        vitals.setLuotKham(visit);
+        when(lichKhamRepository.findByIdWithDetails("LK001")).thenReturn(Optional.of(mockLichKham));
+        when(sinhHieuRepository.findByLuotKham_IdLuotKham("LK_VISIT_CURRENT")).thenReturn(Optional.of(vitals));
+
+        MedicalRecordResponse res = doctorRecordService.getMedicalRecord("NV001", "LK001");
+        assertThat(res.getSinhHieuHienTai().getIdLuotKhamNguon()).isEqualTo("LK_VISIT_CURRENT");
+    }
+
+    @Test
     void getMedicalRecord_NotFoundLichKham() {
         when(lichKhamRepository.findByIdWithDetails("LK001")).thenReturn(Optional.empty());
 

@@ -91,6 +91,7 @@ public class DoctorRecordServiceImpl implements DoctorRecordService {
             if (sinhHieuOpt.isPresent()) {
                 SinhHieu sh = sinhHieuOpt.get();
                 currentVitalsInfo = MedicalRecordResponse.VitalsInfo.builder()
+                        .idLuotKhamNguon(luotKham.getIdLuotKham())
                         .huyetApTamThu(sh.getHuyetApTamThu())
                         .huyetApTamTruong(sh.getHuyetApTamTruong())
                         .canNang(sh.getCanNang())

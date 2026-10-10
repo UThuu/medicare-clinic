@@ -6,6 +6,8 @@ import { Button } from '../components/common/Button';
 import { PatientSummary } from '../components/common/PatientSummary';
 import { medicalRecordService } from '../services/medicalRecordService';
 import { MedicalRecordResponse } from '../types/MedicalRecord';
+
+import { getExaminationBlockReason } from './examinationState';
 import './patientRecord.css';
 
 export const PatientRecord: React.FC = () => {
@@ -48,7 +50,9 @@ export const PatientRecord: React.FC = () => {
                 ]}
             >
                 <div style={{ padding: '2rem' }}>Đang tải...</div>
-            </MainLayout>
+    
+        </MainLayout>
+
         );
     }
 
@@ -68,7 +72,9 @@ export const PatientRecord: React.FC = () => {
                         Quay lại
                     </Button>
                 </div>
-            </MainLayout>
+    
+        </MainLayout>
+
         );
     }
 
@@ -125,10 +131,12 @@ export const PatientRecord: React.FC = () => {
         >
             <style dangerouslySetInnerHTML={{ __html: ".mc-shell { height: calc(100vh - 64px); overflow: hidden; } .mc-main { padding: 0 !important; display: flex; flex-direction: column; overflow: hidden; height: 100%; }" }}></style>
             <div className="patient-record-container">
-                <div className="breadcrumb">
-                    <span className="back-link" onClick={() => navigate('/staff/schedules')}>Lịch khám</span>
-                    <span className="separator">›</span>
-                    <span className="current">Hồ sơ bệnh nhân</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <div className="breadcrumb" style={{ margin: 0 }}>
+                        <span className="back-link" onClick={() => navigate('/staff/schedules')}>Lịch khám</span>
+                        <span className="separator">›</span>
+                        <span className="current">Hồ sơ bệnh nhân</span>
+                    </div>
                 </div>
 
                 <div className="patient-summary-wrapper">
@@ -239,9 +247,16 @@ export const PatientRecord: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="card-footer">
-                                    <button className="btn-large w-full" disabled style={{ opacity: 0.5 }}>
-                                        Ghi nhận kết quả khám
-                                    </button>
+                                    {!getExaminationBlockReason(record) ? (
+                                        <Button variant="primary" style={{ width: '100%' }} onClick={() => navigate(`/staff/medical-record/${idLuotKham}/record-exam`)}>
+                                            Ghi nhận kết quả khám
+                                        </Button>
+                                    ) : (
+                                        <Button variant="primary" disabled style={{ width: '100%', opacity: 0.5 }}>
+                                            Ghi nhận kết quả khám
+                                        </Button>
+                                    )}
+                                    {getExaminationBlockReason(record) && <p role="status">{getExaminationBlockReason(record)}</p>}
                                 </div>
                             </div>
                         </div>
@@ -356,6 +371,8 @@ export const PatientRecord: React.FC = () => {
                     </div>
                 )}
             </div>
+
         </MainLayout>
+
     );
 };

@@ -58,6 +58,7 @@ public class MedicalRecordResponse {
     @Data
     @Builder
     public static class VitalsInfo {
+        private String idLuotKhamNguon;
         private Integer huyetApTamThu;
         private Integer huyetApTamTruong;
         private BigDecimal canNang;
