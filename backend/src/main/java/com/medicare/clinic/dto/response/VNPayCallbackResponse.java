@@ -18,7 +18,9 @@ public class VNPayCallbackResponse {
     private BigDecimal soTien;
     private String nganHang;
     private String thoiGianThanhToan;
+    private String thoiGian;
     private String trangThai; // THANH_CONG hoặc THAT_BAI
+    private boolean thanhCong;
     private String maPhanHoi;
     private String thongBao;
 }

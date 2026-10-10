@@ -165,15 +165,16 @@ export interface VNPayPaymentResponse {
 }
 
 export interface VNPayCallbackResponse {
+  idHoaDon: string;
   maGiaoDich: string;
   maGiaoDichVNPay?: string;
-  idHoaDon: string;
   soTien: number;
   nganHang?: string;
-  maPhanHoi: string;
+  thoiGianThanhToan?: string;
+  thoiGian?: string;
   trangThai: string;
-  thanhCong: boolean;
+  thanhCong?: boolean;
+  maPhanHoi: string;
   thongBao: string;
-  thoiGian: string;
 }
 

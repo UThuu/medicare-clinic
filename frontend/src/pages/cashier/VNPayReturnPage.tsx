@@ -19,6 +19,21 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
     }).format(amount);
   };
 
+  const formatThoiGian = (timeStr?: string, rawTime?: string) => {
+    if (timeStr && timeStr.trim().length > 0) return timeStr;
+    if (rawTime && rawTime.length === 14) {
+      // yyyyMMddHHmmss -> HH:mm:ss dd/MM/yyyy
+      const y = rawTime.substring(0, 4);
+      const m = rawTime.substring(4, 6);
+      const d = rawTime.substring(6, 8);
+      const h = rawTime.substring(8, 10);
+      const min = rawTime.substring(10, 12);
+      const s = rawTime.substring(12, 14);
+      return `${h}:${min}:${s} ${d}/${m}/${y}`;
+    }
+    return new Date().toLocaleString('vi-VN');
+  };
+
   useEffect(() => {
     const processCallback = async () => {
       try {
@@ -45,6 +60,11 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
 
     processCallback();
   }, []);
+
+  const isSuccess =
+    result?.thanhCong === true ||
+    result?.trangThai === 'THANH_CONG' ||
+    result?.maPhanHoi === '00';
 
   return (
     <div style={{ padding: '40px 20px', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -76,17 +96,17 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
           </div>
         ) : result ? (
           <div>
-            <div className={`vnpay-return-header ${result.thanhCong ? 'success' : 'error'}`}>
-              <div className={`vnpay-return-icon ${result.thanhCong ? 'success' : 'error'}`}>
-                {result.thanhCong ? '✓' : '✕'}
+            <div className={`vnpay-return-header ${isSuccess ? 'success' : 'error'}`}>
+              <div className={`vnpay-return-icon ${isSuccess ? 'success' : 'error'}`}>
+                {isSuccess ? '✓' : '✕'}
               </div>
               <div style={{ marginBottom: '8px' }}>
-                <span className={`badge ${result.thanhCong ? 'badge-completed' : 'badge-cancelled'}`} style={{ fontSize: '13px', padding: '6px 14px' }}>
-                  {result.thanhCong ? 'GIAO DỊCH THÀNH CÔNG' : 'GIAO DỊCH KHÔNG THÀNH CÔNG'}
+                <span className={`badge ${isSuccess ? 'badge-completed' : 'badge-cancelled'}`} style={{ fontSize: '13px', padding: '6px 14px' }}>
+                  {isSuccess ? 'GIAO DỊCH THÀNH CÔNG' : 'GIAO DỊCH KHÔNG THÀNH CÔNG'}
                 </span>
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: 800, color: result.thanhCong ? '#15803d' : '#b91c1c', marginBottom: '6px' }}>
-                {result.thanhCong ? 'Thanh Toán Viện Phí Hoàn Tất' : 'Thanh Toán Bị Hủy Hoặc Thất Bại'}
+              <h2 style={{ fontSize: '22px', fontWeight: 800, color: isSuccess ? '#15803d' : '#b91c1c', marginBottom: '6px' }}>
+                {isSuccess ? 'Thanh Toán Viện Phí Hoàn Tất' : 'Thanh Toán Bị Hủy Hoặc Thất Bại'}
               </h2>
               <p style={{ fontSize: '14px', color: '#64748b' }}>
                 {result.thongBao}
@@ -108,7 +128,7 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
                   </tr>
                   <tr>
                     <td style={{ color: '#64748b', fontWeight: 600 }}>Số tiền giao dịch:</td>
-                    <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '18px', color: result.thanhCong ? '#059669' : '#b91c1c' }}>
+                    <td style={{ textAlign: 'right', fontWeight: 800, fontSize: '18px', color: isSuccess ? '#059669' : '#b91c1c' }}>
                       {formatVND(result.soTien)}
                     </td>
                   </tr>
@@ -133,13 +153,17 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
                     </tr>
                   )}
                   <tr>
-                    <td style={{ color: '#64748b', fontWeight: 600 }}>Thời gian phản hồi:</td>
-                    <td style={{ textAlign: 'right', color: '#64748b' }}>{result.thoiGian}</td>
+                    <td style={{ color: '#64748b', fontWeight: 600 }}>Thời gian giao dịch:</td>
+                    <td style={{ textAlign: 'right', color: '#64748b' }}>
+                      {formatThoiGian(result.thoiGian, result.thoiGianThanhToan)}
+                    </td>
                   </tr>
                   <tr>
                     <td style={{ color: '#64748b', fontWeight: 600 }}>Mã phản hồi (vnp_ResponseCode):</td>
                     <td style={{ textAlign: 'right', fontWeight: 700 }}>
-                      <span className="badge badge-info">{result.maPhanHoi}</span>
+                      <span className={`badge ${isSuccess ? 'badge-completed' : 'badge-cancelled'}`}>
+                        {result.maPhanHoi}
+                      </span>
                     </td>
                   </tr>
                 </tbody>
@@ -147,9 +171,9 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
 
               <div style={{ marginTop: '28px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
                 <Button variant="primary" onClick={onBackToBilling}>
-                  {result.thanhCong ? 'Quay lại Quản Lý Thu Ngân' : 'Quay lại Thử Lại Thanh Toán'}
+                  {isSuccess ? 'Quay lại Quản Lý Thu Ngân' : 'Quay lại Thử Lại Thanh Toán'}
                 </Button>
-                {result.thanhCong && (
+                {isSuccess && (
                   <Button variant="secondary" onClick={() => window.print()}>
                     🖨️ In Biên Lai
                   </Button>

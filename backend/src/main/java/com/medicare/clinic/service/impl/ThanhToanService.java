@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import com.medicare.clinic.dto.response.VNPayCallbackResponse;
 import com.medicare.clinic.dto.response.VNPayPaymentResponse;
 import com.medicare.clinic.payment.PaymentGateway;
@@ -582,6 +583,14 @@ public class ThanhToanService implements IThanhToanService {
 
             log.info("Xử lý thanh toán VNPay thành công cho hóa đơn: {}, Mã GD VNPay: {}", idHoaDon, vnp_TransactionNo);
 
+            String thoiGianHienThi = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+            if (vnp_PayDate != null && vnp_PayDate.length() == 14) {
+                try {
+                    LocalDateTime dt = LocalDateTime.parse(vnp_PayDate, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                    thoiGianHienThi = dt.format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+                } catch (Exception ignored) {}
+            }
+
             return VNPayCallbackResponse.builder()
                     .idHoaDon(hoaDon.getId())
                     .maGiaoDich(giaoDich.getMaGiaoDich())
@@ -589,7 +598,9 @@ public class ThanhToanService implements IThanhToanService {
                     .soTien(soTien)
                     .nganHang(vnp_BankCode)
                     .thoiGianThanhToan(vnp_PayDate)
+                    .thoiGian(thoiGianHienThi)
                     .trangThai("THANH_CONG")
+                    .thanhCong(true)
                     .maPhanHoi(vnp_ResponseCode)
                     .thongBao("Giao dịch thanh toán trực tuyến qua VNPay thành công!")
                     .build();
@@ -601,6 +612,14 @@ public class ThanhToanService implements IThanhToanService {
 
             // Giữ nguyên hóa đơn là CHUA_THANH_TOAN để khách có thể thanh toán lại theo SRS
             log.warn("Thanh toán VNPay không thành công cho hóa đơn: {}, Mã phản hồi: {}", idHoaDon, vnp_ResponseCode);
+
+            String thoiGianHienThi = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+            if (vnp_PayDate != null && vnp_PayDate.length() == 14) {
+                try {
+                    LocalDateTime dt = LocalDateTime.parse(vnp_PayDate, DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+                    thoiGianHienThi = dt.format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
+                } catch (Exception ignored) {}
+            }
 
             String thongBaoLoi = "Giao dịch không thành công hoặc người dùng đã hủy (Mã lỗi: " + vnp_ResponseCode + ")";
             if ("24".equals(vnp_ResponseCode)) {
@@ -616,7 +635,9 @@ public class ThanhToanService implements IThanhToanService {
                     .soTien(soTien)
                     .nganHang(vnp_BankCode)
                     .thoiGianThanhToan(vnp_PayDate)
+                    .thoiGian(thoiGianHienThi)
                     .trangThai("THAT_BAI")
+                    .thanhCong(false)
                     .maPhanHoi(vnp_ResponseCode)
                     .thongBao(thongBaoLoi)
                     .build();
