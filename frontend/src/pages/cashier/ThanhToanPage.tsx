@@ -102,7 +102,7 @@ export const ThanhToanPage: React.FC = () => {
 
   const handleChonPhuongThuc = (pt: string) => {
     setPhuongThuc(pt);
-    if ((pt === 'VNPAY_QR' || pt === 'CHUYEN_KHOAN') && selectedHoaDonId && !thongTinQr) {
+    if (pt === 'VNPAY_QR' && selectedHoaDonId && !thongTinQr) {
       loadQrCode(selectedHoaDonId);
     }
   };
@@ -162,7 +162,7 @@ export const ThanhToanPage: React.FC = () => {
       } finally {
         setProcessing(false);
       }
-    } else if (phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN') {
+    } else if (phuongThuc === 'VNPAY_QR') {
       // UC-19: Xác nhận thanh toán QR / Chuyển khoản ngân hàng
       try {
         setProcessing(true);
@@ -398,12 +398,12 @@ export const ThanhToanPage: React.FC = () => {
                 disabled={
                   processing ||
                   (phuongThuc === 'TIEN_MAT' && (!isDuTien || isChuaNhap)) ||
-                  ((phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN') && loadingQr)
+                  (phuongThuc === 'VNPAY_QR' && loadingQr)
                 }
               >
                 {phuongThuc === 'TIEN_MAT'
                   ? `✓ Xác nhận thu tiền mặt (${formatVND(thongTinThanhToan.tongTien)})`
-                  : phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN'
+                  : phuongThuc === 'VNPAY_QR'
                   ? `✓ Xác nhận đã nhận chuyển khoản QR (${formatVND(thongTinThanhToan.tongTien)})`
                   : `✓ Xác nhận thanh toán (${formatVND(thongTinThanhToan.tongTien)})`}
               </Button>
@@ -479,7 +479,7 @@ export const ThanhToanPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bộ chọn Phương thức thanh toán (UC-17, UC-18, UC-19) */}
+            {/* Bộ chọn Phương thức thanh toán (UC-17, UC-18, UC-19, UC-20) */}
             <div className="payment-method-section">
               <h4>Phương thức thanh toán</h4>
               <div className="method-options">
@@ -517,28 +517,8 @@ export const ThanhToanPage: React.FC = () => {
                   />
                   <span className="method-icon">📱</span>
                   <div className="method-text">
-                    <span className="method-title">Quét mã QR</span>
+                    <span className="method-title">QR / Chuyển khoản</span>
                     <span className="method-desc">VietQR / Vietcombank</span>
-                  </div>
-                </label>
-
-                <label
-                  className={`method-card ${
-                    phuongThuc === 'CHUYEN_KHOAN' ? 'selected' : ''
-                  }`}
-                  id="tab-method-chuyen-khoan"
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="CHUYEN_KHOAN"
-                    checked={phuongThuc === 'CHUYEN_KHOAN'}
-                    onChange={(e) => handleChonPhuongThuc(e.target.value)}
-                  />
-                  <span className="method-icon">🏦</span>
-                  <div className="method-text">
-                    <span className="method-title">Chuyển khoản</span>
-                    <span className="method-desc">Tài khoản Vietcombank</span>
                   </div>
                 </label>
 
@@ -658,12 +638,12 @@ export const ThanhToanPage: React.FC = () => {
             )}
 
             {/* Chi tiết quét mã QR & Chuyển khoản ngân hàng (UC-19) */}
-            {(phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN') && (
+            {phuongThuc === 'VNPAY_QR' && (
               <div className="qr-payment-box" id="box-thanh-toan-qr">
                 <div className="qr-header">
                   <div className="qr-header-title">
                     <span>📱</span>
-                    <span>Thanh Toán Bằng Mã QR Ngân Hàng (UC-19)</span>
+                    <span>Thanh Toán Bằng QR / Chuyển Khoản Ngân Hàng (UC-19)</span>
                   </div>
                   <span className="qr-bank-badge">VIETCOMBANK 24/7</span>
                 </div>
