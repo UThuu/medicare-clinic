@@ -7,6 +7,7 @@ export interface BenhNhanTaoMoiRequest {
   gioiTinh: GioiTinhBenhNhan;
   soDienThoai: string;
   diaChi?: string;
+  xacNhanTaoMoi?: boolean;
 }
 
 /** Response đúng với BenhNhanTaoMoiResponse ở backend UC29. */
@@ -17,5 +18,5 @@ export interface BenhNhanTaoMoiResponse {
   ngaySinh: string;
   gioiTinh: GioiTinhBenhNhan;
   soDienThoai: string;
-  diaChi?: string | null;
+  diaChi: string | null;
 }

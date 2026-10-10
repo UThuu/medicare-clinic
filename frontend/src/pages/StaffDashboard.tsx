@@ -1,17 +1,20 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
-import { useNavigate } from 'react-router-dom';
 
 import { DoctorDashboard } from './DoctorDashboard';
+import { ReceptionDashboard } from './ReceptionDashboard';
 
 export const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
 
   if (user?.vaiTro === 'BAC_SI') {
     return <DoctorDashboard />;
+  }
+
+  if (user?.vaiTro === 'LE_TAN') {
+    return <ReceptionDashboard />;
   }
 
   const handleLogout = async () => {
@@ -32,13 +35,6 @@ export const StaffDashboard: React.FC = () => {
         
 
       </div>
-      {user?.vaiTro === 'LE_TAN' && (
-        <div style={{ marginBottom: '1rem' }}>
-          <Button onClick={() => navigate('/staff/patient-create')}>
-            Tạo hồ sơ bệnh nhân mới
-          </Button>
-        </div>
-      )}
       <Button onClick={handleLogout} variant="secondary">
         Đăng xuất
       </Button>

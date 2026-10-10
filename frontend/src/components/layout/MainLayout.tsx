@@ -8,9 +8,11 @@ import '../common/shared-ui.css';
 export interface MainLayoutProps extends HeaderProps {
   children: ReactNode;
   sidebarItems?: SidebarProps['items'];
+  className?: string;
+  sidebarLogout?: boolean;
 }
 
-export function MainLayout({ children, sidebarItems, ...headerProps }: MainLayoutProps) {
+export function MainLayout({ children, sidebarItems, className = '', sidebarLogout = false, ...headerProps }: MainLayoutProps) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -28,10 +30,10 @@ export function MainLayout({ children, sidebarItems, ...headerProps }: MainLayou
   };
 
   return (
-    <div className="mc-app">
+    <div className={`mc-app ${className}`.trim()}>
       <Header {...headerProps} onLogout={handleLogout} />
       <div className="mc-shell">
-        <Sidebar items={sidebarItems} />
+        <Sidebar items={sidebarItems} onLogout={sidebarLogout ? handleLogout : undefined} isLoggingOut={isLoggingOut} />
         <main className="mc-main">{children}</main>
       </div>
     </div>
