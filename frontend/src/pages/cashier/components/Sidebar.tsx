@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface SidebarProps {
-  activeTab: 'cho-lap' | 'thanh-toan' | 'da-lap';
-  onTabChange: (tab: 'cho-lap' | 'thanh-toan' | 'da-lap') => void;
+  activeTab: 'cho-lap' | 'thanh-toan' | 'da-lap' | 'benh-nhan-online';
+  onTabChange: (tab: 'cho-lap' | 'thanh-toan' | 'da-lap' | 'benh-nhan-online') => void;
   pendingCount: number;
   unpaidCount?: number;
   totalInvoiceCount: number;
@@ -92,6 +92,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }}
           >
             {totalInvoiceCount}
+          </span>
+        </div>
+
+        <div className="sidebar-menu-title" style={{ marginTop: '20px' }}>
+          Cổng Bệnh Nhân (Patient Portal)
+        </div>
+
+        <div
+          id="nav-tab-benh-nhan-online"
+          className={`sidebar-nav-item ${activeTab === 'benh-nhan-online' ? 'active' : ''}`}
+          onClick={() => onTabChange('benh-nhan-online')}
+        >
+          <span>🌐</span>
+          <span style={{ flex: 1 }}>Thanh toán online (UC-20)</span>
+          <span
+            style={{
+              background: '#0284c7',
+              color: 'white',
+              borderRadius: '10px',
+              fontSize: '10px',
+              padding: '2px 6px',
+              fontWeight: 700,
+            }}
+          >
+            Bệnh nhân
           </span>
         </div>
       </div>

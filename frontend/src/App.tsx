@@ -3,11 +3,12 @@ import { Header } from './pages/cashier/components/Header';
 import { Sidebar } from './pages/cashier/components/Sidebar';
 import { TaoHoaDonPage } from './pages/cashier/TaoHoaDonPage';
 import { ThanhToanPage } from './pages/cashier/ThanhToanPage';
+import { ThanhToanOnlinePage } from './pages/patient/ThanhToanOnlinePage';
 import { VNPayReturnPage } from './pages/cashier/VNPayReturnPage';
 import { thanhToanService } from './services/thanhToanService';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cho-lap' | 'thanh-toan' | 'da-lap'>('thanh-toan');
+  const [activeTab, setActiveTab] = useState<'cho-lap' | 'thanh-toan' | 'da-lap' | 'benh-nhan-online'>('thanh-toan');
   const [unpaidCount, setUnpaidCount] = useState<number>(0);
 
   // Kiểm tra nếu đang ở trang callback của VNPay Gateway
@@ -49,6 +50,11 @@ export const App: React.FC = () => {
           title: 'Danh Sách Hóa Đơn Đã Lập',
           subtitle: 'Lịch sử và tra cứu hóa đơn khám chữa bệnh tại phòng khám',
         };
+      case 'benh-nhan-online':
+        return {
+          title: 'Cổng Bệnh Nhân - Thanh Toán Viện Phí Online',
+          subtitle: 'Thực hiện UC-20 (Bệnh nhân chủ động thanh toán viện phí từ xa qua Cổng VNPay Gateway)',
+        };
     }
   };
 
@@ -69,7 +75,9 @@ export const App: React.FC = () => {
           subtitle={headerInfo.subtitle}
         />
         <main className="content-body">
-          {activeTab === 'thanh-toan' ? (
+          {activeTab === 'benh-nhan-online' ? (
+            <ThanhToanOnlinePage />
+          ) : activeTab === 'thanh-toan' ? (
             <ThanhToanPage />
           ) : (
             <TaoHoaDonPage initialTab={activeTab === 'da-lap' ? 'da-lap' : 'cho-lap'} />
