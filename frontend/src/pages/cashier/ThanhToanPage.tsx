@@ -769,26 +769,6 @@ export const ThanhToanPage: React.FC = () => {
                 onChange={(e) => setGhiChu(e.target.value)}
               />
             </div>
-
-            {/* Lịch sử các lần thử giao dịch nếu có */}
-            {thongTinThanhToan.lichSuGiaoDich && thongTinThanhToan.lichSuGiaoDich.length > 0 && (
-              <div className="history-section">
-                <h5>Lịch sử giao dịch liên quan</h5>
-                <ul className="history-list">
-                  {thongTinThanhToan.lichSuGiaoDich.map((gd) => (
-                    <li key={gd.idGiaoDich} className="history-item">
-                      <span>Mã GD: <strong>{gd.maGiaoDich}</strong></span>
-                      <span>{gd.phuongThuc}</span>
-                      <span style={{ fontWeight: 700 }}>{formatVND(gd.soTien)}</span>
-                      <StatusBadge status={gd.trangThai} />
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>
-                        {new Date(gd.thoiGian).toLocaleTimeString('vi-VN')}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         ) : null}
       </Modal>
