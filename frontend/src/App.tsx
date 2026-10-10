@@ -7,6 +7,7 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
+import { RecordExamResult } from './pages/RecordExamResult';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -71,6 +72,15 @@ const App: React.FC = () => {
           } 
         />
         
+
+        <Route
+          path="/staff/medical-record/:id/record-exam"
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI']}>
+              <RecordExamResult />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

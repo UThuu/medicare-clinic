@@ -17,11 +17,32 @@ import java.util.Map;
 @RequestMapping("/api/khambenh")
 @RequiredArgsConstructor
 public class KhamBenhController {
-    
+
     private final IKhamBenhService khamBenhService;
-    
+
     @PostMapping("/ket-qua")
     public ResponseEntity<?> saveKetQuaKham(@RequestBody SaveKhamBenhRequest request, HttpServletRequest httpRequest) {
+        String maNv = requireDoctor(httpRequest);
+        try {
+            khamBenhService.saveKhamBenh(maNv, request);
+            return ResponseEntity.ok(Map.of("message", "Lưu kết quả khám thành công"));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @PostMapping("/{idLichKham}/bat-dau")
+    public ResponseEntity<?> startKhamBenh(@PathVariable String idLichKham, HttpServletRequest httpRequest) {
+        String maNv = requireDoctor(httpRequest);
+        try {
+            khamBenhService.startKhamBenh(maNv, idLichKham);
+            return ResponseEntity.ok(Map.of("message", "Đã bắt đầu khám"));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private String requireDoctor(HttpServletRequest httpRequest) {
         HttpSession session = httpRequest.getSession(false);
         if (session == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
@@ -41,11 +62,6 @@ public class KhamBenhController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tài khoản không gắn với mã nhân viên");
         }
 
-        try {
-            khamBenhService.saveKhamBenh(maNv, request);
-            return ResponseEntity.ok(Map.of("message", "Lưu kết quả khám thành công"));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        return maNv;
     }
 }

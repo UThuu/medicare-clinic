@@ -1,87 +1,175 @@
 package com.medicare.clinic.service.impl;
 
 import com.medicare.clinic.dto.khambenh.SaveKhamBenhRequest;
-import com.medicare.clinic.entity.BacSi;
-import com.medicare.clinic.entity.LichKham;
-import com.medicare.clinic.entity.LuotKham;
+import com.medicare.clinic.entity.*;
 import com.medicare.clinic.entity.enums.TrangThaiLuotKham;
-import com.medicare.clinic.repository.LichKhamRepository;
-import com.medicare.clinic.repository.LuotKhamRepository;
+import com.medicare.clinic.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import java.math.BigDecimal;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class KhamBenhServiceTest {
-
-    @Mock
-    private LichKhamRepository lichKhamRepository;
-
-    @Mock
-    private LuotKhamRepository luotKhamRepository;
-
-    @InjectMocks
-    private KhamBenhService khamBenhService;
-
-    private SaveKhamBenhRequest validRequest;
-    private LichKham lichKham;
-    private LuotKham luotKham;
-    private BacSi bacSi;
+class KhamBenhServiceTest {
+    @Mock private LichKhamRepository lichKhamRepository;
+    @Mock private LuotKhamRepository luotKhamRepository;
+    @Mock private SinhHieuRepository sinhHieuRepository;
+    @InjectMocks private KhamBenhService service;
+    private SaveKhamBenhRequest request;
+    private LichKham schedule;
+    private LuotKham visit;
+    private SinhHieu vitals;
 
     @BeforeEach
     void setUp() {
-        validRequest = new SaveKhamBenhRequest();
-        validRequest.setIdLichKham("lich-kham-1");
-        validRequest.setTrieuChung("Đau đầu");
-        validRequest.setKetQuaKham("Bình thường");
-        validRequest.setChanDoan("Cảm cúm");
+        request = new SaveKhamBenhRequest();
+        request.setIdLichKham("LICH1");
+        request.setTrieuChung(" Đau đầu ");
+        request.setKetQuaKham(" Bình thường ");
+        request.setChanDoan(" Cảm cúm ");
+        BacSi doctor = new BacSi();
+        doctor.setMaNv("BS001");
+        visit = new LuotKham();
+        visit.setIdLuotKham("LUOT1");
+        visit.setTrangThai(TrangThaiLuotKham.DANG_KHAM);
+        schedule = new LichKham();
+        schedule.setBacSi(doctor);
+        schedule.setLuotKham(visit);
+        vitals = new SinhHieu();
+        vitals.setLuotKham(visit);
+        vitals.setHuyetApTamThu(120);
+        vitals.setHuyetApTamTruong(80);
+        vitals.setCanNang(new BigDecimal("60"));
+        vitals.setNhietDo(new BigDecimal("36.5"));
+    }
 
-        bacSi = new BacSi();
-        bacSi.setMaNv("BS001");
-
-        luotKham = new LuotKham();
-        luotKham.setIdLuotKham("luot-kham-1");
-        luotKham.setTrangThai(TrangThaiLuotKham.DANG_KHAM);
-
-        lichKham = new LichKham();
-        lichKham.setIdLichKham("lich-kham-1");
-        lichKham.setBacSi(bacSi);
-        lichKham.setLuotKham(luotKham);
+    private void stubVisit() {
+        when(lichKhamRepository.findById("LICH1")).thenReturn(Optional.of(schedule));
+    }
+    private void stubVitals() {
+        stubVisit();
+        when(sinhHieuRepository.findByLuotKham_IdLuotKham("LUOT1")).thenReturn(Optional.of(vitals));
     }
 
     @Test
-    void saveKhamBenh_success() {
-        when(lichKhamRepository.findById("lich-kham-1")).thenReturn(Optional.of(lichKham));
-        when(luotKhamRepository.save(any(LuotKham.class))).thenReturn(luotKham);
-
-        khamBenhService.saveKhamBenh("BS001", validRequest);
-
-        verify(luotKhamRepository, times(1)).save(luotKham);
+    void startTransitionsWaitingVisitAndPreservesSavedResults() {
+        visit.setTrangThai(TrangThaiLuotKham.CHO_KHAM);
+        visit.setChanDoan("Đã lưu");
+        stubVitals();
+        service.startKhamBenh("BS001", "LICH1");
+        assertEquals(TrangThaiLuotKham.DANG_KHAM, visit.getTrangThai());
+        assertEquals("Đã lưu", visit.getChanDoan());
+        verify(luotKhamRepository).save(visit);
     }
 
     @Test
-    void saveKhamBenh_wrongDoctor() {
-        when(lichKhamRepository.findById("lich-kham-1")).thenReturn(Optional.of(lichKham));
-
-        assertThrows(IllegalArgumentException.class, () -> khamBenhService.saveKhamBenh("BS002", validRequest));
+    void startIsIdempotentForInProgressVisit() {
+        stubVitals();
+        service.startKhamBenh("BS001", "LICH1");
+        assertEquals(TrangThaiLuotKham.DANG_KHAM, visit.getTrangThai());
         verify(luotKhamRepository, never()).save(any());
     }
 
     @Test
-    void saveKhamBenh_alreadyHoanTat() {
-        luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
-        when(lichKhamRepository.findById("lich-kham-1")).thenReturn(Optional.of(lichKham));
-
-        assertThrows(IllegalArgumentException.class, () -> khamBenhService.saveKhamBenh("BS001", validRequest));
+    void startRejectsMissingCurrentVitalsWithoutChangingStatus() {
+        visit.setTrangThai(TrangThaiLuotKham.CHO_KHAM);
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.startKhamBenh("BS001", "LICH1"));
+        assertEquals(TrangThaiLuotKham.CHO_KHAM, visit.getTrangThai());
+        verify(sinhHieuRepository).findByLuotKham_IdLuotKham("LUOT1");
         verify(luotKhamRepository, never()).save(any());
+    }
+
+    @Test
+    void startRejectsIncompleteCurrentVitals() {
+        vitals.setNhietDo(null);
+        stubVitals();
+        assertThrows(IllegalArgumentException.class, () -> service.startKhamBenh("BS001", "LICH1"));
+        verify(luotKhamRepository, never()).save(any());
+    }
+
+    @Test
+    void startRejectsWrongDoctor() {
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.startKhamBenh("BS002", "LICH1"));
+        verifyNoInteractions(sinhHieuRepository, luotKhamRepository);
+    }
+
+    @Test
+    void startRejectsCompletedVisit() {
+        visit.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.startKhamBenh("BS001", "LICH1"));
+        verifyNoInteractions(sinhHieuRepository, luotKhamRepository);
+    }
+
+    @Test
+    void startRejectsMissingVisit() {
+        schedule.setLuotKham(null);
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.startKhamBenh("BS001", "LICH1"));
+        verifyNoInteractions(sinhHieuRepository, luotKhamRepository);
+    }
+
+    @Test
+    void saveKeepsInProgressAndAllowsUpdatingResults() {
+        stubVitals();
+        service.saveKhamBenh("BS001", request);
+        assertEquals("Đau đầu", visit.getTrieuChung());
+        assertEquals("Bình thường", visit.getKetQuaKham());
+        assertEquals("Cảm cúm", visit.getChanDoan());
+        assertEquals(TrangThaiLuotKham.DANG_KHAM, visit.getTrangThai());
+        request.setChanDoan("Chẩn đoán mới");
+        service.saveKhamBenh("BS001", request);
+        assertEquals("Chẩn đoán mới", visit.getChanDoan());
+        assertEquals(TrangThaiLuotKham.DANG_KHAM, visit.getTrangThai());
+        verify(luotKhamRepository, times(2)).save(visit);
+    }
+
+    @Test
+    void saveRejectsWaitingVisitEvenWithVitals() {
+        visit.setTrangThai(TrangThaiLuotKham.CHO_KHAM);
+        stubVitals();
+        assertThrows(IllegalArgumentException.class, () -> service.saveKhamBenh("BS001", request));
+        assertEquals(TrangThaiLuotKham.CHO_KHAM, visit.getTrangThai());
+        verify(luotKhamRepository, never()).save(any());
+    }
+
+    @Test
+    void saveRejectsMissingVitalsAndKeepsExistingResults() {
+        visit.setChanDoan("Đã lưu");
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.saveKhamBenh("BS001", request));
+        assertEquals("Đã lưu", visit.getChanDoan());
+        verify(luotKhamRepository, never()).save(any());
+    }
+
+    @Test
+    void saveRejectsWrongDoctor() {
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.saveKhamBenh("BS002", request));
+        verify(luotKhamRepository, never()).save(any());
+    }
+
+    @Test
+    void saveRejectsCompletedVisit() {
+        visit.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
+        stubVisit();
+        assertThrows(IllegalArgumentException.class, () -> service.saveKhamBenh("BS001", request));
+        verify(luotKhamRepository, never()).save(any());
+    }
+
+    @Test
+    void saveRejectsBlankFields() {
+        request.setChanDoan("  ");
+        assertThrows(IllegalArgumentException.class, () -> service.saveKhamBenh("BS001", request));
+        verifyNoInteractions(lichKhamRepository, sinhHieuRepository, luotKhamRepository);
     }
 }
