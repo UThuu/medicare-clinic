@@ -1,0 +1,337 @@
+.mc-revenue-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+  color: #111827;
+}
+
+.mc-revenue-preview-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid #b7e4e2;
+  border-radius: 10px;
+  color: #0b6f71;
+  background: #effafa;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mc-revenue-preview-banner__dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #0f8b8d;
+}
+
+.mc-revenue-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.mc-revenue-eyebrow {
+  color: #0b7f81;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.mc-revenue-heading h1 {
+  margin: 5px 0 0;
+  color: #172b3a;
+  font-size: 29px;
+  line-height: 1.25;
+  letter-spacing: -.035em;
+}
+
+.mc-revenue-heading p {
+  margin: 9px 0 0;
+  max-width: 720px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.mc-revenue-heading__icon {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #0b7f81;
+  background: #e7f6f5;
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.mc-revenue-filter {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 30px minmax(180px, 1fr) minmax(230px, auto);
+  align-items: end;
+  gap: 16px;
+}
+
+.mc-revenue-range-separator {
+  padding-bottom: 9px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.mc-revenue-filter__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mc-revenue-filter-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #edf2f5;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mc-revenue-filter-note span {
+  color: #0f8b8d;
+  font-weight: 800;
+}
+
+.mc-revenue-results {
+  display: grid;
+  gap: 16px;
+}
+
+.mc-revenue-results__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-revenue-results__heading h2 {
+  margin: 0;
+  color: #172b3a;
+  font-size: 19px;
+  line-height: 1.4;
+}
+
+.mc-revenue-results__heading p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.mc-revenue-period-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #176c4a;
+  background: #e8f7f0;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mc-revenue-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.mc-revenue-stat-card {
+  min-width: 0;
+  border-color: #e5edf2;
+  box-shadow: 0 3px 12px rgba(32, 48, 64, .06);
+}
+
+.mc-revenue-stat-card--primary {
+  border-top: 3px solid #0f8b8d;
+  background: linear-gradient(135deg, #ffffff 0%, #f2fbfa 100%);
+}
+
+.mc-revenue-stat-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-revenue-stat-card__label {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mc-revenue-stat-card__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  border-radius: 10px;
+  color: #ffffff;
+  background: #0f8b8d;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.mc-revenue-stat-card__icon--neutral {
+  color: #0b7f81;
+  background: #e7f6f5;
+}
+
+.mc-revenue-stat-card__value {
+  margin-top: 18px;
+  color: #172b3a;
+  font-size: clamp(24px, 2.7vw, 34px);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+
+.mc-revenue-stat-card--primary .mc-revenue-stat-card__value {
+  color: #0b7f81;
+}
+
+.mc-revenue-stat-card__value small {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.mc-revenue-stat-card__foot {
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mc-revenue-empty-state {
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px;
+  border: 1px dashed #cbd8df;
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.mc-revenue-empty-state__icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  color: #0b7f81;
+  background: #e7f6f5;
+  font-size: 22px;
+}
+
+.mc-revenue-empty-state strong {
+  color: #334155;
+  font-size: 14px;
+}
+
+.mc-revenue-empty-state span {
+  max-width: 420px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.mc-revenue-result-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #cfe9dc;
+  border-radius: 10px;
+  background: #f4fbf7;
+  color: #245d43;
+  font-size: 13px;
+}
+
+.mc-revenue-result-message__check {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #22a06b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mc-revenue-result-message p {
+  margin: 4px 0 0;
+  color: #46725c;
+  line-height: 1.5;
+}
+
+@media (max-width: 1100px) {
+  .mc-revenue-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mc-revenue-range-separator {
+    display: none;
+  }
+
+  .mc-revenue-filter__actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .mc-revenue-page {
+    gap: 18px;
+  }
+
+  .mc-revenue-heading h1 {
+    font-size: 24px;
+  }
+
+  .mc-revenue-heading__icon {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 12px;
+    font-size: 22px;
+  }
+
+  .mc-revenue-filter,
+  .mc-revenue-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-revenue-filter__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .mc-revenue-results__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
