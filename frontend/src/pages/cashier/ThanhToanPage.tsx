@@ -8,6 +8,7 @@ import { thanhToanService } from '../../services/thanhToanService';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { StatusBadge } from './components/StatusBadge';
+import { InHoaDonModal } from './components/InHoaDonModal';
 
 export const ThanhToanPage: React.FC = () => {
   const [danhSachHoaDon, setDanhSachHoaDon] = useState<HoaDonResponse[]>([]);
@@ -19,6 +20,10 @@ export const ThanhToanPage: React.FC = () => {
   const [thongTinThanhToan, setThongTinThanhToan] = useState<ThongTinThanhToanResponse | null>(null);
   const [loadingDetail, setLoadingDetail] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  // Modal In hóa đơn (UC-21)
+  const [printInvoiceId, setPrintInvoiceId] = useState<string | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
 
   // Form thanh toán
   const [phuongThuc, setPhuongThuc] = useState<string>('TIEN_MAT');
@@ -146,6 +151,9 @@ export const ThanhToanPage: React.FC = () => {
           'success'
         );
         setIsModalOpen(false);
+        // UC-21: Tự động mở modal in hóa đơn sau khi thanh toán thành công
+        setPrintInvoiceId(res.idHoaDon);
+        setIsPrintModalOpen(true);
         setSelectedHoaDonId(null);
         setThongTinThanhToan(null);
         fetchDanhSach();
@@ -168,6 +176,9 @@ export const ThanhToanPage: React.FC = () => {
           'success'
         );
         setIsModalOpen(false);
+        // UC-21: Tự động mở modal in hóa đơn sau khi thanh toán thành công
+        setPrintInvoiceId(res.idHoaDon);
+        setIsPrintModalOpen(true);
         setSelectedHoaDonId(null);
         setThongTinThanhToan(null);
         fetchDanhSach();
@@ -205,6 +216,9 @@ export const ThanhToanPage: React.FC = () => {
 
         showToast(`✓ Thanh toán thành công hóa đơn ${res.idHoaDon}! Mã GD: ${res.maGiaoDich}`, 'success');
         setIsModalOpen(false);
+        // UC-21: Tự động mở modal in hóa đơn sau khi thanh toán thành công
+        setPrintInvoiceId(res.idHoaDon);
+        setIsPrintModalOpen(true);
         setSelectedHoaDonId(null);
         setThongTinThanhToan(null);
         fetchDanhSach();
@@ -886,6 +900,13 @@ export const ThanhToanPage: React.FC = () => {
           </div>
         ) : null}
       </Modal>
+
+      {/* UC-21: MODAL IN HÓA ĐƠN CHI TIẾT */}
+      <InHoaDonModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        idHoaDon={printInvoiceId}
+      />
     </div>
   );
 };

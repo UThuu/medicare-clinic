@@ -4,10 +4,8 @@ import com.medicare.clinic.dto.request.TaoHoaDonRequest;
 import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.entity.*;
-import com.medicare.clinic.repository.DonThuocRepository;
-import com.medicare.clinic.repository.HoaDonRepository;
-import com.medicare.clinic.repository.LuotKhamRepository;
-import com.medicare.clinic.repository.ThuNganRepository;
+import com.medicare.clinic.dto.response.InHoaDonResponse;
+import com.medicare.clinic.repository.*;
 import com.medicare.clinic.service.impl.HoaDonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +41,12 @@ public class HoaDonServiceTest {
 
     @Mock
     private ThuNganRepository thuNganRepository;
+
+    @Mock
+    private ThanhToanRepository thanhToanRepository;
+
+    @Mock
+    private GiaoDichThanhToanRepository giaoDichThanhToanRepository;
 
     @InjectMocks
     private HoaDonService hoaDonService;
@@ -134,5 +139,57 @@ public class HoaDonServiceTest {
 
         assertTrue(ex.getMessage().contains("đã được lập hóa đơn trước đó"));
         verify(hoaDonRepository, never()).save(any(HoaDon.class));
+    }
+
+    @Test
+    @DisplayName("UC-21 AC-1: In hóa đơn thành công khi hóa đơn ở trạng thái DA_THANH_TOAN")
+    void testLayThongTinInHoaDon_ThanhCong_KhiDaThanhToan() {
+        HoaDon hd = new HoaDon();
+        hd.setId("HD-12345678");
+        hd.setLuotKham(sampleLuotKham);
+        hd.setThuNgan(sampleThuNgan);
+        hd.setNgayTao(LocalDateTime.of(2026, 10, 11, 9, 0));
+        hd.setPhiKham(BigDecimal.valueOf(150000));
+        hd.setTienThuoc(BigDecimal.valueOf(50000));
+        hd.setTongTien(BigDecimal.valueOf(200000));
+        hd.setTrangThai("DA_THANH_TOAN");
+
+        when(hoaDonRepository.findById("HD-12345678")).thenReturn(Optional.of(hd));
+        when(donThuocRepository.findByLuotKham_IdLuotKham("LK-001")).thenReturn(Optional.of(sampleDonThuoc));
+
+        ThanhToan tt = new ThanhToan("TT-001", hd, BigDecimal.valueOf(200000), "THANH_CONG", LocalDateTime.now());
+        GiaoDichThanhToan gd = new GiaoDichThanhToan("GD-001", tt, "GD-VNPAY-9999", "VNPAY", BigDecimal.valueOf(200000), "THANH_CONG", LocalDateTime.now());
+        when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-12345678")).thenReturn(List.of(gd));
+
+        InHoaDonResponse res = hoaDonService.layThongTinInHoaDon("HD-12345678");
+
+        assertNotNull(res);
+        assertEquals("HD-12345678", res.getIdHoaDon());
+        assertEquals("DA_THANH_TOAN", res.getTrangThai());
+        assertEquals("Trần Thị Bảy", res.getTenBenhNhan());
+        assertEquals(BigDecimal.valueOf(200000), res.getTongTien());
+        assertNotNull(res.getTongTienBangChu());
+        assertTrue(res.getTongTienBangChu().contains("đồng chẵn"));
+        assertEquals("Thanh toán trực tuyến VNPay", res.getTenPhuongThuc());
+        assertEquals("GD-VNPAY-9999", res.getMaGiaoDich());
+        assertEquals(2, res.getDanhSachKhoanThu().size());
+    }
+
+    @Test
+    @DisplayName("UC-21 AC-2: Chặn in và thông báo khi hóa đơn chưa thanh toán")
+    void testLayThongTinInHoaDon_NemNgoaiLe_KhiChuaThanhToan() {
+        HoaDon hd = new HoaDon();
+        hd.setId("HD-CHUA-TT");
+        hd.setLuotKham(sampleLuotKham);
+        hd.setTrangThai("CHUA_THANH_TOAN");
+        hd.setTongTien(BigDecimal.valueOf(150000));
+
+        when(hoaDonRepository.findById("HD-CHUA-TT")).thenReturn(Optional.of(hd));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+            hoaDonService.layThongTinInHoaDon("HD-CHUA-TT");
+        });
+
+        assertEquals("Vui lòng hoàn tất thanh toán trước khi in", ex.getMessage());
     }
 }

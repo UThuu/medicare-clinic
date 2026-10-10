@@ -8,6 +8,7 @@ import {
 import { Button } from './components/Button';
 import { StatusBadge } from './components/StatusBadge';
 import { Modal } from './components/Modal';
+import { InHoaDonModal } from './components/InHoaDonModal';
 
 interface TaoHoaDonPageProps {
   initialTab?: 'cho-lap' | 'da-lap';
@@ -34,6 +35,21 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
 
   // State Modal Xem chi tiết hóa đơn đã lập
   const [selectedInvoice, setSelectedInvoice] = useState<HoaDonResponse | null>(null);
+
+  // State Modal In hóa đơn (UC-21)
+  const [printInvoiceId, setPrintInvoiceId] = useState<string | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
+
+  const handleOpenPrintInvoice = (hd: HoaDonResponse) => {
+    // AC-2: Given hóa đơn chưa thanh toán, When thu ngân chọn “In hóa đơn”,
+    // Then hệ thống thông báo “Vui lòng hoàn tất thanh toán trước khi in” và không tạo bản hóa đơn hoàn tất.
+    if (hd.trangThai !== 'DA_THANH_TOAN') {
+      showToast('⚠️ Vui lòng hoàn tất thanh toán trước khi in (AC-2)', 'error');
+      return;
+    }
+    setPrintInvoiceId(hd.idHoaDon);
+    setIsPrintModalOpen(true);
+  };
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMsg({ text, type });
@@ -333,14 +349,29 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
                         <StatusBadge status={hd.trangThai} />
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <Button
-                          id={`btn-xem-hd-${hd.idHoaDon}`}
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => setSelectedInvoice(hd)}
-                        >
-                          👁️ Xem
-                        </Button>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <Button
+                            id={`btn-xem-hd-${hd.idHoaDon}`}
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setSelectedInvoice(hd)}
+                          >
+                            👁️ Xem
+                          </Button>
+                          <Button
+                            id={`btn-in-hd-${hd.idHoaDon}`}
+                            size="sm"
+                            variant={hd.trangThai === 'DA_THANH_TOAN' ? 'primary' : 'secondary'}
+                            onClick={() => handleOpenPrintInvoice(hd)}
+                            title={
+                              hd.trangThai === 'DA_THANH_TOAN'
+                                ? 'In hóa đơn viện phí chi tiết (UC-21)'
+                                : 'Hóa đơn chưa thanh toán - Vui lòng hoàn tất thanh toán trước khi in'
+                            }
+                          >
+                            🖨️ In
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -480,9 +511,33 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
         onClose={() => setSelectedInvoice(null)}
         title={`Chi Tiết Hóa Đơn: ${selectedInvoice?.idHoaDon}`}
         footer={
-          <Button variant="secondary" onClick={() => setSelectedInvoice(null)}>
-            Đóng
-          </Button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <div>
+              {selectedInvoice?.trangThai === 'DA_THANH_TOAN' ? (
+                <Button
+                  id="btn-modal-print-invoice"
+                  variant="primary"
+                  onClick={() => {
+                    if (selectedInvoice) {
+                      setPrintInvoiceId(selectedInvoice.idHoaDon);
+                      setIsPrintModalOpen(true);
+                    }
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span>🖨️</span>
+                  <span>In Hóa Đơn (UC-21)</span>
+                </Button>
+              ) : (
+                <span style={{ fontSize: '12px', color: '#b91c1c', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  ⚠️ Chưa thanh toán — Không thể in hóa đơn hoàn tất
+                </span>
+              )}
+            </div>
+            <Button variant="secondary" onClick={() => setSelectedInvoice(null)}>
+              Đóng
+            </Button>
+          </div>
         }
       >
         {selectedInvoice && (
@@ -556,6 +611,13 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
           </div>
         )}
       </Modal>
+
+      {/* UC-21: MODAL IN HÓA ĐƠN CHI TIẾT */}
+      <InHoaDonModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        idHoaDon={printInvoiceId}
+      />
     </div>
   );
 };

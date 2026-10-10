@@ -5,6 +5,8 @@ import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.LuotKhamChoHoaDonResponse;
 
+import com.medicare.clinic.dto.response.InHoaDonResponse;
+
 import java.util.List;
 
 public interface IHoaDonService {
@@ -37,4 +39,9 @@ public interface IHoaDonService {
      * Lấy danh sách tất cả hóa đơn đã lập
      */
     List<HoaDonResponse> layDanhSachTatCaHoaDon();
+
+    /**
+     * UC-21: Lấy thông tin snapshot in hóa đơn chi tiết (chỉ cho phép khi đã thanh toán)
+     */
+    InHoaDonResponse layThongTinInHoaDon(String idHoaDon);
 }

@@ -5,19 +5,25 @@ import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
 import com.medicare.clinic.dto.response.ChiTietKhoanThuDTO;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.LuotKhamChoHoaDonResponse;
+import com.medicare.clinic.dto.response.InHoaDonResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.DonThuocRepository;
+import com.medicare.clinic.repository.GiaoDichThanhToanRepository;
 import com.medicare.clinic.repository.HoaDonRepository;
 import com.medicare.clinic.repository.LuotKhamRepository;
+import com.medicare.clinic.repository.ThanhToanRepository;
 import com.medicare.clinic.repository.ThuNganRepository;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
+import com.medicare.clinic.util.MoneyToWordsUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +39,8 @@ public class HoaDonService implements IHoaDonService {
     private final LuotKhamRepository luotKhamRepository;
     private final DonThuocRepository donThuocRepository;
     private final ThuNganRepository thuNganRepository;
+    private final ThanhToanRepository thanhToanRepository;
+    private final GiaoDichThanhToanRepository giaoDichThanhToanRepository;
 
     private static final BigDecimal PHI_KHAM_MAC_DINH = BigDecimal.valueOf(150000);
 
@@ -287,6 +295,133 @@ public class HoaDonService implements IHoaDonService {
                 .tongTien(hd.getTongTien())
                 .trangThai(hd.getTrangThai())
                 .danhSachChiTiet(danhSachKhoanThu)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InHoaDonResponse layThongTinInHoaDon(String idHoaDon) {
+        log.info("Xử lý yêu cầu in hóa đơn cho ID: {}", idHoaDon);
+
+        if (idHoaDon == null || idHoaDon.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
+        }
+
+        HoaDon hd = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với ID: " + idHoaDon));
+
+        // AC-2: Given hóa đơn chưa thanh toán, When thu ngân chọn “In hóa đơn”,
+        // Then hệ thống thông báo “Vui lòng hoàn tất thanh toán trước khi in” và không tạo bản hóa đơn hoàn tất.
+        if (!"DA_THANH_TOAN".equalsIgnoreCase(hd.getTrangThai())) {
+            throw new IllegalStateException("Vui lòng hoàn tất thanh toán trước khi in");
+        }
+
+        LuotKham lk = hd.getLuotKham();
+        BenhNhan bn = (lk != null && lk.getLichKham() != null) ? lk.getLichKham().getBenhNhan() : null;
+        BacSi bs = (lk != null && lk.getLichKham() != null) ? lk.getLichKham().getBacSi() : null;
+
+        // Tính tuổi nếu có ngày sinh
+        Integer tuoi = null;
+        if (bn != null && bn.getNgaySinh() != null) {
+            tuoi = Period.between(bn.getNgaySinh(), LocalDate.now()).getYears();
+        }
+
+        // Lấy danh sách khoản thu chi tiết (Phí khám + Tiền thuốc)
+        List<ChiTietKhoanThuDTO> danhSachKhoanThu = new ArrayList<>();
+        danhSachKhoanThu.add(ChiTietKhoanThuDTO.builder()
+                .loaiKhoanThu("TIEN_KHAM")
+                .tenKhoanThu("Phí khám lâm sàng (" + (bs != null && bs.getChuyenKhoa() != null ? bs.getChuyenKhoa() : "Đa khoa") + ")")
+                .donViTinh("Lần")
+                .soLuong(1)
+                .donGia(hd.getPhiKham())
+                .thanhTien(hd.getPhiKham())
+                .huongDan("Khám chuyên khoa & tư vấn sức khỏe")
+                .build());
+
+        if (lk != null) {
+            Optional<DonThuoc> dtOpt = donThuocRepository.findByLuotKham_IdLuotKham(lk.getIdLuotKham());
+            if (dtOpt.isPresent() && dtOpt.get().getChiTietDonThuocs() != null) {
+                for (ChiTietDonThuoc ct : dtOpt.get().getChiTietDonThuocs()) {
+                    BigDecimal tt = ct.getDonGia().multiply(BigDecimal.valueOf(ct.getSoLuong()));
+                    danhSachKhoanThu.add(ChiTietKhoanThuDTO.builder()
+                            .loaiKhoanThu("TIEN_THUOC")
+                            .tenKhoanThu(ct.getThuoc() != null ? ct.getThuoc().getTenThuoc() : "Thuốc kê đơn")
+                            .donViTinh(ct.getThuoc() != null ? ct.getThuoc().getDonViTinh() : "Đơn vị")
+                            .soLuong(ct.getSoLuong())
+                            .donGia(ct.getDonGia())
+                            .thanhTien(tt)
+                            .huongDan(ct.getLieuLuong() + (ct.getHuongDanSuDung() != null ? " - " + ct.getHuongDanSuDung() : ""))
+                            .build());
+                }
+            }
+        }
+
+        // Lấy thông tin thanh toán & giao dịch
+        String phuongThuc = "TIEN_MAT";
+        String tenPhuongThuc = "Tiền mặt tại quầy";
+        String maGiaoDich = "TM-" + hd.getId();
+        LocalDateTime ngayThanhToan = hd.getNgayTao();
+
+        List<GiaoDichThanhToan> dsGiaoDich = giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc(hd.getId());
+        if (!dsGiaoDich.isEmpty()) {
+            GiaoDichThanhToan gdThanhCong = dsGiaoDich.stream()
+                    .filter(g -> "THANH_CONG".equalsIgnoreCase(g.getTrangThai()))
+                    .findFirst()
+                    .orElse(dsGiaoDich.get(0));
+
+            phuongThuc = gdThanhCong.getPhuongThuc();
+            maGiaoDich = gdThanhCong.getMaGiaoDich() != null ? gdThanhCong.getMaGiaoDich() : gdThanhCong.getIdGiaoDich();
+            ngayThanhToan = gdThanhCong.getThoiGian();
+
+            if ("TIEN_MAT".equalsIgnoreCase(phuongThuc)) {
+                tenPhuongThuc = "Tiền mặt tại quầy";
+            } else if ("CHUYEN_KHOAN_QR".equalsIgnoreCase(phuongThuc) || "CHUYEN_KHOAN".equalsIgnoreCase(phuongThuc) || "VNPAY_QR".equalsIgnoreCase(phuongThuc)) {
+                tenPhuongThuc = "Chuyển khoản VietQR";
+            } else if ("TRUC_TUYEN".equalsIgnoreCase(phuongThuc) || "VNPAY".equalsIgnoreCase(phuongThuc)) {
+                tenPhuongThuc = "Thanh toán trực tuyến VNPay";
+            }
+        } else {
+            Optional<ThanhToan> ttOpt = thanhToanRepository.findByHoaDon_Id(hd.getId());
+            if (ttOpt.isPresent() && ttOpt.get().getNgayTao() != null) {
+                ngayThanhToan = ttOpt.get().getNgayTao();
+            }
+        }
+
+        // Đọc số tiền ra chữ tiếng Việt
+        String tongTienBangChu = MoneyToWordsUtil.docSoTien(hd.getTongTien());
+
+        return InHoaDonResponse.builder()
+                .tenPhongKham("PHÒNG KHÁM ĐA KHOA QUỐC TẾ MEDICARE")
+                .diaChiPhongKham("123 Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh")
+                .hotline("1900 6868 - (028) 3835 1024")
+                .email("contact@medicare-clinic.vn")
+                .website("https://medicare-clinic.vn")
+                .idHoaDon(hd.getId())
+                .idLuotKham(lk != null ? lk.getIdLuotKham() : "")
+                .ngayLap(hd.getNgayTao())
+                .ngayThanhToan(ngayThanhToan)
+                .trangThai(hd.getTrangThai())
+                .maBenhNhan(bn != null ? bn.getIdBenhNhan() : "")
+                .tenBenhNhan(bn != null ? bn.getHoTen() : "Không rõ")
+                .ngaySinh(bn != null ? bn.getNgaySinh() : null)
+                .tuoi(tuoi)
+                .gioiTinh(bn != null ? bn.getGioiTinh() : "")
+                .soDienThoai(bn != null ? bn.getSoDienThoai() : "")
+                .diaChi(bn != null ? bn.getDiaChi() : "")
+                .bacSiKham(bs != null ? bs.getHoTen() : "Bác sĩ phụ trách")
+                .chuyenKhoa(bs != null ? bs.getChuyenKhoa() : "Đa khoa")
+                .lyDoKham(lk != null ? lk.getLyDoKham() : "")
+                .chanDoan(lk != null ? lk.getChanDoan() : "")
+                .danhSachKhoanThu(danhSachKhoanThu)
+                .phiKham(hd.getPhiKham())
+                .tienThuoc(hd.getTienThuoc())
+                .tongTien(hd.getTongTien())
+                .tongTienBangChu(tongTienBangChu)
+                .phuongThucThanhToan(phuongThuc)
+                .tenPhuongThuc(tenPhuongThuc)
+                .maGiaoDich(maGiaoDich)
+                .thuNganThu(hd.getThuNgan() != null ? hd.getThuNgan().getHoTen() : "Nguyễn Thị Thu Ngân")
+                .ghiChu("Hóa đơn đã được thanh toán đầy đủ và có giá trị thanh quyết toán viện phí.")
                 .build();
     }
 }

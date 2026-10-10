@@ -110,4 +110,29 @@ public class HoaDonController {
     public ResponseEntity<List<HoaDonResponse>> layDanhSachTatCaHoaDon() {
         return ResponseEntity.ok(hoadonService.layDanhSachTatCaHoaDon());
     }
+
+    /**
+     * API 7 (UC-21): Lấy thông tin bản in hóa đơn chi tiết dạng snapshot
+     * AC-1: Trả về snapshot hóa đơn khi đã thanh toán (DA_THANH_TOAN)
+     * AC-2: Trả về HTTP 400 Bad Request kèm "Vui lòng hoàn tất thanh toán trước khi in" nếu chưa thanh toán
+     */
+    @GetMapping("/{id}/in")
+    public ResponseEntity<?> layThongTinInHoaDon(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok(hoadonService.layThongTinInHoaDon(id));
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (IllegalStateException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy thông tin in hóa đơn: ", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi máy chủ khi tạo bản in hóa đơn: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 }

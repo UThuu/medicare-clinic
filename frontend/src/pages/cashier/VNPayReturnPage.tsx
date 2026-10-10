@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { thanhToanService } from '../../services/thanhToanService';
 import { VNPayCallbackResponse } from '../../types/billing';
 import { Button } from './components/Button';
+import { InHoaDonModal } from './components/InHoaDonModal';
 
 interface VNPayReturnPageProps {
   onBackToBilling: () => void;
@@ -11,6 +12,7 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
   const [loading, setLoading] = useState<boolean>(true);
   const [result, setResult] = useState<VNPayCallbackResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
 
   const formatVND = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -179,8 +181,14 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
                     : (isSuccess ? 'Quay lại Quầy Thu Ngân' : 'Quay lại Thử Lại Thanh Toán')}
                 </Button>
                 {isSuccess && (
-                  <Button variant="secondary" onClick={() => window.print()}>
-                    🖨️ In Biên Lai Điện Tử
+                  <Button
+                    variant="secondary"
+                    id="btn-print-vnpay-receipt"
+                    onClick={() => setIsPrintModalOpen(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <span>🧾</span>
+                    <span>Xem & In Hóa Đơn Viện Phí (UC-21)</span>
                   </Button>
                 )}
               </div>
@@ -188,6 +196,15 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
           </div>
         ) : null}
       </div>
+
+      {/* UC-21: MODAL IN HÓA ĐƠN CHI TIẾT */}
+      {result && (
+        <InHoaDonModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          idHoaDon={result.idHoaDon}
+        />
+      )}
     </div>
   );
 };

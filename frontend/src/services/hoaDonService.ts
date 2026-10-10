@@ -2,6 +2,7 @@ import api from './api';
 import {
   ChiPhiKhamPreviewResponse,
   HoaDonResponse,
+  InHoaDonResponse,
   LuotKhamChoHoaDonResponse,
   TaoHoaDonRequest,
 } from '../types/billing';
@@ -34,6 +35,12 @@ export const hoaDonService = {
   // Lấy tất cả hóa đơn đã tạo
   getDanhSachTatCaHoaDon: async (): Promise<HoaDonResponse[]> => {
     const response = await api.get<HoaDonResponse[]>('/hoadon');
+    return response.data;
+  },
+
+  // UC-21: Lấy thông tin bản in hóa đơn chi tiết (chỉ cho phép khi đã thanh toán)
+  getThongTinInHoaDon: async (idHoaDon: string): Promise<InHoaDonResponse> => {
+    const response = await api.get<InHoaDonResponse>(`/hoadon/${idHoaDon}/in`);
     return response.data;
   },
 };

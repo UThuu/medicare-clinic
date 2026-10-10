@@ -178,3 +178,38 @@ export interface VNPayCallbackResponse {
   thongBao: string;
 }
 
+export interface InHoaDonResponse {
+  tenPhongKham: string;
+  diaChiPhongKham: string;
+  hotline: string;
+  email: string;
+  website: string;
+  idHoaDon: string;
+  idLuotKham: string;
+  ngayLap: string;
+  ngayThanhToan: string;
+  trangThai: 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN' | 'HUY';
+  maBenhNhan: string;
+  tenBenhNhan: string;
+  ngaySinh?: string;
+  tuoi?: number;
+  gioiTinh?: string;
+  soDienThoai: string;
+  diaChi?: string;
+  bacSiKham: string;
+  chuyenKhoa?: string;
+  lyDoKham?: string;
+  chanDoan?: string;
+  danhSachKhoanThu: ChiTietKhoanThuDTO[];
+  phiKham: number;
+  tienThuoc: number;
+  tongTien: number;
+  tongTienBangChu: string;
+  phuongThucThanhToan: string;
+  tenPhuongThuc: string;
+  maGiaoDich: string;
+  thuNganThu: string;
+  ghiChu?: string;
+}
+
+
