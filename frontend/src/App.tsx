@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
 import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
+import { RecordExamResult } from './pages/RecordExamResult';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -81,9 +82,16 @@ const App: React.FC = () => {
           }
         />
 
-        {/* Route xem thử UC28 bằng dữ liệu mẫu, không yêu cầu đăng nhập và không gọi API. Xóa trước khi merge chính thức. */}
-        <Route path="/dev/uc28" element={<BenhNhanTimKiem preview />} />
 
+
+        <Route
+          path="/staff/medical-record/:id/record-exam"
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI']}>
+              <RecordExamResult />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -102,6 +102,13 @@ export const DoctorSchedule: React.FC = () => {
     return { text: 'Đã đặt', tone: 'neutral' };
   };
 
+  const formatDateTime = (isoStr: string) => {
+    if (!isoStr) return '';
+    if (!isoStr.includes('T')) return isoStr;
+    const parts = isoStr.split('T');
+    return `${parts[1]} ${parts[0]}`;
+  };
+
   const columns: TableColumn<DoctorScheduleResponse>[] = [
     {
       key: 'gioKham',
@@ -117,7 +124,7 @@ export const DoctorSchedule: React.FC = () => {
         <div>
           <strong style={{ display: 'block', color: '#111' }}>{r.tenBenhNhan}</strong>
           <span style={{ fontSize: '0.85em', color: '#666', marginTop: '4px', display: 'block' }}>
-            {r.idBenhNhan} · {r.gioiTinh === 'NAM' ? 'Nam' : r.gioiTinh === 'NU' ? 'Nữ' : 'Khác'} · {calculateAge(r.ngaySinh)} tuổi
+            {r.idBenhNhan} • {r.gioiTinh === 'NAM' ? 'Nam' : r.gioiTinh === 'NU' ? 'Nữ' : 'Khác'} • {calculateAge(r.ngaySinh)} tuổi
           </span>
         </div>,
         r.idLichKham
@@ -127,13 +134,29 @@ export const DoctorSchedule: React.FC = () => {
       key: 'lyDoKham',
       header: 'Lý do khám',
       width: '20%',
-      render: (r) => renderClickable(<span style={{ color: '#888' }}>[Chưa có]</span>, r.idLichKham)
+      render: (r) => renderClickable(
+        r.lyDoKham ? <span>{r.lyDoKham}</span> : <span style={{ color: '#888' }}>[Chưa có]</span>, 
+        r.idLichKham
+      )
     },
     {
       key: 'sinhHieu',
       header: 'Sinh hiệu',
       width: '20%',
-      render: (r) => renderClickable(<span style={{ color: '#888' }}>Chưa có</span>, r.idLichKham)
+      render: (r) => {
+        if (!r.huyetApTamThu && !r.nhietDo && !r.canNang) {
+            return renderClickable(<span style={{ color: '#888' }}>Chưa có</span>, r.idLichKham);
+        }
+        return renderClickable(
+          <div style={{ fontSize: '0.85em', color: '#555' }}>
+            {r.huyetApTamThu && r.huyetApTamTruong && <div>HA: {r.huyetApTamThu}/{r.huyetApTamTruong} mmHg</div>}
+            {r.nhietDo && <div>NĐ: {r.nhietDo}°C</div>}
+            {r.canNang && <div>CN: {r.canNang}kg</div>}
+            {r.thoiDiemDoSinhHieu && <div style={{ color: '#888', fontSize: '0.9em' }}>{formatDateTime(r.thoiDiemDoSinhHieu)}</div>}
+          </div>,
+          r.idLichKham
+        );
+      }
     },
     {
       key: 'trangThai',

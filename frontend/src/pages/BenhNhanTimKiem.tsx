@@ -4,8 +4,7 @@ import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Input } from '../components/common/Input';
 import { Table, type TableColumn } from '../components/common/Table';
-import { MainLayout } from '../components/layout/MainLayout';
-import { useAuth } from '../contexts/AuthContext';
+import { ReceptionLayout } from '../components/layout/ReceptionLayout';
 import { timKiemHoSoBenhNhan } from '../services/benhNhanTimKiemService';
 import type {
   BenhNhanTimKiemItem,
@@ -15,29 +14,6 @@ import type {
 import './benhNhanTimKiem.css';
 
 type KieuTimKiem = 'phone' | 'nameDob';
-
-const DU_LIEU_MAU: BenhNhanTimKiemResponse = {
-  thongBao: 'Đã tìm thấy hồ sơ bệnh nhân phù hợp. Đây là dữ liệu minh họa.',
-  tongSoKetQua: 2,
-  danhSachBenhNhan: [
-    {
-      idBenhNhan: 'BN-DEMO-001',
-      hoTen: 'Nguyễn Minh An',
-      ngaySinh: '1998-04-12',
-      gioiTinh: 'NAM',
-      soDienThoai: '0901234567',
-      diaChi: 'Quận 3, Thành phố Hồ Chí Minh',
-    },
-    {
-      idBenhNhan: 'BN-DEMO-002',
-      hoTen: 'Nguyễn Minh Anh',
-      ngaySinh: '1998-04-12',
-      gioiTinh: 'NU',
-      soDienThoai: '0909876543',
-      diaChi: 'Quận Bình Thạnh, Thành phố Hồ Chí Minh',
-    },
-  ],
-};
 
 function dinhDangNgay(ngay?: string | null): string {
   if (!ngay) return '—';
@@ -67,30 +43,25 @@ function layLoiValidation(
 ): string | null {
   if (mode === 'phone') {
     if (!soDienThoai.trim()) return 'Vui lòng nhập số điện thoại cần tìm.';
-    if (!/^[0-9+() .-]{8,20}$/.test(soDienThoai.trim())) {
+    if (!/^(?=.*[0-9])[0-9+() .-]{8,20}$/.test(soDienThoai.trim())) {
       return 'Số điện thoại cần có từ 8 đến 20 ký tự và chỉ gồm chữ số hoặc ký tự + ( ) . -.';
     }
     return null;
   }
 
   if (!hoTen.trim()) return 'Vui lòng nhập họ tên bệnh nhân.';
+  if (hoTen.trim().length > 100) return 'Họ tên không được vượt quá 100 ký tự.';
   if (!ngaySinh) return 'Vui lòng chọn ngày sinh để thu hẹp kết quả tìm kiếm.';
   if (ngaySinh > ngayHienTaiISO()) return 'Ngày sinh không thể ở tương lai.';
   return null;
 }
 
-interface BenhNhanTimKiemProps {
-  /** true chỉ để xem giao diện bằng dữ liệu mẫu; không gọi API/backend. */
-  preview?: boolean;
-}
-
-export function BenhNhanTimKiem({ preview = false }: BenhNhanTimKiemProps) {
-  const { user } = useAuth();
+export function BenhNhanTimKiem() {
   const [kieuTimKiem, setKieuTimKiem] = useState<KieuTimKiem>('phone');
-  const [soDienThoai, setSoDienThoai] = useState(preview ? '0901234567' : '');
+  const [soDienThoai, setSoDienThoai] = useState('');
   const [hoTen, setHoTen] = useState('');
   const [ngaySinh, setNgaySinh] = useState('');
-  const [ketQua, setKetQua] = useState<BenhNhanTimKiemResponse | null>(preview ? DU_LIEU_MAU : null);
+  const [ketQua, setKetQua] = useState<BenhNhanTimKiemResponse | null>(null);
   const [benhNhanDangXem, setBenhNhanDangXem] = useState<BenhNhanTimKiemItem | null>(null);
   const [loi, setLoi] = useState('');
   const [dangTim, setDangTim] = useState(false);
@@ -126,6 +97,7 @@ export function BenhNhanTimKiem({ preview = false }: BenhNhanTimKiemProps) {
     event.preventDefault();
     setLoi('');
     setBenhNhanDangXem(null);
+    setKetQua(null);
 
     const validationMessage = layLoiValidation(kieuTimKiem, soDienThoai, hoTen, ngaySinh);
     if (validationMessage) {
@@ -136,11 +108,6 @@ export function BenhNhanTimKiem({ preview = false }: BenhNhanTimKiemProps) {
     const request: BenhNhanTimKiemRequest = kieuTimKiem === 'phone'
       ? { soDienThoai: soDienThoai.trim() }
       : { hoTen: hoTen.trim(), ngaySinh };
-
-    if (preview) {
-      setKetQua(DU_LIEU_MAU);
-      return;
-    }
 
     try {
       setDangTim(true);
@@ -159,7 +126,7 @@ export function BenhNhanTimKiem({ preview = false }: BenhNhanTimKiemProps) {
     setHoTen('');
     setNgaySinh('');
     setKieuTimKiem('phone');
-    setKetQua(preview ? DU_LIEU_MAU : null);
+    setKetQua(null);
     setLoi('');
     setBenhNhanDangXem(null);
   };
@@ -168,20 +135,18 @@ export function BenhNhanTimKiem({ preview = false }: BenhNhanTimKiemProps) {
     <div className="uc28-page">
       <div className="uc28-page-heading">
         <div>
-          <div className="uc28-eyebrow">HỒ SƠ BỆNH NHÂN</div>
+          <div className="uc28-eyebrow">TIẾP NHẬN BỆNH NHÂN · BƯỚC 1</div>
           <h1>Tìm kiếm hồ sơ bệnh nhân</h1>
-          <p>Tra cứu hồ sơ hiện có trước khi tạo hồ sơ mới hoặc tiếp nhận bệnh nhân.</p>
+          <p>Tìm hồ sơ hiện có để bắt đầu quy trình tiếp nhận.</p>
         </div>
         <div className="uc28-heading-icon" aria-hidden="true">⌕</div>
       </div>
 
-      {preview && (
-        <div className="uc28-preview-banner" role="status">
-          <strong>Chế độ xem thử UC28</strong>
-          <span>Đang dùng dữ liệu minh họa. Thao tác tìm kiếm không gọi backend.</span>
-        </div>
-      )}
-
+      <div className="mc-reception-steps" aria-label="Các bước tiếp nhận">
+        <span aria-current="step">1. Tìm hồ sơ<small>Đang khả dụng</small></span>
+        <button type="button" disabled>2. Tạo hồ sơ nếu chưa có<small>Chưa khả dụng</small></button>
+        <button type="button" disabled>3. Xác nhận tiếp nhận<small>Chưa khả dụng</small></button>
+      </div>
       <Card className="uc28-search-card">
         <div className="uc28-section-heading">
           <div>
@@ -333,32 +298,5 @@ export function BenhNhanTimKiem({ preview = false }: BenhNhanTimKiemProps) {
     </div>
   );
 
-  if (preview) {
-    return (
-      <div className="mc-app uc28-preview-app">
-        <header className="mc-header uc28-preview-header">
-          <div className="mc-brand">
-            <span className="mc-brand__mark" aria-hidden="true">+</span>
-            <div><div className="mc-brand__name">MediCare Clinic</div><div className="mc-brand__hotline">Xem thử giao diện UC28</div></div>
-          </div>
-          <span className="uc28-preview-pill">DEMO · KHÔNG GỌI API</span>
-        </header>
-        <main className="mc-main uc28-preview-main">{mainContent}</main>
-      </div>
-    );
-  }
-
-  return (
-    <MainLayout
-      doctorName={user?.hoTen || 'Nhân viên lễ tân'}
-      roleLabel="Lễ tân"
-      hotline="Quản lý hồ sơ bệnh nhân"
-      sidebarItems={[
-        { label: 'Dashboard', href: '/staff' },
-        { label: 'Tìm hồ sơ bệnh nhân', href: '/staff/patient-search', active: true },
-      ]}
-    >
-      {mainContent}
-    </MainLayout>
-  );
+  return <ReceptionLayout section="reception">{mainContent}</ReceptionLayout>;
 }
