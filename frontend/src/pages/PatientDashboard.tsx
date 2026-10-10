@@ -1,16 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 
 export const PatientDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (err: any) {
-      setError(err.message || 'Đăng xuất thất bại');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Đăng xuất thất bại');
     }
   };
 
@@ -22,9 +24,14 @@ export const PatientDashboard: React.FC = () => {
         <p><strong>Xin chào:</strong> {user?.hoTen}</p>
         <p><strong>Vai trò:</strong> {user?.vaiTro}</p>
       </div>
-      <Button onClick={handleLogout} variant="secondary">
-        Đăng xuất
-      </Button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <Button onClick={() => navigate('/patient/thong-bao-lich-kham')}>
+          Thông báo lịch khám
+        </Button>
+        <Button onClick={handleLogout} variant="secondary">
+          Đăng xuất
+        </Button>
+      </div>
     </div>
   );
 };
