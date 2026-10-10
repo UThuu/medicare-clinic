@@ -10,6 +10,17 @@ import { MedicalRecordResponse } from '../types/MedicalRecord';
 import { getExaminationBlockReason } from './examinationState';
 import './patientRecord.css';
 
+const visitStatuses: Record<string, { label: string; color: string }> = {
+    CHO_KHAM: { label: 'Chờ khám', color: '#156F82' },
+    DANG_KHAM: { label: 'Đang khám', color: '#F59E0B' },
+    HOAN_TAT: { label: 'Hoàn tất', color: '#0F8B8D' },
+};
+
+const VisitStatus = ({ status, className }: { status: string; className?: string }) => {
+    const display = visitStatuses[status] || { label: 'Chưa rõ', color: '#64748B' };
+    return <span className={className} style={{ color: display.color, fontWeight: 600 }}>{display.label}</span>;
+};
+
 export const PatientRecord: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const idLuotKham = id || '';
@@ -100,16 +111,14 @@ export const PatientRecord: React.FC = () => {
             </thead>
             <tbody>
                 {lichSuKham?.length > 0 ? (
-                    lichSuKham.map((ls, idx) => (
-                        <tr key={idx}>
+                    lichSuKham.map((ls) => (
+                        <tr key={ls.idLuotKham}>
                             <td>{ls.ngayKham}</td>
                             <td>{ls.tenBacSi}</td>
                             <td>{ls.lyDoKham}</td>
-                            <td>{ls.chanDoan || 'Không bệnh'}</td>
+                            <td>{ls.chanDoan?.trim() || 'Chưa có chẩn đoán'}</td>
                             <td>
-                                <span style={{ color: ls.trangThai === 'HOAN_TAT' ? '#0F8B8D' : '#F59E0B', fontWeight: 600 }}>
-                                    {ls.trangThai === 'HOAN_TAT' ? 'Hoàn tất' : 'Đang khám'}
-                                </span>
+                                <VisitStatus status={ls.trangThai} />
                             </td>
                         </tr>
                     ))
@@ -233,13 +242,11 @@ export const PatientRecord: React.FC = () => {
                                             </div>
                                             <div className="form-group-inline">
                                                 <label>Chẩn đoán</label>
-                                                <span className="value-text">{luotKhamHienTai.chanDoan || '...'}</span>
+                                                <span className="value-text">{luotKhamHienTai.chanDoan?.trim() || 'Chưa có chẩn đoán'}</span>
                                             </div>
                                             <div className="form-group-inline" style={{ gridColumn: '1 / span 2' }}>
                                                 <label>Trạng thái</label>
-                                                <span className="value-text" style={{ color: luotKhamHienTai.trangThai === 'HOAN_TAT' ? '#0F8B8D' : '#F59E0B', fontWeight: 600 }}>
-                                                    {luotKhamHienTai.trangThai === 'HOAN_TAT' ? 'Hoàn tất' : 'Đang khám'}
-                                                </span>
+                                                <VisitStatus className="value-text" status={luotKhamHienTai.trangThai} />
                                             </div>
                                         </div>
                                     ) : (

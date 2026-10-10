@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 /** Keep these entry points in sync with frontend/src/App.tsx. */
 @Controller
 public class SpaController {
-    @GetMapping({"/", "/login", "/patient", "/staff", "/staff/schedules",
+    @GetMapping({"/", "/login", "/patient", "/staff", "/staff/schedules", "/staff/patient-search",
             "/staff/medical-record/{id:[^.]+}",
             "/staff/medical-record/{id:[^.]+}/record-exam"})
     public String index() {

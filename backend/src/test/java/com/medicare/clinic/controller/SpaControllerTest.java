@@ -17,7 +17,7 @@ class SpaControllerTest {
     @Autowired private MockMvc mvc;
 
     @ParameterizedTest
-    @ValueSource(strings = {"/", "/login", "/patient", "/staff", "/staff/schedules",
+    @ValueSource(strings = {"/", "/login", "/patient", "/staff", "/staff/schedules", "/staff/patient-search",
             "/staff/medical-record/LK001", "/staff/medical-record/LK001/record-exam"})
     void reactRoutesForwardToIndex(String path) throws Exception {
         mvc.perform(get(path)).andExpect(status().isOk())
