@@ -30,7 +30,6 @@ export const ThanhToanPage: React.FC = () => {
   const [thongTinQr, setThongTinQr] = useState<ThongTinQrResponse | null>(null);
   const [loadingQr, setLoadingQr] = useState<boolean>(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [maGiaoDichQrRef, setMaGiaoDichQrRef] = useState<string>('');
 
   // Toast thông báo
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -82,7 +81,6 @@ export const ThanhToanPage: React.FC = () => {
     setGhiChu('');
     setTienKhachDuaInput('');
     setThongTinQr(null);
-    setMaGiaoDichQrRef('');
     setCopiedKey(null);
 
     try {
@@ -114,12 +112,6 @@ export const ThanhToanPage: React.FC = () => {
     setTimeout(() => {
       setCopiedKey(null);
     }, 2000);
-  };
-
-  const handleMoPhongNhanTien = () => {
-    const fakeRef = 'VCB' + Math.floor(10000000 + Math.random() * 90000000);
-    setMaGiaoDichQrRef(fakeRef);
-    showToast(`🔔 [Mô phỏng Vietcombank] Nhận biến động số dư: +${formatVND(tongTien)}! Mã GD: ${fakeRef}`, 'success');
   };
 
   const tongTien = thongTinThanhToan?.tongTien || 0;
@@ -168,7 +160,6 @@ export const ThanhToanPage: React.FC = () => {
         setProcessing(true);
         const res = await thanhToanService.xacNhanThanhToanQr({
           idHoaDon: selectedHoaDonId,
-          maGiaoDichNganHang: maGiaoDichQrRef.trim() || undefined,
           ghiChu: ghiChu.trim() || undefined,
         });
 
@@ -747,34 +738,12 @@ export const ThanhToanPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Công cụ mô phỏng nhận tiền cho Tester */}
-                      <div className="qr-simulate-box">
-                        <div style={{ fontSize: '12px', color: '#1e40af' }}>
-                          🧪 <strong>Kiểm thử nhanh:</strong> Giả lập app Vietcombank đã chuyển khoản
+                      {/* Hướng dẫn quy trình thu ngân */}
+                      <div className="qr-guide-box">
+                        <span style={{ fontSize: '18px', lineHeight: 1 }}>💡</span>
+                        <div style={{ fontSize: '12px', color: '#166534', lineHeight: 1.5 }}>
+                          <strong>Quy trình thu ngân:</strong> Hướng dẫn bệnh nhân mở app ngân hàng quét mã VietQR bên cạnh. Sau khi kiểm tra điện thoại/loa quầy báo nhận tiền thành công, bấm nút <strong>"Xác nhận đã nhận chuyển khoản QR"</strong> bên dưới để hoàn tất hóa đơn.
                         </div>
-                        <button
-                          type="button"
-                          className="qr-simulate-btn"
-                          onClick={handleMoPhongNhanTien}
-                          id="btn-simulate-transfer"
-                        >
-                          ⚡ Mô phỏng đã nhận tiền
-                        </button>
-                      </div>
-
-                      {/* Nhập mã giao dịch đối soát ngân hàng */}
-                      <div className="qr-ref-input-group">
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
-                          Mã giao dịch ngân hàng / Mã chuẩn chi:
-                        </label>
-                        <input
-                          type="text"
-                          className="custom-input"
-                          placeholder="Ví dụ: VCB-1038034475..."
-                          value={maGiaoDichQrRef}
-                          onChange={(e) => setMaGiaoDichQrRef(e.target.value)}
-                          id="input-ma-giao-dich-ref"
-                        />
                       </div>
                     </div>
                   </div>
