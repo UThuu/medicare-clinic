@@ -1,5 +1,6 @@
 package com.medicare.clinic.service.impl;
 
+import com.medicare.clinic.dto.request.ThanhToanQrRequest;
 import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.*;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -267,6 +270,132 @@ public class ThanhToanService implements IThanhToanService {
                 .trangThai("THANH_CONG")
                 .thoiGian(giaoDich.getThoiGian())
                 .thongBao("Thanh toán tiền mặt thành công! Tiền thối lại cho khách: " + tienThoiLai.stripTrailingZeros().toPlainString() + " đ")
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ThongTinQrResponse layThongTinQrThanhToan(String idHoaDon) {
+        log.info("Lấy thông tin mã VietQR cho hóa đơn: {}", idHoaDon);
+
+        if (idHoaDon == null || idHoaDon.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
+        }
+
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + idHoaDon));
+
+        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó!");
+        }
+
+        String nganHang = "Vietcombank";
+        String maNganHang = "vietcombank";
+        String soTaiKhoan = "1038034475";
+        String tenChuTaiKhoan = "NGUYEN MAI NHUT TAN";
+        String noiDung = "MEDICARE " + hoaDon.getId();
+
+        String qrImageUrl;
+        try {
+            String noiDungEncoded = URLEncoder.encode(noiDung, StandardCharsets.UTF_8.toString());
+            String tenEncoded = URLEncoder.encode(tenChuTaiKhoan, StandardCharsets.UTF_8.toString());
+            long amount = hoaDon.getTongTien() != null ? hoaDon.getTongTien().longValue() : 0L;
+            qrImageUrl = String.format(
+                    "https://img.vietqr.io/image/%s-%s-compact2.png?amount=%d&addInfo=%s&accountName=%s",
+                    maNganHang, soTaiKhoan, amount, noiDungEncoded, tenEncoded
+            );
+        } catch (Exception e) {
+            log.error("Lỗi khi sinh URL VietQR: ", e);
+            qrImageUrl = "";
+        }
+
+        return ThongTinQrResponse.builder()
+                .idHoaDon(hoaDon.getId())
+                .soTien(hoaDon.getTongTien())
+                .nganHang(nganHang)
+                .maNganHang(maNganHang)
+                .soTaiKhoan(soTaiKhoan)
+                .tenChuTaiKhoan(tenChuTaiKhoan)
+                .noiDung(noiDung)
+                .qrImageUrl(qrImageUrl)
+                .qrQuickLink(qrImageUrl)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public KetQuaThanhToanResponse xacNhanThanhToanQr(ThanhToanQrRequest request) {
+        log.info("Bắt đầu xử lý xác nhận thanh toán qua QR cho hóa đơn: {}", request.getIdHoaDon());
+
+        if (request.getIdHoaDon() == null || request.getIdHoaDon().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
+        }
+
+        HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + request.getIdHoaDon()));
+
+        // Chặn thanh toán lại nếu hóa đơn đã thanh toán hoàn tất (E3)
+        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
+        }
+
+        BigDecimal tongTien = hoaDon.getTongTien();
+
+        // Tìm hoặc tạo mới bản ghi ThanhToan (1-1 với HoaDon)
+        ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
+                .orElseGet(() -> {
+                    ThanhToan tt = new ThanhToan();
+                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setHoaDon(hoaDon);
+                    tt.setSoTien(tongTien);
+                    tt.setNgayTao(LocalDateTime.now());
+                    tt.setTrangThai("DANG_XU_LY");
+                    return thanhToanRepository.save(tt);
+                });
+
+        // Tạo bản ghi GiaoDichThanhToan qua QR/Ngân hàng
+        String maGiaoDich = (request.getMaGiaoDichNgoai() != null && !request.getMaGiaoDichNgoai().trim().isEmpty())
+                ? request.getMaGiaoDichNgoai()
+                : "QR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        GiaoDichThanhToan giaoDich = new GiaoDichThanhToan();
+        giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        giaoDich.setThanhToan(thanhToan);
+        giaoDich.setMaGiaoDich(maGiaoDich);
+        giaoDich.setPhuongThuc("VNPAY_QR");
+        giaoDich.setSoTien(tongTien);
+        giaoDich.setTrangThai("THANH_CONG");
+        giaoDich.setThoiGian(LocalDateTime.now());
+        giaoDichThanhToanRepository.save(giaoDich);
+
+        // Cập nhật trạng thái ThanhToan -> THANH_CONG
+        thanhToan.setTrangThai("THANH_CONG");
+        thanhToanRepository.save(thanhToan);
+
+        // Cập nhật trạng thái HoaDon -> DA_THANH_TOAN
+        hoaDon.setTrangThai("DA_THANH_TOAN");
+        hoaDonRepository.save(hoaDon);
+
+        // Cập nhật trạng thái LuotKham -> HOAN_TAT
+        LuotKham luotKham = hoaDon.getLuotKham();
+        if (luotKham != null) {
+            luotKham.setTrangThai("HOAN_TAT");
+            luotKhamRepository.save(luotKham);
+        }
+
+        log.info("Xác nhận thanh toán QR thành công cho hóa đơn: {}, mã giao dịch: {}",
+                hoaDon.getId(), maGiaoDich);
+
+        return KetQuaThanhToanResponse.builder()
+                .idThanhToan(thanhToan.getId())
+                .idGiaoDich(giaoDich.getIdGiaoDich())
+                .maGiaoDich(giaoDich.getMaGiaoDich())
+                .idHoaDon(hoaDon.getId())
+                .phuongThuc("VNPAY_QR")
+                .soTien(tongTien)
+                .trangThai("THANH_CONG")
+                .thoiGian(giaoDich.getThoiGian())
+                .thongBao("Xác nhận thanh toán qua QR/Ngân hàng thành công cho hóa đơn " + hoaDon.getId())
                 .build();
     }
 

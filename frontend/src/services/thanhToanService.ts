@@ -6,6 +6,8 @@ import {
   KetQuaThanhToanResponse,
   ThanhToanTienMatRequest,
   ThanhToanTienMatResponse,
+  ThongTinQrResponse,
+  ThanhToanQrRequest,
   GiaoDichResponse,
 } from '../types/billing';
 
@@ -47,6 +49,24 @@ export const thanhToanService = {
   },
 
   /**
+   * UC-19: Lấy thông tin mã VietQR ngân hàng phục vụ thanh toán
+   */
+  layThongTinQrThanhToan: async (idHoaDon: string): Promise<ThongTinQrResponse> => {
+    const res = await api.get<ThongTinQrResponse>(`/thanhtoan/qr/${idHoaDon}`);
+    return res.data;
+  },
+
+  /**
+   * UC-19: Xác nhận hoàn tất thanh toán qua chuyển khoản / QR ngân hàng
+   */
+  xacNhanThanhToanQr: async (
+    payload: ThanhToanQrRequest
+  ): Promise<KetQuaThanhToanResponse> => {
+    const res = await api.post<KetQuaThanhToanResponse>('/thanhtoan/qr-xac-nhan', payload);
+    return res.data;
+  },
+
+  /**
    * Lấy lịch sử giao dịch của hóa đơn
    */
   layLichSuGiaoDich: async (idHoaDon: string): Promise<GiaoDichResponse[]> => {
@@ -54,3 +74,4 @@ export const thanhToanService = {
     return res.data;
   },
 };
+

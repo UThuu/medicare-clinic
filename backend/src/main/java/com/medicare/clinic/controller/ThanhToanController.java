@@ -1,11 +1,13 @@
 package com.medicare.clinic.controller;
 
+import com.medicare.clinic.dto.request.ThanhToanQrRequest;
 import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.GiaoDichResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
 import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
+import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.service.interfaces.IThanhToanService;
 import lombok.RequiredArgsConstructor;
@@ -99,6 +101,54 @@ public class ThanhToanController {
             log.error("Lỗi khi thanh toán tiền mặt: ", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Không thể hoàn tất thanh toán tiền mặt: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * API UC-19: Lấy thông tin mã VietQR để thanh toán hóa đơn
+     */
+    @GetMapping("/qr/{idHoaDon}")
+    public ResponseEntity<?> layThongTinQrThanhToan(@PathVariable String idHoaDon) {
+        try {
+            ThongTinQrResponse response = thanhToanService.layThongTinQrThanhToan(idHoaDon);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        } catch (IllegalStateException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            log.error("Lỗi khi sinh mã VietQR: ", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi máy chủ khi sinh mã QR: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * API UC-19: Xác nhận thanh toán qua QR/Ngân hàng thành công
+     */
+    @PostMapping("/qr-xac-nhan")
+    public ResponseEntity<?> xacNhanThanhToanQr(@RequestBody ThanhToanQrRequest request) {
+        try {
+            KetQuaThanhToanResponse response = thanhToanService.xacNhanThanhToanQr(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (IllegalStateException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            log.error("Lỗi khi xác nhận thanh toán QR: ", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Không thể hoàn tất thanh toán QR: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

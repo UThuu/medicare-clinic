@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { HoaDonResponse, ThongTinThanhToanResponse } from '../../types/billing';
+import {
+  HoaDonResponse,
+  ThongTinThanhToanResponse,
+  ThongTinQrResponse,
+} from '../../types/billing';
 import { thanhToanService } from '../../services/thanhToanService';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
@@ -21,6 +25,12 @@ export const ThanhToanPage: React.FC = () => {
   const [tienKhachDuaInput, setTienKhachDuaInput] = useState<string>('');
   const [ghiChu, setGhiChu] = useState<string>('');
   const [processing, setProcessing] = useState<boolean>(false);
+
+  // QR Code & Ngân hàng (UC-19)
+  const [thongTinQr, setThongTinQr] = useState<ThongTinQrResponse | null>(null);
+  const [loadingQr, setLoadingQr] = useState<boolean>(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [maGiaoDichQrRef, setMaGiaoDichQrRef] = useState<string>('');
 
   // Toast thông báo
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -52,6 +62,18 @@ export const ThanhToanPage: React.FC = () => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
+  const loadQrCode = async (idHoaDon: string) => {
+    try {
+      setLoadingQr(true);
+      const qrData = await thanhToanService.layThongTinQrThanhToan(idHoaDon);
+      setThongTinQr(qrData);
+    } catch (err: any) {
+      showToast('Không thể tạo mã QR ngân hàng: ' + (err.response?.data?.error || err.message), 'error');
+    } finally {
+      setLoadingQr(false);
+    }
+  };
+
   const handleOpenThanhToan = async (idHoaDon: string) => {
     setSelectedHoaDonId(idHoaDon);
     setIsModalOpen(true);
@@ -59,6 +81,9 @@ export const ThanhToanPage: React.FC = () => {
     setPhuongThuc('TIEN_MAT');
     setGhiChu('');
     setTienKhachDuaInput('');
+    setThongTinQr(null);
+    setMaGiaoDichQrRef('');
+    setCopiedKey(null);
 
     try {
       const data = await thanhToanService.layThongTinThanhToan(idHoaDon);
@@ -73,6 +98,28 @@ export const ThanhToanPage: React.FC = () => {
     } finally {
       setLoadingDetail(false);
     }
+  };
+
+  const handleChonPhuongThuc = (pt: string) => {
+    setPhuongThuc(pt);
+    if ((pt === 'VNPAY_QR' || pt === 'CHUYEN_KHOAN') && selectedHoaDonId && !thongTinQr) {
+      loadQrCode(selectedHoaDonId);
+    }
+  };
+
+  const handleSaoChep = (key: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    showToast(`Đã sao chép: ${text}`, 'success');
+    setTimeout(() => {
+      setCopiedKey(null);
+    }, 2000);
+  };
+
+  const handleMoPhongNhanTien = () => {
+    const fakeRef = 'VCB' + Math.floor(10000000 + Math.random() * 90000000);
+    setMaGiaoDichQrRef(fakeRef);
+    showToast(`🔔 [Mô phỏng Vietcombank] Nhận biến động số dư: +${formatVND(tongTien)}! Mã GD: ${fakeRef}`, 'success');
   };
 
   const tongTien = thongTinThanhToan?.tongTien || 0;
@@ -115,6 +162,29 @@ export const ThanhToanPage: React.FC = () => {
       } finally {
         setProcessing(false);
       }
+    } else if (phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN') {
+      // UC-19: Xác nhận thanh toán QR / Chuyển khoản ngân hàng
+      try {
+        setProcessing(true);
+        const res = await thanhToanService.xacNhanThanhToanQr({
+          idHoaDon: selectedHoaDonId,
+          maGiaoDichNganHang: maGiaoDichQrRef.trim() || undefined,
+          ghiChu: ghiChu.trim() || undefined,
+        });
+
+        showToast(
+          `✓ Thanh toán QR thành công hóa đơn ${res.idHoaDon}! Mã GD: ${res.maGiaoDich}`,
+          'success'
+        );
+        setIsModalOpen(false);
+        setSelectedHoaDonId(null);
+        setThongTinThanhToan(null);
+        fetchDanhSach();
+      } catch (err: any) {
+        showToast('Xác nhận thanh toán QR thất bại: ' + (err.response?.data?.error || err.message), 'error');
+      } finally {
+        setProcessing(false);
+      }
     } else {
       try {
         setProcessing(true);
@@ -137,6 +207,7 @@ export const ThanhToanPage: React.FC = () => {
       }
     }
   };
+
 
   const filteredList = danhSachHoaDon.filter((hd) => {
     const q = searchTerm.toLowerCase();
@@ -324,10 +395,16 @@ export const ThanhToanPage: React.FC = () => {
                 variant="primary"
                 onClick={handleXacNhanThanhToan}
                 loading={processing}
-                disabled={processing || (phuongThuc === 'TIEN_MAT' && (!isDuTien || isChuaNhap))}
+                disabled={
+                  processing ||
+                  (phuongThuc === 'TIEN_MAT' && (!isDuTien || isChuaNhap)) ||
+                  ((phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN') && loadingQr)
+                }
               >
                 {phuongThuc === 'TIEN_MAT'
                   ? `✓ Xác nhận thu tiền mặt (${formatVND(thongTinThanhToan.tongTien)})`
+                  : phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN'
+                  ? `✓ Xác nhận đã nhận chuyển khoản QR (${formatVND(thongTinThanhToan.tongTien)})`
                   : `✓ Xác nhận thanh toán (${formatVND(thongTinThanhToan.tongTien)})`}
               </Button>
             </>
@@ -402,7 +479,7 @@ export const ThanhToanPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bộ chọn Phương thức thanh toán (UC-17) */}
+            {/* Bộ chọn Phương thức thanh toán (UC-17, UC-18, UC-19) */}
             <div className="payment-method-section">
               <h4>Phương thức thanh toán</h4>
               <div className="method-options">
@@ -416,7 +493,7 @@ export const ThanhToanPage: React.FC = () => {
                     name="paymentMethod"
                     value="TIEN_MAT"
                     checked={phuongThuc === 'TIEN_MAT'}
-                    onChange={(e) => setPhuongThuc(e.target.value)}
+                    onChange={(e) => handleChonPhuongThuc(e.target.value)}
                   />
                   <span className="method-icon">💵</span>
                   <div className="method-text">
@@ -429,18 +506,19 @@ export const ThanhToanPage: React.FC = () => {
                   className={`method-card ${
                     phuongThuc === 'VNPAY_QR' ? 'selected' : ''
                   }`}
+                  id="tab-method-qr"
                 >
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="VNPAY_QR"
                     checked={phuongThuc === 'VNPAY_QR'}
-                    onChange={(e) => setPhuongThuc(e.target.value)}
+                    onChange={(e) => handleChonPhuongThuc(e.target.value)}
                   />
                   <span className="method-icon">📱</span>
                   <div className="method-text">
                     <span className="method-title">Quét mã QR</span>
-                    <span className="method-desc">VietQR / VNPay QR</span>
+                    <span className="method-desc">VietQR / Vietcombank</span>
                   </div>
                 </label>
 
@@ -448,18 +526,19 @@ export const ThanhToanPage: React.FC = () => {
                   className={`method-card ${
                     phuongThuc === 'CHUYEN_KHOAN' ? 'selected' : ''
                   }`}
+                  id="tab-method-chuyen-khoan"
                 >
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="CHUYEN_KHOAN"
                     checked={phuongThuc === 'CHUYEN_KHOAN'}
-                    onChange={(e) => setPhuongThuc(e.target.value)}
+                    onChange={(e) => handleChonPhuongThuc(e.target.value)}
                   />
                   <span className="method-icon">🏦</span>
                   <div className="method-text">
                     <span className="method-title">Chuyển khoản</span>
-                    <span className="method-desc">Chuyển khoản qua số tài khoản</span>
+                    <span className="method-desc">Tài khoản Vietcombank</span>
                   </div>
                 </label>
 
@@ -473,7 +552,7 @@ export const ThanhToanPage: React.FC = () => {
                     name="paymentMethod"
                     value="TRUC_TUYEN"
                     checked={phuongThuc === 'TRUC_TUYEN'}
-                    onChange={(e) => setPhuongThuc(e.target.value)}
+                    onChange={(e) => handleChonPhuongThuc(e.target.value)}
                   />
                   <span className="method-icon">🌐</span>
                   <div className="method-text">
@@ -577,6 +656,156 @@ export const ThanhToanPage: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Chi tiết quét mã QR & Chuyển khoản ngân hàng (UC-19) */}
+            {(phuongThuc === 'VNPAY_QR' || phuongThuc === 'CHUYEN_KHOAN') && (
+              <div className="qr-payment-box" id="box-thanh-toan-qr">
+                <div className="qr-header">
+                  <div className="qr-header-title">
+                    <span>📱</span>
+                    <span>Thanh Toán Bằng Mã QR Ngân Hàng (UC-19)</span>
+                  </div>
+                  <span className="qr-bank-badge">VIETCOMBANK 24/7</span>
+                </div>
+
+                {loadingQr ? (
+                  <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+                    ⏳ Đang khởi tạo mã VietQR từ Vietcombank...
+                  </div>
+                ) : thongTinQr ? (
+                  <div className="qr-content-grid">
+                    {/* Cột trái: Ảnh mã VietQR */}
+                    <div className="qr-image-card">
+                      <div className="qr-image-wrapper">
+                        {thongTinQr.qrImageUrl ? (
+                          <img
+                            id="vietqr-image"
+                            src={thongTinQr.qrImageUrl}
+                            alt="VietQR Vietcombank"
+                            onError={(e) => {
+                              // Fallback nếu có lỗi mạng
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div style={{ padding: '20px', color: '#64748b' }}>Mã QR không khả dụng</div>
+                        )}
+                      </div>
+                      <div className="qr-scan-hint">
+                        Quét bằng App <strong>Vietcombank</strong> hoặc bất kỳ ngân hàng nào
+                      </div>
+                    </div>
+
+                    {/* Cột phải: Thông tin chuyển khoản chi tiết */}
+                    <div className="qr-details-card">
+                      <div className="qr-info-row">
+                        <span className="qr-info-label">Ngân hàng:</span>
+                        <div className="qr-info-val-group">
+                          <span className="qr-info-value" style={{ color: '#008848' }}>
+                            {thongTinQr.nganHang} (VCB)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="qr-info-row">
+                        <span className="qr-info-label">Chủ tài khoản:</span>
+                        <div className="qr-info-val-group">
+                          <span className="qr-info-value" id="val-ten-chu-tk">
+                            {thongTinQr.tenChuTaiKhoan}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="qr-info-row">
+                        <span className="qr-info-label">Số tài khoản:</span>
+                        <div className="qr-info-val-group">
+                          <span className="qr-info-value" id="val-so-tai-khoan" style={{ letterSpacing: '0.5px' }}>
+                            {thongTinQr.soTaiKhoan}
+                          </span>
+                          <button
+                            type="button"
+                            className={`qr-copy-btn ${copiedKey === 'stk' ? 'copied' : ''}`}
+                            onClick={() => handleSaoChep('stk', thongTinQr.soTaiKhoan)}
+                            id="btn-copy-stk"
+                          >
+                            {copiedKey === 'stk' ? '✓ Đã chép' : '📋 Chép'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="qr-info-row">
+                        <span className="qr-info-label">Số tiền:</span>
+                        <div className="qr-info-val-group">
+                          <span className="qr-info-value" style={{ color: '#0369a1', fontSize: '15px' }} id="val-so-tien-qr">
+                            {formatVND(thongTinQr.soTien)}
+                          </span>
+                          <button
+                            type="button"
+                            className={`qr-copy-btn ${copiedKey === 'tien' ? 'copied' : ''}`}
+                            onClick={() => handleSaoChep('tien', thongTinQr.soTien.toString())}
+                            id="btn-copy-tien"
+                          >
+                            {copiedKey === 'tien' ? '✓ Đã chép' : '📋 Chép'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="qr-info-row">
+                        <span className="qr-info-label">Nội dung CK:</span>
+                        <div className="qr-info-val-group">
+                          <span className="qr-info-value" style={{ color: '#d97706' }} id="val-noi-dung-qr">
+                            {thongTinQr.noiDung}
+                          </span>
+                          <button
+                            type="button"
+                            className={`qr-copy-btn ${copiedKey === 'noidung' ? 'copied' : ''}`}
+                            onClick={() => handleSaoChep('noidung', thongTinQr.noiDung)}
+                            id="btn-copy-noidung"
+                          >
+                            {copiedKey === 'noidung' ? '✓ Đã chép' : '📋 Chép'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Công cụ mô phỏng nhận tiền cho Tester */}
+                      <div className="qr-simulate-box">
+                        <div style={{ fontSize: '12px', color: '#1e40af' }}>
+                          🧪 <strong>Kiểm thử nhanh:</strong> Giả lập app Vietcombank đã chuyển khoản
+                        </div>
+                        <button
+                          type="button"
+                          className="qr-simulate-btn"
+                          onClick={handleMoPhongNhanTien}
+                          id="btn-simulate-transfer"
+                        >
+                          ⚡ Mô phỏng đã nhận tiền
+                        </button>
+                      </div>
+
+                      {/* Nhập mã giao dịch đối soát ngân hàng */}
+                      <div className="qr-ref-input-group">
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
+                          Mã giao dịch ngân hàng / Mã chuẩn chi:
+                        </label>
+                        <input
+                          type="text"
+                          className="custom-input"
+                          placeholder="Ví dụ: VCB-1038034475..."
+                          value={maGiaoDichQrRef}
+                          onChange={(e) => setMaGiaoDichQrRef(e.target.value)}
+                          id="input-ma-giao-dich-ref"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '20px', color: '#ef4444' }}>
+                    Không thể hiển thị thông tin QR. Vui lòng thử lại!
+                  </div>
+                )}
+              </div>
+            )}
+
 
             {/* Ghi chú giao dịch */}
             <div style={{ marginTop: '14px' }}>

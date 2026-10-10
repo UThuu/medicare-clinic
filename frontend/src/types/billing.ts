@@ -138,3 +138,21 @@ export interface ThanhToanTienMatResponse {
   thongBao: string;
 }
 
+export interface ThongTinQrResponse {
+  idHoaDon: string;
+  soTien: number;
+  nganHang: string;
+  maNganHang: string;
+  soTaiKhoan: string;
+  tenChuTaiKhoan: string;
+  noiDung: string;
+  qrImageUrl: string;
+  qrQuickLink: string;
+}
+
+export interface ThanhToanQrRequest {
+  idHoaDon: string;
+  maGiaoDichNganHang?: string;
+  ghiChu?: string;
+}
+

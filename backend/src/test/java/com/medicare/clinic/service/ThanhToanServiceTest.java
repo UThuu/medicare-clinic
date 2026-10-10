@@ -1,10 +1,12 @@
 package com.medicare.clinic.service;
 
+import com.medicare.clinic.dto.request.ThanhToanQrRequest;
 import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
 import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
+import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.*;
@@ -261,6 +263,78 @@ public class ThanhToanServiceTest {
                 () -> thanhToanService.thanhToanTienMat(request));
 
         assertTrue(ex.getMessage().contains("đã được thanh toán"));
+        verify(giaoDichThanhToanRepository, never()).save(any());
+    }
+
+    // ==========================================
+    // CÁC TEST CASES CHO UC-19 (THANH TOÁN QR / NGÂN HÀNG)
+    // ==========================================
+
+    @Test
+    @DisplayName("UC-19: Lấy thông tin mã VietQR thành công với đúng STK, chủ TK và nội dung")
+    void testLayThongTinQrThanhToan_ThanhCong() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        ThongTinQrResponse qrResponse = thanhToanService.layThongTinQrThanhToan("HD-001");
+
+        assertNotNull(qrResponse);
+        assertEquals("HD-001", qrResponse.getIdHoaDon());
+        assertEquals(BigDecimal.valueOf(200000), qrResponse.getSoTien());
+        assertEquals("Vietcombank", qrResponse.getNganHang());
+        assertEquals("1038034475", qrResponse.getSoTaiKhoan());
+        assertEquals("NGUYEN MAI NHUT TAN", qrResponse.getTenChuTaiKhoan());
+        assertEquals("MEDICARE HD-001", qrResponse.getNoiDung());
+        assertTrue(qrResponse.getQrImageUrl().contains("vietcombank-1038034475"));
+        assertTrue(qrResponse.getQrImageUrl().contains("200000"));
+    }
+
+    @Test
+    @DisplayName("UC-19 (E3): Báo lỗi khi lấy mã QR cho hóa đơn đã thanh toán")
+    void testLayThongTinQrThanhToan_DaThanhToan_BaoLoi() {
+        mockHoaDon.setTrangThai("DA_THANH_TOAN");
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        assertThrows(IllegalStateException.class, () -> thanhToanService.layThongTinQrThanhToan("HD-001"));
+    }
+
+    @Test
+    @DisplayName("UC-19: Xác nhận thanh toán qua QR thành công cập nhật trạng thái hóa đơn")
+    void testXacNhanThanhToanQr_ThanhCong() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
+        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+        when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+
+        ThanhToanQrRequest request = ThanhToanQrRequest.builder()
+                .idHoaDon("HD-001")
+                .maGiaoDichNgoai("VCB-TEST-123")
+                .ghiChu("Khách đã quét mã Vietcombank thành công")
+                .build();
+
+        KetQuaThanhToanResponse response = thanhToanService.xacNhanThanhToanQr(request);
+
+        assertNotNull(response);
+        assertEquals("HD-001", response.getIdHoaDon());
+        assertEquals("VNPAY_QR", response.getPhuongThuc());
+        assertEquals("THANH_CONG", response.getTrangThai());
+        assertEquals("VCB-TEST-123", response.getMaGiaoDich());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        verify(hoaDonRepository, times(1)).save(mockHoaDon);
+        verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
+    }
+
+    @Test
+    @DisplayName("UC-19 (E3): Chặn xác nhận thanh toán QR nếu hóa đơn đã được thanh toán")
+    void testXacNhanThanhToanQr_DaThanhToan_BaoLoi() {
+        mockHoaDon.setTrangThai("DA_THANH_TOAN");
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        ThanhToanQrRequest request = ThanhToanQrRequest.builder()
+                .idHoaDon("HD-001")
+                .build();
+
+        assertThrows(IllegalStateException.class, () -> thanhToanService.xacNhanThanhToanQr(request));
         verify(giaoDichThanhToanRepository, never()).save(any());
     }
 }
