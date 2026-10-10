@@ -19,7 +19,7 @@ public class BacSiGoiYDaTungKhamResponse {
         private String hoTenBacSi;
         private String chuyenKhoa;
         private String bangCap;
-        private Integer soLanKhamTruoc;
+        private Integer soLanKham;
         private LocalDate ngayKhamGanNhat;
     }
 }
