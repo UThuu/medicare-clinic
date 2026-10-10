@@ -176,6 +176,22 @@ export const ThanhToanPage: React.FC = () => {
       } finally {
         setProcessing(false);
       }
+    } else if (phuongThuc === 'TRUC_TUYEN') {
+      // UC-20: Thanh toán trực tuyến qua Cổng VNPay Gateway
+      try {
+        setProcessing(true);
+        const res = await thanhToanService.taoGiaoDichVNPay(selectedHoaDonId);
+        if (res.paymentUrl) {
+          showToast('Đang chuyển hướng sang Cổng thanh toán VNPay...', 'success');
+          window.location.href = res.paymentUrl;
+        } else {
+          showToast('Không lấy được URL thanh toán từ VNPay!', 'error');
+          setProcessing(false);
+        }
+      } catch (err: any) {
+        showToast('Khởi tạo giao dịch VNPay thất bại: ' + (err.response?.data?.error || err.message), 'error');
+        setProcessing(false);
+      }
     } else {
       try {
         setProcessing(true);
@@ -396,6 +412,8 @@ export const ThanhToanPage: React.FC = () => {
                   ? `✓ Xác nhận thu tiền mặt (${formatVND(thongTinThanhToan.tongTien)})`
                   : phuongThuc === 'VNPAY_QR'
                   ? `✓ Xác nhận đã nhận chuyển khoản QR (${formatVND(thongTinThanhToan.tongTien)})`
+                  : phuongThuc === 'TRUC_TUYEN'
+                  ? `🔗 Chuyển đến Cổng VNPay (${formatVND(thongTinThanhToan.tongTien)})`
                   : `✓ Xác nhận thanh toán (${formatVND(thongTinThanhToan.tongTien)})`}
               </Button>
             </>
@@ -752,6 +770,101 @@ export const ThanhToanPage: React.FC = () => {
                     Không thể hiển thị thông tin QR. Vui lòng thử lại!
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Chi tiết cổng thanh toán trực tuyến VNPay Gateway (UC-20) */}
+            {phuongThuc === 'TRUC_TUYEN' && (
+              <div className="vnpay-payment-box" id="box-thanh-toan-vnpay">
+                <div className="vnpay-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="vnpay-brand-badge">VNPAY GATEWAY</span>
+                    <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '15px' }}>
+                      Cổng Thanh Toán Trực Tuyến (UC-20)
+                    </span>
+                  </div>
+                  <span className="vnpay-sandbox-badge">SANDBOX TEST</span>
+                </div>
+
+                <div className="vnpay-info-card">
+                  <div style={{ fontSize: '13px', color: '#334155', lineHeight: 1.6 }}>
+                    Hệ thống sẽ kết nối an toàn với <strong>Cổng VNPay Gateway</strong>. Bệnh nhân có thể thanh toán qua:
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    <span className="badge badge-info" style={{ padding: '4px 10px' }}>🏦 40+ Ngân hàng Nội địa (ATM)</span>
+                    <span className="badge badge-info" style={{ padding: '4px 10px' }}>💳 Thẻ Quốc tế (Visa / Master / JCB)</span>
+                    <span className="badge badge-info" style={{ padding: '4px 10px' }}>📱 Ví điện tử VNPAY</span>
+                  </div>
+                </div>
+
+                {/* Thông tin thẻ thử nghiệm VNPay Sandbox */}
+                <div className="vnpay-test-card" id="card-vnpay-sandbox-info">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#0369a1' }}>
+                      🧪 THÔNG TIN THẺ TEST SANDBOX (NCB):
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>Bấm nút chép để điền nhanh</span>
+                  </div>
+
+                  <div className="vnpay-test-grid">
+                    <div className="vnpay-test-item">
+                      <span><strong>Ngân hàng:</strong> NCB</span>
+                      <button
+                        type="button"
+                        className={`qr-copy-btn ${copiedKey === 'ncb' ? 'copied' : ''}`}
+                        onClick={() => handleSaoChep('ncb', 'NCB')}
+                      >
+                        {copiedKey === 'ncb' ? '✓' : '📋'}
+                      </button>
+                    </div>
+
+                    <div className="vnpay-test-item">
+                      <span><strong>Số thẻ:</strong> 9704198526191432198</span>
+                      <button
+                        type="button"
+                        className={`qr-copy-btn ${copiedKey === 'sothe' ? 'copied' : ''}`}
+                        onClick={() => handleSaoChep('sothe', '9704198526191432198')}
+                      >
+                        {copiedKey === 'sothe' ? '✓' : '📋'}
+                      </button>
+                    </div>
+
+                    <div className="vnpay-test-item">
+                      <span><strong>Chủ thẻ:</strong> NGUYEN VAN A</span>
+                      <button
+                        type="button"
+                        className={`qr-copy-btn ${copiedKey === 'chuthe' ? 'copied' : ''}`}
+                        onClick={() => handleSaoChep('chuthe', 'NGUYEN VAN A')}
+                      >
+                        {copiedKey === 'chuthe' ? '✓' : '📋'}
+                      </button>
+                    </div>
+
+                    <div className="vnpay-test-item">
+                      <span><strong>Ngày PH:</strong> 07/15 | <strong>OTP:</strong> 123456</span>
+                      <button
+                        type="button"
+                        className={`qr-copy-btn ${copiedKey === 'otp' ? 'copied' : ''}`}
+                        onClick={() => handleSaoChep('otp', '123456')}
+                      >
+                        {copiedKey === 'otp' ? '✓' : '📋'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '16px' }}>
+                  <button
+                    type="button"
+                    className="vnpay-btn-primary"
+                    id="btn-goto-vnpay"
+                    onClick={handleXacNhanThanhToan}
+                    disabled={processing}
+                  >
+                    <span>{processing ? '⏳ Đang kết nối Cổng VNPay...' : '🔗 Chuyển Đến Cổng Thanh Toán VNPay'}</span>
+                    {!processing && <span>→</span>}
+                  </button>
+                </div>
               </div>
             )}
 

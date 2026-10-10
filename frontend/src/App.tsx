@@ -3,11 +3,17 @@ import { Header } from './pages/cashier/components/Header';
 import { Sidebar } from './pages/cashier/components/Sidebar';
 import { TaoHoaDonPage } from './pages/cashier/TaoHoaDonPage';
 import { ThanhToanPage } from './pages/cashier/ThanhToanPage';
+import { VNPayReturnPage } from './pages/cashier/VNPayReturnPage';
 import { thanhToanService } from './services/thanhToanService';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'cho-lap' | 'thanh-toan' | 'da-lap'>('thanh-toan');
   const [unpaidCount, setUnpaidCount] = useState<number>(0);
+
+  // Kiểm tra nếu đang ở trang callback của VNPay Gateway
+  const isVNPayCallback =
+    window.location.pathname.includes('/payment/vnpay-return') ||
+    window.location.search.includes('vnp_ResponseCode');
 
   useEffect(() => {
     thanhToanService
@@ -15,6 +21,16 @@ export const App: React.FC = () => {
       .then((data) => setUnpaidCount(data.length))
       .catch(() => {});
   }, [activeTab]);
+
+  if (isVNPayCallback) {
+    return (
+      <div className="app-container" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+        <div style={{ flex: 1 }}>
+          <VNPayReturnPage onBackToBilling={() => { window.location.href = '/'; }} />
+        </div>
+      </div>
+    );
+  }
 
   const getHeaderInfo = () => {
     switch (activeTab) {
@@ -26,7 +42,7 @@ export const App: React.FC = () => {
       case 'thanh-toan':
         return {
           title: 'Thu Ngân & Thanh Toán Hóa Đơn',
-          subtitle: 'Thực hiện UC-17 (Thanh toán viện phí) và UC-18 (Thanh toán tiền mặt & tính tiền thối lại)',
+          subtitle: 'Thực hiện UC-17 (Thanh toán viện phí), UC-18 (Tiền mặt), UC-19 (QR) & UC-20 (VNPay Gateway)',
         };
       case 'da-lap':
         return {

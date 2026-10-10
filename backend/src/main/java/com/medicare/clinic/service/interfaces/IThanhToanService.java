@@ -9,8 +9,11 @@ import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
 import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
+import com.medicare.clinic.dto.response.VNPayCallbackResponse;
+import com.medicare.clinic.dto.response.VNPayPaymentResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IThanhToanService {
 
@@ -45,7 +48,18 @@ public interface IThanhToanService {
     KetQuaThanhToanResponse xacNhanThanhToanQr(ThanhToanQrRequest request);
 
     /**
+     * UC-20: Khởi tạo liên kết thanh toán trực tuyến qua cổng VNPay Gateway
+     */
+    VNPayPaymentResponse taoGiaoDichVNPay(String idHoaDon);
+
+    /**
+     * UC-20: Xử lý và xác thực kết quả thanh toán từ VNPay Callback (IPN / Return)
+     */
+    VNPayCallbackResponse xuLyKetQuaVNPay(Map<String, String> vnpParams);
+
+    /**
      * Lấy lịch sử tất cả các lần thử giao dịch thanh toán của hóa đơn
      */
     List<GiaoDichResponse> layLichSuGiaoDich(String idHoaDon);
 }
+

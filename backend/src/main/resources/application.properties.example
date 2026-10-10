@@ -20,3 +20,11 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 
 # Logging
 logging.level.com.medicare.clinic=DEBUG
+
+# Cấu hình Cổng Thanh Toán Trực Tuyến VNPay Sandbox (UC-20)
+vnpay.payUrl=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+vnpay.tmnCode=${VNPAY_TMN_CODE:YOUR_TMN_CODE}
+vnpay.hashSecret=${VNPAY_HASH_SECRET:YOUR_HASH_SECRET}
+vnpay.returnUrl=http://localhost:5174/payment/vnpay-return
+vnpay.version=2.1.0
+vnpay.command=pay

@@ -9,6 +9,8 @@ import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
 import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
+import com.medicare.clinic.dto.response.VNPayCallbackResponse;
+import com.medicare.clinic.dto.response.VNPayPaymentResponse;
 import com.medicare.clinic.service.interfaces.IThanhToanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -149,6 +151,50 @@ public class ThanhToanController {
             log.error("Lỗi khi xác nhận thanh toán QR: ", e);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Không thể hoàn tất thanh toán QR: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * API UC-20: Khởi tạo liên kết thanh toán trực tuyến VNPay
+     */
+    @GetMapping("/vnpay/create/{idHoaDon}")
+    public ResponseEntity<?> taoGiaoDichVNPay(@PathVariable String idHoaDon) {
+        try {
+            VNPayPaymentResponse response = thanhToanService.taoGiaoDichVNPay(idHoaDon);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (IllegalStateException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        } catch (Exception e) {
+            log.error("Lỗi khi tạo liên kết thanh toán VNPay: ", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Không thể tạo liên kết thanh toán VNPay: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    /**
+     * API UC-20: Tiếp nhận và xác thực kết quả thanh toán từ VNPay Callback
+     */
+    @GetMapping("/vnpay/callback")
+    public ResponseEntity<?> xuLyKetQuaVNPay(@RequestParam Map<String, String> vnpParams) {
+        try {
+            VNPayCallbackResponse response = thanhToanService.xuLyKetQuaVNPay(vnpParams);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            log.error("Lỗi khi xử lý callback VNPay: ", e);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi xử lý kết quả VNPay: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

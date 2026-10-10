@@ -8,7 +8,12 @@ import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
 import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
+import com.medicare.clinic.dto.response.VNPayCallbackResponse;
+import com.medicare.clinic.dto.response.VNPayPaymentResponse;
 import com.medicare.clinic.entity.*;
+import com.medicare.clinic.payment.PaymentGateway;
+import com.medicare.clinic.payment.dto.PaymentRequest;
+import com.medicare.clinic.payment.dto.PaymentResponse;
 import com.medicare.clinic.repository.*;
 import com.medicare.clinic.service.impl.ThanhToanService;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
@@ -48,6 +53,9 @@ public class ThanhToanServiceTest {
 
     @Mock
     private IHoaDonService hoaDonService;
+
+    @Mock
+    private PaymentGateway paymentGateway;
 
     @InjectMocks
     private ThanhToanService thanhToanService;
@@ -337,4 +345,110 @@ public class ThanhToanServiceTest {
         assertThrows(IllegalStateException.class, () -> thanhToanService.xacNhanThanhToanQr(request));
         verify(giaoDichThanhToanRepository, never()).save(any());
     }
+
+    // ==========================================
+    // UC-20: THANH TOÁN TRỰC TUYẾN QUA VNPAY GATEWAY
+    // ==========================================
+
+    @Test
+    @DisplayName("UC-20: Khởi tạo liên kết thanh toán VNPay thành công")
+    void testTaoGiaoDichVNPay_ThanhCong() {
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
+        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+        when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+
+        PaymentResponse mockPaymentResponse = PaymentResponse.builder()
+                .paymentUrl("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=20000000")
+                .transactionId("HD-001_1728192839")
+                .status("SUCCESS")
+                .build();
+        when(paymentGateway.createPaymentRequest(any(PaymentRequest.class))).thenReturn(mockPaymentResponse);
+
+        VNPayPaymentResponse response = thanhToanService.taoGiaoDichVNPay("HD-001");
+
+        assertNotNull(response);
+        assertEquals("HD-001", response.getIdHoaDon());
+        assertTrue(response.getPaymentUrl().contains("vnpayment.vn"));
+        assertNotNull(response.getMaGiaoDich());
+        verify(paymentGateway, times(1)).createPaymentRequest(any(PaymentRequest.class));
+        verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
+    }
+
+    @Test
+    @DisplayName("UC-20 (E3): Chặn tạo liên kết VNPay nếu hóa đơn đã thanh toán")
+    void testTaoGiaoDichVNPay_DaThanhToan_BaoLoi() {
+        mockHoaDon.setTrangThai("DA_THANH_TOAN");
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+
+        assertThrows(IllegalStateException.class, () -> thanhToanService.taoGiaoDichVNPay("HD-001"));
+        verify(paymentGateway, never()).createPaymentRequest(any());
+    }
+
+    @Test
+    @DisplayName("UC-20: Xử lý callback VNPay thành công (ResponseCode 00) cập nhật hóa đơn DA_THANH_TOAN")
+    void testXuLyKetQuaVNPay_ThanhCong_00() {
+        java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
+        vnpParams.put("vnp_TxnRef", "HD-001_1728192839");
+        vnpParams.put("vnp_ResponseCode", "00");
+        vnpParams.put("vnp_TransactionNo", "14285790");
+        vnpParams.put("vnp_BankCode", "NCB");
+        vnpParams.put("vnp_Amount", "20000000");
+        vnpParams.put("vnp_PayDate", "20261010220000");
+        vnpParams.put("vnp_SecureHash", "VALID_HASH");
+
+        when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(true);
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
+        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+        when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
+        when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+
+        VNPayCallbackResponse response = thanhToanService.xuLyKetQuaVNPay(vnpParams);
+
+        assertNotNull(response);
+        assertEquals("HD-001", response.getIdHoaDon());
+        assertEquals("THANH_CONG", response.getTrangThai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        verify(hoaDonRepository, times(1)).save(mockHoaDon);
+    }
+
+    @Test
+    @DisplayName("UC-20: Xử lý callback VNPay sai chữ ký bảo mật phải ném ngoại lệ")
+    void testXuLyKetQuaVNPay_SaiChuKy_NemNgoaiLe() {
+        java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
+        vnpParams.put("vnp_SecureHash", "FAKE_HASH");
+        when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class, () -> thanhToanService.xuLyKetQuaVNPay(vnpParams));
+        verify(hoaDonRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("UC-20: Xử lý callback VNPay khi khách hủy giao dịch (ResponseCode 24)")
+    void testXuLyKetQuaVNPay_KhachHuy_24() {
+        java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
+        vnpParams.put("vnp_TxnRef", "HD-001_1728192839");
+        vnpParams.put("vnp_ResponseCode", "24");
+        vnpParams.put("vnp_TransactionNo", "0");
+        vnpParams.put("vnp_Amount", "20000000");
+        vnpParams.put("vnp_SecureHash", "VALID_HASH");
+
+        when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(true);
+        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
+        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+        when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
+        when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
+
+        VNPayCallbackResponse response = thanhToanService.xuLyKetQuaVNPay(vnpParams);
+
+        assertNotNull(response);
+        assertEquals("HD-001", response.getIdHoaDon());
+        assertEquals("THAT_BAI", response.getTrangThai());
+        assertEquals("CHUA_THANH_TOAN", mockHoaDon.getTrangThai()); // Hóa đơn vẫn giữ nguyên CHUA_THANH_TOAN
+        verify(hoaDonRepository, never()).save(mockHoaDon);
+    }
 }
+

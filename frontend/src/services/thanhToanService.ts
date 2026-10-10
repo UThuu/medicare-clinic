@@ -73,5 +73,23 @@ export const thanhToanService = {
     const res = await api.get<GiaoDichResponse[]>(`/thanhtoan/lich-su/${idHoaDon}`);
     return res.data;
   },
+
+  /**
+   * UC-20: Khởi tạo URL thanh toán trực tuyến qua Cổng VNPay Gateway
+   */
+  taoGiaoDichVNPay: async (idHoaDon: string): Promise<import('../types/billing').VNPayPaymentResponse> => {
+    const res = await api.get<import('../types/billing').VNPayPaymentResponse>(`/thanhtoan/vnpay/create/${idHoaDon}`);
+    return res.data;
+  },
+
+  /**
+   * UC-20: Xử lý kết quả callback từ VNPay Gateway
+   */
+  xuLyKetQuaVNPay: async (params: Record<string, string>): Promise<import('../types/billing').VNPayCallbackResponse> => {
+    const res = await api.get<import('../types/billing').VNPayCallbackResponse>('/thanhtoan/vnpay/callback', {
+      params,
+    });
+    return res.data;
+  },
 };
 

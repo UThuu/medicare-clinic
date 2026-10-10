@@ -156,3 +156,24 @@ export interface ThanhToanQrRequest {
   ghiChu?: string;
 }
 
+export interface VNPayPaymentResponse {
+  paymentUrl: string;
+  maGiaoDich: string;
+  idHoaDon: string;
+  soTien: number;
+  thongBao: string;
+}
+
+export interface VNPayCallbackResponse {
+  maGiaoDich: string;
+  maGiaoDichVNPay?: string;
+  idHoaDon: string;
+  soTien: number;
+  nganHang?: string;
+  maPhanHoi: string;
+  trangThai: string;
+  thanhCong: boolean;
+  thongBao: string;
+  thoiGian: string;
+}
+

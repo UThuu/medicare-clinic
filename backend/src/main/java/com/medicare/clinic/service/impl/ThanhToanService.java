@@ -17,8 +17,15 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import com.medicare.clinic.dto.response.VNPayCallbackResponse;
+import com.medicare.clinic.dto.response.VNPayPaymentResponse;
+import com.medicare.clinic.payment.PaymentGateway;
+import com.medicare.clinic.payment.dto.PaymentRequest;
+import com.medicare.clinic.payment.dto.PaymentResponse;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +39,7 @@ public class ThanhToanService implements IThanhToanService {
     private final GiaoDichThanhToanRepository giaoDichThanhToanRepository;
     private final LuotKhamRepository luotKhamRepository;
     private final IHoaDonService hoaDonService;
+    private final PaymentGateway paymentGateway;
 
     @Override
     @Transactional(readOnly = true)
@@ -419,6 +427,202 @@ public class ThanhToanService implements IThanhToanService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public VNPayPaymentResponse taoGiaoDichVNPay(String idHoaDon) {
+        log.info("Bắt đầu khởi tạo giao dịch VNPay cho hóa đơn: {}", idHoaDon);
+
+        if (idHoaDon == null || idHoaDon.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
+        }
+
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + idHoaDon));
+
+        // Chặn nếu hóa đơn đã thanh toán hoàn tất (E3)
+        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+            throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
+        }
+
+        BigDecimal tongTien = hoaDon.getTongTien();
+
+        // 1. Tìm hoặc tạo mới bản ghi ThanhToan (1-1 với HoaDon)
+        ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
+                .orElseGet(() -> {
+                    ThanhToan tt = new ThanhToan();
+                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setHoaDon(hoaDon);
+                    tt.setSoTien(tongTien);
+                    tt.setNgayTao(LocalDateTime.now());
+                    tt.setTrangThai("DANG_XU_LY");
+                    return thanhToanRepository.save(tt);
+                });
+
+        // 2. Tạo 1 bản ghi GiaoDichThanhToan mới (1 attempt theo REQ-088)
+        GiaoDichThanhToan giaoDich = new GiaoDichThanhToan();
+        giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        giaoDich.setThanhToan(thanhToan);
+        giaoDich.setMaGiaoDich("VNP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        giaoDich.setPhuongThuc("TRUC_TUYEN");
+        giaoDich.setSoTien(tongTien);
+        giaoDich.setTrangThai("DANG_XU_LY");
+        giaoDich.setThoiGian(LocalDateTime.now());
+        giaoDichThanhToanRepository.save(giaoDich);
+
+        // 3. Gọi PaymentGateway để sinh URL thanh toán VNPay
+        PaymentRequest paymentRequest = PaymentRequest.builder()
+                .orderId(hoaDon.getId())
+                .amount(tongTien)
+                .orderInfo("Thanh toan vien phi Medicare " + hoaDon.getId())
+                .build();
+
+        PaymentResponse paymentResponse = paymentGateway.createPaymentRequest(paymentRequest);
+
+        if (!"SUCCESS".equalsIgnoreCase(paymentResponse.getStatus())) {
+            giaoDich.setTrangThai("THAT_BAI");
+            giaoDichThanhToanRepository.save(giaoDich);
+            throw new IllegalStateException("Không thể tạo liên kết thanh toán VNPay: " + paymentResponse.getMessage());
+        }
+
+        return VNPayPaymentResponse.builder()
+                .idHoaDon(hoaDon.getId())
+                .tongTien(tongTien)
+                .paymentUrl(paymentResponse.getPaymentUrl())
+                .maGiaoDich(giaoDich.getMaGiaoDich())
+                .thoiGianTao(giaoDich.getThoiGian())
+                .thongBao("Khởi tạo liên kết thanh toán VNPay thành công")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public VNPayCallbackResponse xuLyKetQuaVNPay(Map<String, String> vnpParams) {
+        log.info("Bắt đầu xử lý kết quả callback từ VNPay: {}", vnpParams);
+
+        if (vnpParams == null || vnpParams.isEmpty()) {
+            throw new IllegalArgumentException("Tham số callback từ VNPay không hợp lệ!");
+        }
+
+        // 1. Kiểm tra chữ ký bảo mật checksum SHA512
+        boolean isValid = paymentGateway.verifyPaymentResult(vnpParams);
+        if (!isValid) {
+            log.error("Xác thực chữ ký VNPay thất bại! Dữ liệu có thể bị can thiệp trái phép.");
+            throw new IllegalArgumentException("Chữ ký dữ liệu VNPay không hợp lệ (Checksum verification failed)!");
+        }
+
+        // 2. Trích xuất thông tin giao dịch
+        String vnp_TxnRef = vnpParams.get("vnp_TxnRef");
+        String vnp_ResponseCode = vnpParams.get("vnp_ResponseCode");
+        String vnp_TransactionNo = vnpParams.get("vnp_TransactionNo");
+        String vnp_BankCode = vnpParams.get("vnp_BankCode");
+        String vnp_PayDate = vnpParams.get("vnp_PayDate");
+        String vnp_AmountStr = vnpParams.get("vnp_Amount");
+
+        if (vnp_TxnRef == null || vnp_TxnRef.isEmpty()) {
+            throw new IllegalArgumentException("Mã tham chiếu đơn hàng (vnp_TxnRef) không được để trống!");
+        }
+
+        // Parse idHoaDon từ vnp_TxnRef (ví dụ HD-xxx_17281928392)
+        String idHoaDon = vnp_TxnRef.contains("_") ? vnp_TxnRef.substring(0, vnp_TxnRef.lastIndexOf("_")) : vnp_TxnRef;
+
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + idHoaDon));
+
+        BigDecimal soTien = (vnp_AmountStr != null && !vnp_AmountStr.isEmpty())
+                ? new BigDecimal(vnp_AmountStr).divide(new BigDecimal(100))
+                : hoaDon.getTongTien();
+
+        ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
+                .orElseGet(() -> {
+                    ThanhToan tt = new ThanhToan();
+                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setHoaDon(hoaDon);
+                    tt.setSoTien(hoaDon.getTongTien());
+                    tt.setNgayTao(LocalDateTime.now());
+                    tt.setTrangThai("DANG_XU_LY");
+                    return thanhToanRepository.save(tt);
+                });
+
+        // Tìm giao dịch gần nhất đang xử lý của thanh toán này
+        List<GiaoDichThanhToan> dsGiaoDich = giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc(hoaDon.getId());
+        GiaoDichThanhToan giaoDich;
+        if (!dsGiaoDich.isEmpty()) {
+            giaoDich = dsGiaoDich.get(0);
+        } else {
+            giaoDich = new GiaoDichThanhToan();
+            giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+            giaoDich.setThanhToan(thanhToan);
+            giaoDich.setPhuongThuc("TRUC_TUYEN");
+            giaoDich.setSoTien(soTien);
+            giaoDich.setThoiGian(LocalDateTime.now());
+        }
+
+        boolean isThanhCong = "00".equals(vnp_ResponseCode);
+
+        if (isThanhCong) {
+            // Thanh toán thành công!
+            giaoDich.setTrangThai("THANH_CONG");
+            if (vnp_TransactionNo != null && !vnp_TransactionNo.isEmpty()) {
+                giaoDich.setMaGiaoDich("VNP-" + vnp_TransactionNo);
+            }
+            giaoDich.setThoiGian(LocalDateTime.now());
+            giaoDichThanhToanRepository.save(giaoDich);
+
+            thanhToan.setTrangThai("THANH_CONG");
+            thanhToanRepository.save(thanhToan);
+
+            hoaDon.setTrangThai("DA_THANH_TOAN");
+            hoaDonRepository.save(hoaDon);
+
+            LuotKham luotKham = hoaDon.getLuotKham();
+            if (luotKham != null) {
+                luotKham.setTrangThai("HOAN_TAT");
+                luotKhamRepository.save(luotKham);
+            }
+
+            log.info("Xử lý thanh toán VNPay thành công cho hóa đơn: {}, Mã GD VNPay: {}", idHoaDon, vnp_TransactionNo);
+
+            return VNPayCallbackResponse.builder()
+                    .idHoaDon(hoaDon.getId())
+                    .maGiaoDich(giaoDich.getMaGiaoDich())
+                    .maGiaoDichVNPay(vnp_TransactionNo)
+                    .soTien(soTien)
+                    .nganHang(vnp_BankCode)
+                    .thoiGianThanhToan(vnp_PayDate)
+                    .trangThai("THANH_CONG")
+                    .maPhanHoi(vnp_ResponseCode)
+                    .thongBao("Giao dịch thanh toán trực tuyến qua VNPay thành công!")
+                    .build();
+        } else {
+            // Thanh toán thất bại hoặc người dùng hủy
+            giaoDich.setTrangThai("THAT_BAI");
+            giaoDich.setThoiGian(LocalDateTime.now());
+            giaoDichThanhToanRepository.save(giaoDich);
+
+            // Giữ nguyên hóa đơn là CHUA_THANH_TOAN để khách có thể thanh toán lại theo SRS
+            log.warn("Thanh toán VNPay không thành công cho hóa đơn: {}, Mã phản hồi: {}", idHoaDon, vnp_ResponseCode);
+
+            String thongBaoLoi = "Giao dịch không thành công hoặc người dùng đã hủy (Mã lỗi: " + vnp_ResponseCode + ")";
+            if ("24".equals(vnp_ResponseCode)) {
+                thongBaoLoi = "Khách hàng đã hủy giao dịch thanh toán trên cổng VNPay.";
+            } else if ("11".equals(vnp_ResponseCode)) {
+                thongBaoLoi = "Giao dịch hết hạn thanh toán.";
+            }
+
+            return VNPayCallbackResponse.builder()
+                    .idHoaDon(hoaDon.getId())
+                    .maGiaoDich(giaoDich.getMaGiaoDich())
+                    .maGiaoDichVNPay(vnp_TransactionNo)
+                    .soTien(soTien)
+                    .nganHang(vnp_BankCode)
+                    .thoiGianThanhToan(vnp_PayDate)
+                    .trangThai("THAT_BAI")
+                    .maPhanHoi(vnp_ResponseCode)
+                    .thongBao(thongBaoLoi)
+                    .build();
+        }
+    }
+
     private HoaDonResponse chuyenThanhHoaDonResponse(HoaDon hd) {
         LuotKham lk = hd.getLuotKham();
         LichKham lkham = (lk != null) ? lk.getLichKham() : null;
@@ -443,3 +647,4 @@ public class ThanhToanService implements IThanhToanService {
                 .build();
     }
 }
+
