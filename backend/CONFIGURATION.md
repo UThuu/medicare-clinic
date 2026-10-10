@@ -1,6 +1,6 @@
 # Runtime configuration
 
-Supply `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` through the process environment or the hosting secret store. All three are required; there are no database defaults. `DB_URL` is a complete MySQL JDBC URL for the target database. `PORT` is optional (default 8082, matching the Vite development proxy).
+Supply `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` through the process environment or the hosting secret store. All three are required; there are no database defaults. `DB_URL` is a complete MySQL JDBC URL for the target database. `PORT` is optional: 8082 for local development (matching the Vite proxy), and 8080 for the prod profile/Docker image. Hosting must publish the port selected by `PORT`. See `DEPLOYMENT.md` for the container setup.
 
 An `.env` file is not loaded automatically by Spring Boot. Do not commit credentials, session cookies, or private backup patches. The schema must already exist: Hibernate uses `validate`, not `update`. No migration or seed runs automatically.
 
