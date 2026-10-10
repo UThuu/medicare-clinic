@@ -24,6 +24,11 @@ public interface LichKhamRepository extends JpaRepository<LichKham, String> {
             TrangThaiLichKham trangThai
     );
 
+    List<LichKham> findByBenhNhan_IdBenhNhanAndTrangThaiNotOrderByNgayKhamAscGioKhamAsc(
+        String idBenhNhan,
+        TrangThaiLichKham trangThai
+    );
+
     @Query("SELECT lk FROM LichKham lk " +
            "LEFT JOIN FETCH lk.luotKham " +
            "JOIN FETCH lk.benhNhan " +
