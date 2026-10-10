@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface SidebarProps {
-  activeTab: 'cho-lap' | 'da-lap';
-  onTabChange: (tab: 'cho-lap' | 'da-lap') => void;
+  activeTab: 'cho-lap' | 'thanh-toan' | 'da-lap';
+  onTabChange: (tab: 'cho-lap' | 'thanh-toan' | 'da-lap') => void;
   pendingCount: number;
   totalInvoiceCount: number;
 }
@@ -24,7 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="sidebar-menu">
-        <div className="sidebar-menu-title">Nghiệp vụ Hóa đơn (UC-15)</div>
+        <div className="sidebar-menu-title">Quản Lý Thu Ngân (TV4)</div>
 
         <div
           id="nav-tab-cho-lap"
@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onTabChange('cho-lap')}
         >
           <span>📋</span>
-          <span style={{ flex: 1 }}>Chờ lập hóa đơn</span>
+          <span style={{ flex: 1 }}>1. Lập hóa đơn (UC-15)</span>
           {pendingCount > 0 && (
             <span
               style={{
@@ -50,12 +50,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <div
+          id="nav-tab-thanh-toan"
+          className={`sidebar-nav-item ${activeTab === 'thanh-toan' ? 'active' : ''}`}
+          onClick={() => onTabChange('thanh-toan')}
+        >
+          <span>💳</span>
+          <span style={{ flex: 1 }}>2. Thanh toán (UC-17)</span>
+        </div>
+
+        <div
           id="nav-tab-da-lap"
           className={`sidebar-nav-item ${activeTab === 'da-lap' ? 'active' : ''}`}
           onClick={() => onTabChange('da-lap')}
         >
           <span>🧾</span>
-          <span style={{ flex: 1 }}>Hóa đơn đã lập</span>
+          <span style={{ flex: 1 }}>3. Hóa đơn đã lập</span>
           <span
             style={{
               background: '#e2e8f0',

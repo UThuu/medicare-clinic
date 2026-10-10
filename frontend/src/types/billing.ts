@@ -67,3 +67,54 @@ export interface LuotKhamChoHoaDonResponse {
   trangThaiLuotKham: string;
   daCoDonThuoc: boolean;
 }
+
+export interface GiaoDichResponse {
+  idGiaoDich: string;
+  maGiaoDich: string;
+  phuongThuc: string;
+  soTien: number;
+  trangThai: string;
+  thoiGian: string;
+}
+
+export interface ThongTinThanhToanResponse {
+  idHoaDon: string;
+  idThanhToan?: string;
+  idLuotKham?: string;
+  maBenhNhan: string;
+  tenBenhNhan: string;
+  soDienThoai: string;
+  diaChi?: string;
+  bacSiKham: string;
+  chuyenKhoa?: string;
+  chanDoan?: string;
+  ngayLapHoaDon: string;
+  phiKham: number;
+  tienThuoc: number;
+  tongTien: number;
+  trangThaiHoaDon: 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN' | 'HUY';
+  trangThaiThanhToan: string;
+  danhSachChiTiet: ChiTietKhoanThuDTO[];
+  lichSuGiaoDich: GiaoDichResponse[];
+}
+
+export interface XacNhanThanhToanRequest {
+  idHoaDon: string;
+  phuongThuc: string;
+  soTien?: number;
+  maGiaoDichNgoai?: string;
+  ghiChu?: string;
+}
+
+export interface KetQuaThanhToanResponse {
+  idThanhToan: string;
+  idGiaoDich: string;
+  maGiaoDich: string;
+  idHoaDon: string;
+  phuongThuc: string;
+  soTien: number;
+  trangThai: string;
+  thoiGian: string;
+  thongBao: string;
+}
+

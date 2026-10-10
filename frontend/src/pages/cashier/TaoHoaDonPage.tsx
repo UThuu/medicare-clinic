@@ -9,8 +9,16 @@ import { Button } from './components/Button';
 import { StatusBadge } from './components/StatusBadge';
 import { Modal } from './components/Modal';
 
-export const TaoHoaDonPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cho-lap' | 'da-lap'>('cho-lap');
+interface TaoHoaDonPageProps {
+  initialTab?: 'cho-lap' | 'da-lap';
+}
+
+export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-lap' }) => {
+  const [activeTab, setActiveTab] = useState<'cho-lap' | 'da-lap'>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   const [danhSachChoLap, setDanhSachChoLap] = useState<LuotKhamChoHoaDonResponse[]>([]);
   const [danhSachHoaDon, setDanhSachHoaDon] = useState<HoaDonResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
