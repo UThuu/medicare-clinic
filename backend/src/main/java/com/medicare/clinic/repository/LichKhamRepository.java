@@ -1,4 +1,4 @@
-﻿package com.medicare.clinic.repository;
+package com.medicare.clinic.repository;
 
 import com.medicare.clinic.entity.LichKham;
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;
