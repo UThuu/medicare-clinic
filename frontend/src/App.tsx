@@ -7,6 +7,7 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
+import { HoaDonTraCuu } from './pages/HoaDonTraCuu';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -53,6 +54,16 @@ const App: React.FC = () => {
           } 
         />
         
+
+        <Route
+          path="/staff/hoadon/tra-cuu"
+          element={
+            <ProtectedRoute allowedRoles={['THU_NGAN']}>
+              <HoaDonTraCuu />
+            </ProtectedRoute>
+          }
+        />
+
         <Route 
           path="/staff/schedules" 
           element={

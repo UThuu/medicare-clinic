@@ -1,0 +1,121 @@
+.mc-invoice-page {
+  display: grid;
+  gap: 20px;
+}
+
+.mc-invoice-page__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.mc-invoice-page__heading h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 700;
+}
+
+.mc-invoice-page__heading p {
+  margin: 6px 0 0;
+  color: var(--mc-neutral-600);
+}
+
+.mc-invoice-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.mc-invoice-filters__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.mc-invoice-result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.mc-invoice-result-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 26px;
+}
+
+.mc-invoice-muted {
+  color: var(--mc-neutral-600);
+  font-size: 13px;
+}
+
+.mc-invoice-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 0 0 20px;
+}
+
+.mc-invoice-detail-grid div {
+  min-width: 0;
+}
+
+.mc-invoice-detail-grid dt {
+  color: var(--mc-neutral-600);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.mc-invoice-detail-grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.mc-invoice-total {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mc-neutral-200);
+}
+
+.mc-invoice-total strong {
+  color: var(--mc-primary-700);
+  font-size: 20px;
+}
+
+@media (max-width: 1000px) {
+  .mc-invoice-filters {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mc-invoice-page__heading {
+    flex-direction: column;
+  }
+
+  .mc-invoice-page__heading h1 {
+    font-size: 23px;
+    line-height: 30px;
+  }
+
+  .mc-invoice-filters,
+  .mc-invoice-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-invoice-filters__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
