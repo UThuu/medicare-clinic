@@ -20,6 +20,7 @@ public class MedicalRecordResponse {
     private CurrentVisitInfo luotKhamHienTai;
     private VitalsInfo sinhHieuHienTai;
     private LatestVitalsInfo sinhHieuMoiNhat;
+    private List<VitalsInfo> lichSuSinhHieu;
     private List<AllergyInfo> diUng;
     private List<VisitHistoryInfo> lichSuKham;
 

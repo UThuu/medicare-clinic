@@ -115,6 +115,16 @@ public class DoctorRecordServiceImpl implements DoctorRecordService {
                     .build();
         }
 
+        // History Vitals
+        List<SinhHieu> allVitals = sinhHieuRepository.findLatestByBenhNhanId(benhNhan.getIdBenhNhan(), org.springframework.data.domain.Pageable.unpaged());
+        List<MedicalRecordResponse.VitalsInfo> lichSuSinhHieu = allVitals.stream().map(sh -> MedicalRecordResponse.VitalsInfo.builder()
+                .huyetApTamThu(sh.getHuyetApTamThu())
+                .huyetApTamTruong(sh.getHuyetApTamTruong())
+                .canNang(sh.getCanNang())
+                .nhietDo(sh.getNhietDo())
+                .thoiDiemDo(sh.getThoiDiemDo())
+                .build()).collect(Collectors.toList());
+
         // History
         List<LuotKham> historyEntities = luotKhamRepository.findHistoryByBenhNhanId(benhNhan.getIdBenhNhan(), lichKham.getIdLichKham());
         
@@ -146,6 +156,7 @@ public class DoctorRecordServiceImpl implements DoctorRecordService {
                 .luotKhamHienTai(visitInfo)
                 .sinhHieuHienTai(currentVitalsInfo)
                 .sinhHieuMoiNhat(latestVitalsInfo)
+                .lichSuSinhHieu(lichSuSinhHieu)
                 .diUng(allergyInfos)
                 .lichSuKham(historyInfos)
                 .build();

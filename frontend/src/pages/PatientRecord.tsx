@@ -272,107 +272,51 @@ export const PatientRecord: React.FC = () => {
                     </div>
                 )}
 
-                                {activeTab === 'sinh_hieu' && (
+                                                {activeTab === 'sinh_hieu' && (
                     <div className="bottom-row">
                         <div className="card history-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <div className="card-header">
-                                <h3>THÔNG TIN SINH HIỆU</h3>
+                                <h3>LỊCH SỬ SINH HIỆU</h3>
                             </div>
-                            <div className="card-body" style={{ padding: '1.5rem', display: 'flex', gap: '2rem', overflowY: 'auto' }}>
-                                
-                                {/* Cột Sinh hiệu hiện tại */}
-                                <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                    <h4 style={{ color: '#0f766e', marginBottom: '1rem', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.5rem' }}>
-                                        Sinh hiệu hiện tại
-                                        <span style={{ display: 'block', fontSize: '0.75em', color: '#64748b', marginTop: '4px', fontWeight: 'normal' }}>
-                                            (Theo lượt khám đang chọn)
-                                        </span>
-                                    </h4>
-                                    
-                                    {!record?.sinhHieuHienTai ? (
-                                        <div style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '2rem 0' }}>
-                                            Chưa ghi nhận sinh hiệu cho lượt khám này
-                                        </div>
-                                    ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ color: '#475569', fontWeight: '500' }}>Huyết áp:</span>
-                                                <span style={{ fontWeight: '600' }}>
-                                                    {record.sinhHieuHienTai.huyetApTamThu && record.sinhHieuHienTai.huyetApTamTruong 
-                                                        ? `${record.sinhHieuHienTai.huyetApTamThu}/${record.sinhHieuHienTai.huyetApTamTruong} mmHg` 
-                                                        : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 'normal' }}>Chưa đo</span>}
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ color: '#475569', fontWeight: '500' }}>Nhiệt độ:</span>
-                                                <span style={{ fontWeight: '600' }}>
-                                                    {record.sinhHieuHienTai.nhietDo 
-                                                        ? `${record.sinhHieuHienTai.nhietDo} °C` 
-                                                        : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 'normal' }}>Chưa đo</span>}
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ color: '#475569', fontWeight: '500' }}>Cân nặng:</span>
-                                                <span style={{ fontWeight: '600' }}>
-                                                    {record.sinhHieuHienTai.canNang 
-                                                        ? `${record.sinhHieuHienTai.canNang} kg` 
-                                                        : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 'normal' }}>Chưa đo</span>}
-                                                </span>
-                                            </div>
-                                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed #cbd5e1', fontSize: '0.85em', color: '#64748b' }}>
-                                                <strong>Thời điểm đo: </strong>
-                                                {record.sinhHieuHienTai.thoiDiemDo ? formatDateTime(record.sinhHieuHienTai.thoiDiemDo) : 'Chưa ghi nhận'}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Cột Sinh hiệu mới nhất */}
-                                <div style={{ flex: 1, backgroundColor: '#f0fdf4', padding: '1.5rem', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                                    <h4 style={{ color: '#166534', marginBottom: '1rem', borderBottom: '1px solid #bbf7d0', paddingBottom: '0.5rem' }}>
-                                        Sinh hiệu gần nhất
-                                        <span style={{ display: 'block', fontSize: '0.75em', color: '#15803d', marginTop: '4px', fontWeight: 'normal' }}>
-                                            (Dữ liệu sinh hiệu mới nhất của bệnh nhân)
-                                        </span>
-                                    </h4>
-                                    
-                                    {!record?.sinhHieuMoiNhat ? (
-                                        <div style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '2rem 0' }}>
-                                            Chưa ghi nhận sinh hiệu nào trong lịch sử
-                                        </div>
-                                    ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ color: '#475569', fontWeight: '500' }}>Huyết áp:</span>
-                                                <span style={{ fontWeight: '600' }}>
-                                                    {record.sinhHieuMoiNhat.huyetApTamThu && record.sinhHieuMoiNhat.huyetApTamTruong 
-                                                        ? `${record.sinhHieuMoiNhat.huyetApTamThu}/${record.sinhHieuMoiNhat.huyetApTamTruong} mmHg` 
-                                                        : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 'normal' }}>Chưa đo</span>}
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ color: '#475569', fontWeight: '500' }}>Nhiệt độ:</span>
-                                                <span style={{ fontWeight: '600' }}>
-                                                    {record.sinhHieuMoiNhat.nhietDo 
-                                                        ? `${record.sinhHieuMoiNhat.nhietDo} °C` 
-                                                        : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 'normal' }}>Chưa đo</span>}
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ color: '#475569', fontWeight: '500' }}>Cân nặng:</span>
-                                                <span style={{ fontWeight: '600' }}>
-                                                    {record.sinhHieuMoiNhat.canNang 
-                                                        ? `${record.sinhHieuMoiNhat.canNang} kg` 
-                                                        : <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 'normal' }}>Chưa đo</span>}
-                                                </span>
-                                            </div>
-                                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px dashed #bbf7d0', fontSize: '0.85em', color: '#15803d' }}>
-                                                <strong>Thời điểm đo: </strong>
-                                                {record.sinhHieuMoiNhat.thoiDiemDo ? formatDateTime(record.sinhHieuMoiNhat.thoiDiemDo) : 'Chưa ghi nhận'}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="card-body" style={{ padding: '0', flex: 1, overflowY: 'auto' }}>
+                                {!record?.lichSuSinhHieu || record.lichSuSinhHieu.length === 0 ? (
+                                    <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b', fontStyle: 'italic' }}>
+                                        Chưa ghi nhận sinh hiệu nào trong lịch sử
+                                    </div>
+                                ) : (
+                                    <table className="mc-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 1 }}>
+                                            <tr>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Thời điểm đo</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Huyết áp (mmHg)</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Nhiệt độ (°C)</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Cân nặng (kg)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {record.lichSuSinhHieu.map((sh, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '12px 16px' }}>{sh.thoiDiemDo ? formatDateTime(sh.thoiDiemDo) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa ghi nhận</span>}</td>
+                                                    <td style={{ padding: '12px 16px' }}>
+                                                        {sh.huyetApTamThu && sh.huyetApTamTruong 
+                                                            ? <strong>{sh.huyetApTamThu}/{sh.huyetApTamTruong}</strong> 
+                                                            : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa đo</span>}
+                                                    </td>
+                                                    <td style={{ padding: '12px 16px' }}>
+                                                        {sh.nhietDo 
+                                                            ? <span>{sh.nhietDo}</span> 
+                                                            : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa đo</span>}
+                                                    </td>
+                                                    <td style={{ padding: '12px 16px' }}>
+                                                        {sh.canNang 
+                                                            ? <span>{sh.canNang}</span> 
+                                                            : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa đo</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
                             </div>
                         </div>
                     </div>

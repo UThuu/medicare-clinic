@@ -56,6 +56,7 @@ export interface MedicalRecordResponse {
     luotKhamHienTai: CurrentVisitInfo | null;
     sinhHieuHienTai: VitalsInfo | null;
     sinhHieuMoiNhat: VitalsInfo | null;
+    lichSuSinhHieu: VitalsInfo[];
     diUng: AllergyInfo[];
     lichSuKham: VisitHistoryInfo[];
 }
