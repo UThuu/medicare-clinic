@@ -12,6 +12,8 @@ import type {
   BenhNhanTimKiemResponse,
 } from '../types/BenhNhanTimKiem';
 import './benhNhanTimKiem.css';
+import { BenhNhanTaoMoi } from './BenhNhanTaoMoi';
+import type { BenhNhanTaoMoiRequest, BenhNhanTaoMoiResponse } from '../types/BenhNhanTaoMoi';
 
 type KieuTimKiem = 'phone' | 'nameDob';
 
@@ -65,6 +67,8 @@ export function BenhNhanTimKiem() {
   const [benhNhanDangXem, setBenhNhanDangXem] = useState<BenhNhanTimKiemItem | null>(null);
   const [loi, setLoi] = useState('');
   const [dangTim, setDangTim] = useState(false);
+  const [taoMoi, setTaoMoi] = useState(false);
+  const [thongTinTim, setThongTinTim] = useState<Partial<BenhNhanTaoMoiRequest>>({});
 
   const columns: TableColumn<BenhNhanTimKiemItem>[] = useMemo(() => [
     {
@@ -131,6 +135,25 @@ export function BenhNhanTimKiem() {
     setBenhNhanDangXem(null);
   };
 
+  const openCreate = () => {
+    setThongTinTim(kieuTimKiem === 'phone' ? { soDienThoai: soDienThoai.trim() } : { hoTen: hoTen.trim(), ngaySinh });
+    setTaoMoi(true);
+  };
+  const handleSaved = (patient: BenhNhanTaoMoiResponse) => {
+    setKetQua({ thongBao: patient.thongBao, tongSoKetQua: 1, danhSachBenhNhan: [patient] });
+    setSoDienThoai(patient.soDienThoai); setKieuTimKiem('phone'); setLoi('');
+  };
+  if (taoMoi) return (
+    <ReceptionLayout section="reception">
+      <BenhNhanTaoMoi initialValues={thongTinTim} onBack={() => setTaoMoi(false)} onSaved={handleSaved}
+        onSelectExisting={patient => {
+          setKetQua({ thongBao: 'Đã chọn hồ sơ hiện có.', tongSoKetQua: 1, danhSachBenhNhan: [patient] });
+          setSoDienThoai(patient.soDienThoai); setKieuTimKiem('phone'); setLoi('');
+          setBenhNhanDangXem(patient); setTaoMoi(false);
+        }} />
+    </ReceptionLayout>
+  );
+
   const mainContent = (
     <div className="uc28-page">
       <div className="uc28-page-heading">
@@ -139,12 +162,12 @@ export function BenhNhanTimKiem() {
           <h1>Tìm kiếm hồ sơ bệnh nhân</h1>
           <p>Tìm hồ sơ hiện có để bắt đầu quy trình tiếp nhận.</p>
         </div>
-        <div className="uc28-heading-icon" aria-hidden="true">⌕</div>
+        <Button onClick={openCreate} disabled={dangTim}>Tạo hồ sơ</Button>
       </div>
 
       <div className="mc-reception-steps" aria-label="Các bước tiếp nhận">
         <span aria-current="step">1. Tìm hồ sơ<small>Đang khả dụng</small></span>
-        <button type="button" disabled>2. Tạo hồ sơ nếu chưa có<small>Chưa khả dụng</small></button>
+        <button type="button" disabled={dangTim} onClick={openCreate}>2. Tạo hồ sơ bệnh nhân<small>Đang khả dụng</small></button>
         <button type="button" disabled>3. Xác nhận tiếp nhận<small>Chưa khả dụng</small></button>
       </div>
       <Card className="uc28-search-card">
@@ -163,7 +186,8 @@ export function BenhNhanTimKiem() {
               role="radio"
               aria-checked={kieuTimKiem === 'phone'}
               className={`uc28-method-card ${kieuTimKiem === 'phone' ? 'is-active' : ''}`}
-              onClick={() => { setKieuTimKiem('phone'); setLoi(''); }}
+              disabled={dangTim}
+              onClick={() => { setKieuTimKiem('phone'); setLoi(''); setKetQua(null); }}
             >
               <span className="uc28-method-icon" aria-hidden="true">☎</span>
               <span className="uc28-method-copy">
@@ -177,7 +201,8 @@ export function BenhNhanTimKiem() {
               role="radio"
               aria-checked={kieuTimKiem === 'nameDob'}
               className={`uc28-method-card ${kieuTimKiem === 'nameDob' ? 'is-active' : ''}`}
-              onClick={() => { setKieuTimKiem('nameDob'); setLoi(''); }}
+              disabled={dangTim}
+              onClick={() => { setKieuTimKiem('nameDob'); setLoi(''); setKetQua(null); }}
             >
               <span className="uc28-method-icon" aria-hidden="true">▤</span>
               <span className="uc28-method-copy">
@@ -194,7 +219,8 @@ export function BenhNhanTimKiem() {
                 id="uc28-phone"
                 label="Số điện thoại bệnh nhân"
                 value={soDienThoai}
-                onChange={(event) => setSoDienThoai(event.target.value)}
+                onChange={(event) => { setSoDienThoai(event.target.value); setKetQua(null); }}
+                disabled={dangTim}
                 placeholder="Ví dụ: 0901234567"
                 autoComplete="tel"
                 helperText="Có thể nhập một phần số điện thoại để tìm hồ sơ phù hợp."
@@ -206,7 +232,8 @@ export function BenhNhanTimKiem() {
                 id="uc28-name"
                 label="Họ và tên"
                 value={hoTen}
-                onChange={(event) => setHoTen(event.target.value)}
+                onChange={(event) => { setHoTen(event.target.value); setKetQua(null); }}
+                disabled={dangTim}
                 placeholder="Nhập họ tên bệnh nhân"
                 autoComplete="name"
               />
@@ -216,7 +243,8 @@ export function BenhNhanTimKiem() {
                 type="date"
                 value={ngaySinh}
                 max={ngayHienTaiISO()}
-                onChange={(event) => setNgaySinh(event.target.value)}
+                onChange={(event) => { setNgaySinh(event.target.value); setKetQua(null); }}
+                disabled={dangTim}
               />
             </div>
           )}
@@ -257,7 +285,7 @@ export function BenhNhanTimKiem() {
               <div className="uc28-empty-state">
                 <div className="uc28-empty-icon" aria-hidden="true">⌕</div>
                 <strong>Không tìm thấy hồ sơ bệnh nhân</strong>
-                <p>Kiểm tra lại thông tin tìm kiếm hoặc thử một phương thức khác.</p>
+                <p>Kiểm tra lại thông tin tìm kiếm. Nếu bệnh nhân chưa có hồ sơ, có thể tạo mới.</p>
               </div>
             )}
           </>

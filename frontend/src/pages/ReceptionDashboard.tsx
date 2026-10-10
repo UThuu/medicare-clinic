@@ -21,7 +21,7 @@ export function ReceptionDashboard() {
           <section className="mc-reception-card mc-reception-function">
             <div className="mc-reception-function__heading">
               <span className="mc-reception-icon"><ReceptionIcon kind="patient" /></span>
-              <div><h2>Tiếp nhận bệnh nhân</h2><p>Tìm hồ sơ hiện có. Các bước tạo hồ sơ và xác nhận tiếp nhận chưa khả dụng.</p></div>
+              <div><h2>Tiếp nhận bệnh nhân</h2><p>Tìm hồ sơ hiện có hoặc tạo hồ sơ cho bệnh nhân mới. Xác nhận tiếp nhận chưa khả dụng.</p></div>
             </div>
             <Button size="lg" onClick={() => navigate('/staff/patient-search')}>Tiếp nhận</Button>
           </section>
@@ -58,8 +58,8 @@ export function ReceptionDashboard() {
         </section>
         <section className="mc-reception-card mc-reception-process">
           <span className="mc-reception-icon"><ReceptionIcon kind="document" /></span>
-          <div><h2>Quy trình tiếp nhận</h2><p>Tìm hồ sơ → Tạo mới nếu chưa có → Xác nhận lịch hẹn → Tiếp nhận → Chờ đo sinh hiệu</p>
-            <small>Hiện có bước tìm hồ sơ. Các bước tiếp theo chưa khả dụng.</small>
+          <div><h2>Quy trình tiếp nhận</h2><p>Tìm hồ sơ → Tạo hồ sơ mới → Xác nhận lịch hẹn → Tiếp nhận → Chờ đo sinh hiệu</p>
+            <small>Hiện có bước tìm và tạo hồ sơ. Các bước tiếp theo chưa khả dụng.</small>
           </div>
         </section>
       </div>

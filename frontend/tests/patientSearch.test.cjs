@@ -25,6 +25,7 @@ async function mount(search) {
     const calls = [];
     const { BenhNhanTimKiem } = load('pages/BenhNhanTimKiem.tsx', {
         react: React,
+        './BenhNhanTaoMoi': { BenhNhanTaoMoi: props => React.createElement('div', { id: 'creation', ...props }) },
         '../components/common/Alert': { Alert: container('aside') },
         '../components/common/Button': { Button: container('button') },
         '../components/common/Card': { Card: container('section') },
@@ -122,5 +123,24 @@ test('merged router retains protected UC28 and UC06/07/10 routes and removes pub
         const { default: App } = load('App.tsx', deps); let page;
         try { await act(async () => { page = create(React.createElement(App)); }); assert.ok(text(page.root).includes(expected)); }
         finally { if (page) act(() => page.unmount()); }
+    }
+});
+
+test('creation is available before search, with matching profiles, and with an empty result', async () => {
+    for (const result of [response, { thongBao: 'No match', tongSoKetQua: 0, danhSachBenhNhan: [] }]) {
+        const app = await mount(async () => result);
+        try {
+            const step = () => app.page.root.findAllByType('button').find(node => text(node).startsWith('2. Tạo hồ sơ'));
+            assert.equal(step().props.disabled, false);
+            assert.ok(app.page.root.findAllByType('button').some(node => text(node) === 'Tạo hồ sơ'));
+            await app.edit('uc28-phone', '0901234567'); await app.submit();
+            assert.equal(step().props.disabled, false);
+            await act(() => step().props.onClick());
+            const form = app.page.root.findByProps({ id: 'creation' });
+            assert.equal(form.props.initialValues.soDienThoai, '0901234567');
+            await act(() => form.props.onSaved({ ...response.danhSachBenhNhan[0], thongBao: 'Saved', idBenhNhan: 'NEW-SAVED-ID' }));
+            await act(() => app.page.root.findByProps({ id: 'creation' }).props.onBack());
+            assert.ok(text(app.page.root).includes('NEW-SAVED-ID')); assert.equal(step().props.disabled, false);
+        } finally { app.close(); }
     }
 });
