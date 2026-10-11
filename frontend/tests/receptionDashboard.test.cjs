@@ -24,6 +24,7 @@ function harness(user = { hoTen: 'Tên từ phiên đăng nhập', tenDangNhap: 
       if (id === 'react/jsx-runtime') return require(id);
       if (id === 'react-router-dom') return { useNavigate: () => (...args) => calls.push({ navigate: args }) };
       if (id.endsWith('contexts/AuthContext')) return { useAuth: () => ({ user, logout }) };
+      if (id.endsWith('cashier/TaoHoaDonPage')) return { TaoHoaDonPage: () => null };
       if (id.endsWith('services/scheduleService')) return { scheduleService: {
         getDoctorSchedule: async () => { calls.push({ schedule: true }); return [
           { idLichKham: 'DOCTOR-VISIT', gioKham: '09:00:00', tenBenhNhan: 'Persisted patient', idBenhNhan: 'P1', trangThaiLichKham: 'DA_TIEP_NHAN', trangThaiLuotKham: 'CHO_KHAM' },

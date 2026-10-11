@@ -32,6 +32,8 @@ public class HoaDon {
     private TrangThaiHoaDon trangThai;
     
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
     private List<ChiTietHoaDon> chiTietHoaDons;
 
     public void tinhTongChiPhi() {

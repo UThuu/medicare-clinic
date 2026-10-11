@@ -12,4 +12,5 @@ import java.util.List;
 public interface DonThuocRepository extends JpaRepository<DonThuoc, String> {
     @Query("SELECT d FROM DonThuoc d WHERE d.luotKham.idLuotKham IN :idLuotKhams")
     List<DonThuoc> findByLuotKham_IdLuotKhamIn(@Param("idLuotKhams") List<String> idLuotKhams);
+    java.util.Optional<DonThuoc> findByLuotKham_IdLuotKham(String id);
 }

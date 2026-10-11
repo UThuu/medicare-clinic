@@ -13,6 +13,8 @@ import { LichKhamDatTaiQuay } from './pages/LichKhamDatTaiQuay';
 import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
 import { RecordExamResult } from './pages/RecordExamResult';
 
+import { TaoHoaDonPage } from './pages/cashier/TaoHoaDonPage';
+
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
   const { user, isInitializing } = useAuth();
@@ -104,6 +106,7 @@ const App: React.FC = () => {
         <Route path="/patient/thong-bao-lich-kham" element={
           <ProtectedRoute allowedRoles={['BENH_NHAN']}><BenhNhanThongBaoLichKham /></ProtectedRoute>
         } />
+        <Route path="/staff/billing" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><TaoHoaDonPage /></ProtectedRoute>} />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

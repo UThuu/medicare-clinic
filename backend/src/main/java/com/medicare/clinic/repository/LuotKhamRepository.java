@@ -46,4 +46,14 @@ public interface LuotKhamRepository
             @Param("trangThai") TrangThaiLuotKham trangThai
     );
 
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM LuotKham l WHERE l.idLuotKham = :id")
+    java.util.Optional<LuotKham> findForBilling(@Param("id") String id);
+
+    @Query("SELECT l FROM LuotKham l WHERE l.trangThai = :status " +
+           "AND EXISTS (SELECT d.id FROM DonThuoc d WHERE d.luotKham = l) " +
+           "AND NOT EXISTS (SELECT h.id FROM HoaDon h WHERE h.luotKham = l) " +
+           "ORDER BY l.lichKham.ngayKham DESC, l.lichKham.gioKham DESC")
+    List<LuotKham> findReadyForBilling(@Param("status") TrangThaiLuotKham status);
 }
