@@ -45,4 +45,6 @@ public interface LichKhamRepository extends JpaRepository<LichKham, String> {
            "LEFT JOIN FETCH lk.luotKham " +
            "WHERE lk.idLichKham = :idLichKham")
     java.util.Optional<LichKham> findByIdWithDetails(@Param("idLichKham") String idLichKham);
+
+    List<LichKham> findByBenhNhan_IdBenhNhanAndTrangThaiNotOrderByNgayKhamAscGioKhamAsc(String idBenhNhan, TrangThaiLichKham trangThai);
 }

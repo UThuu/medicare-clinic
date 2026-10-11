@@ -7,6 +7,7 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
+import { LichKhamDatTrucTuyen } from './pages/LichKhamDatTrucTuyen';
 import { LichKhamDatTaiQuay } from './pages/LichKhamDatTaiQuay';
 import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
 import { RecordExamResult } from './pages/RecordExamResult';
@@ -95,6 +96,9 @@ const App: React.FC = () => {
         />
         <Route path="/staff/lich-kham/dat-tai-quay" element={
           <ProtectedRoute allowedRoles={['LE_TAN']}><LichKhamDatTaiQuay /></ProtectedRoute>
+        } />
+        <Route path="/patient/dat-lich-kham" element={
+          <ProtectedRoute allowedRoles={['BENH_NHAN']}><LichKhamDatTrucTuyen /></ProtectedRoute>
         } />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />

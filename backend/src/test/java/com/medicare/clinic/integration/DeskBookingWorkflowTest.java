@@ -88,7 +88,7 @@ class DeskBookingWorkflowTest {
         for (String role:List.of("BAC_SI","BENH_NHAN","DIEU_DUONG","THU_NGAN")) {
             mvc.perform(post("/api/lichkham/dat-tai-quay").session(session(role)).contentType("application/json").content(json.writeValueAsString(booking("09:00")))).andExpect(status().isForbidden());
             mvc.perform(get("/api/lichkham/bac-si").session(session(role))).andExpect(status().isForbidden());
-            mvc.perform(get("/api/lichkham/khung-gio").session(session(role)).param("maBacSi",doctor).param("ngayKham",date.toString())).andExpect(status().isForbidden());
+            if (!"BENH_NHAN".equals(role)) mvc.perform(get("/api/lichkham/khung-gio").session(session(role)).param("maBacSi",doctor).param("ngayKham",date.toString())).andExpect(status().isForbidden());
         }
     }
     @Test @Transactional(propagation=Propagation.NOT_SUPPORTED)

@@ -32,4 +32,18 @@ public interface LuotKhamRepository
     List<LuotKham> findHistoryByBenhNhanId(
             @Param("idBenhNhan") String idBenhNhan, 
             @Param("currentLichKhamId") String currentLichKhamId);
+    @Query("SELECT bs.maNv, nv.hoTen, bs.chuyenKhoa, bs.bangCap, " +
+           "COUNT(l.idLuotKham), MAX(lk.ngayKham) " +
+           "FROM LuotKham l " +
+           "JOIN l.lichKham lk " +
+           "JOIN lk.bacSi bs " +
+           "JOIN bs.nhanVien nv " +
+           "WHERE lk.benhNhan.idBenhNhan = :idBenhNhan AND l.trangThai = :trangThai " +
+           "GROUP BY bs.maNv, nv.hoTen, bs.chuyenKhoa, bs.bangCap " +
+           "ORDER BY COUNT(l.idLuotKham) DESC, MAX(lk.ngayKham) DESC")
+    List<Object[]> findDoctorHistoryByPatient(
+            @Param("idBenhNhan") String idBenhNhan,
+            @Param("trangThai") TrangThaiLuotKham trangThai
+    );
+
 }
