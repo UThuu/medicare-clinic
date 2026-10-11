@@ -4,13 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { PatientLayout, PatientIcon, type IconKind } from '../components/layout/PatientLayout';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { Table } from '../components/common/Table';
+import { PatientInvoicesCard } from './patient/PatientInvoicesCard';
 
 const functions: { kind: IconKind; title: string; description: string; action: string; available?: boolean }[] = [
   { kind: 'calendar', title: 'Đặt lịch khám', description: 'Chọn bác sĩ và thời gian phù hợp', action: 'Đặt lịch', available: true },
   { kind: 'bell', title: 'Thông báo', description: 'Xác nhận lịch hẹn và nhắc lịch khám', action: 'Xem thông báo', available: true },
   { kind: 'record', title: 'Hồ sơ y tế', description: 'Lịch sử khám, chẩn đoán và đơn thuốc', action: 'Xem hồ sơ' },
-  { kind: 'payment', title: 'Thanh toán', description: 'Xem hóa đơn và thanh toán trực tuyến', action: 'Xem hóa đơn' },
+  { kind: 'payment', title: 'Thanh toán', description: 'Xem hóa đơn và thanh toán trực tuyến', action: 'Xem hóa đơn', available: true },
 ];
 
 export function PatientDashboard() {
@@ -33,7 +33,7 @@ export function PatientDashboard() {
               </div>
               <div className="mc-patient-function__action">
                 <Button variant={item.available ? 'primary' : 'secondary'} disabled={!item.available}
-                  onClick={item.available ? () => navigate(item.kind === 'calendar' ? '/patient/dat-lich-kham' : '/patient/thong-bao-lich-kham') : undefined}>{item.action}</Button>
+                  onClick={item.available ? () => navigate(item.kind === 'calendar' ? '/patient/dat-lich-kham' : item.kind === 'payment' ? '/patient/payment' : '/patient/thong-bao-lich-kham') : undefined}>{item.action}</Button>
                 {!item.available && <small>Chưa khả dụng</small>}
               </div>
             </Card>
@@ -70,12 +70,7 @@ export function PatientDashboard() {
             <div className="mc-patient-note"><span aria-hidden="true">i</span><p>Nhắc trước 1 ngày và 2 giờ tại chuông thông báo.</p></div>
           </Card>
         </div>
-        <Card className="mc-patient-bills"><h2>Hóa đơn cần thanh toán</h2>
-          <Table columns={[
-            { key: 'id', header: 'Mã hóa đơn' }, { key: 'date', header: 'Ngày lập' },
-            { key: 'amount', header: 'Tổng tiền' }, { key: 'status', header: 'Trạng thái' }, { key: 'action', header: 'Thao tác' },
-          ]} data={[]} rowKey={(_, i) => i} emptyText="Chức năng đang được hoàn thiện" />
-        </Card>
+        <PatientInvoicesCard />
       </div>
     </PatientLayout>
   );

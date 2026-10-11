@@ -22,6 +22,7 @@ public class HoaDonService implements IHoaDonService {
     private final LuotKhamRepository luotKhamRepository;
     private final DonThuocRepository donThuocRepository;
     private final ThuNganRepository thuNganRepository;
+    private final GiaoDichThanhToanRepository giaoDichThanhToanRepository;
     @Value("${billing.exam-fee:${BILLING_EXAM_FEE:150000}}")
     private BigDecimal examFee;
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("9999999999.99");
@@ -42,13 +43,12 @@ public class HoaDonService implements IHoaDonService {
     private DonThuoc ready(LuotKham visit) {
         if (visit.getTrangThai() != TrangThaiLuotKham.HOAN_TAT)
             throw new IllegalStateException("Lượt khám chưa hoàn tất, chưa thể lập hóa đơn");
-        return donThuocRepository.findByLuotKham_IdLuotKham(visit.getIdLuotKham()).orElseThrow(() ->
-            new IllegalStateException("Chưa có đơn thuốc hoàn tất để lập hóa đơn"));
+        return donThuocRepository.findByLuotKham_IdLuotKham(visit.getIdLuotKham()).orElse(null);
     }
     private List<ChiTietHoaDon> charges(DonThuoc prescription, BigDecimal fee) {
         List<ChiTietHoaDon> details = new ArrayList<>();
         details.add(line("TIEN_KHAM", "Phí khám", 1, money(fee)));
-        if (prescription.getChiTietDonThuocs() != null) for (ChiTietDonThuoc drug : prescription.getChiTietDonThuocs()) {
+        if (prescription != null && prescription.getChiTietDonThuocs() != null) for (ChiTietDonThuoc drug : prescription.getChiTietDonThuocs()) {
             if (drug.getThuoc() == null || drug.getSoLuong() == null || drug.getSoLuong() <= 0)
                 throw new IllegalArgumentException("Chi tiết đơn thuốc không hợp lệ");
             details.add(line("TIEN_THUOC", drug.getThuoc().getTenThuoc(), drug.getSoLuong(), money(drug.getDonGia())));
@@ -81,7 +81,7 @@ public class HoaDonService implements IHoaDonService {
                 .maBenhNhan(p.getIdBenhNhan()).tenBenhNhan(p.getHoTen()).soDienThoai(p.getSoDienThoai())
                 .bacSiKham(d.getNhanVien().getHoTen()).chuyenKhoa(d.getChuyenKhoa()).ngayKham(a.getNgayKham())
                 .gioKham(a.getGioKham()).lyDoKham(v.getLyDoKham()).chanDoan(v.getChanDoan())
-                .trangThaiLuotKham(v.getTrangThai().name()).daCoDonThuoc(true).build();
+                .trangThaiLuotKham(v.getTrangThai().name()).daCoDonThuoc(donThuocRepository.findByLuotKham_IdLuotKham(v.getIdLuotKham()).isPresent()).build();
         }).toList();
     }
     @Override @Transactional(readOnly = true)
@@ -141,5 +141,18 @@ public class HoaDonService implements IHoaDonService {
     @Override @Transactional(readOnly = true)
     public List<HoaDonResponse> layDanhSachTatCaHoaDon() {
         return hoaDonRepository.findAllByOrderByNgayTaoDesc().stream().map(this::response).toList();
+    }
+
+    @Override @Transactional(readOnly = true)
+    public InHoaDonResponse layThongTinInHoaDon(String invoiceId) {
+        HoaDon h = hoaDonRepository.findById(id(invoiceId)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy hóa đơn"));
+        if(h.getTrangThai()!=TrangThaiHoaDon.DA_THANH_TOAN) throw new IllegalStateException("Vui lòng hoàn tất thanh toán trước khi in");
+        HoaDonResponse dto=response(h); BenhNhan p=h.getLuotKham().getLichKham().getBenhNhan();
+        GiaoDichThanhToan payment=giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc(h.getId()).stream().filter(GiaoDichThanhToan::isThanhCong).findFirst().orElse(null);
+        return InHoaDonResponse.builder().tenPhongKham("MediCare Clinic").idHoaDon(h.getId()).idLuotKham(dto.getIdLuotKham()).ngayLap(h.getNgayTao()).trangThai(h.getTrangThai().name())
+            .ngayThanhToan(payment==null?null:payment.getThoiGian()).maBenhNhan(p.getIdBenhNhan()).tenBenhNhan(p.getHoTen()).ngaySinh(p.getNgaySinh()).gioiTinh(p.getGioiTinh()==null?null:p.getGioiTinh().name()).soDienThoai(p.getSoDienThoai()).diaChi(p.getDiaChi())
+            .bacSiKham(dto.getBacSiKham()).chuyenKhoa(h.getLuotKham().getLichKham().getBacSi().getChuyenKhoa()).chanDoan(h.getLuotKham().getChanDoan()).lyDoKham(h.getLuotKham().getLyDoKham())
+            .danhSachKhoanThu(dto.getDanhSachChiTiet()).phiKham(dto.getPhiKham()).tienThuoc(dto.getTienThuoc()).tongTien(h.getTongTien()).tongTienBangChu(com.medicare.clinic.util.MoneyToWordsUtil.docSoTien(h.getTongTien()))
+            .phuongThucThanhToan(payment==null?null:payment.getPhuongThuc().name()).tenPhuongThuc(payment==null?null:payment.getPhuongThuc().name()).maGiaoDich(payment==null?null:payment.getMaGiaoDich()).thuNganThu(dto.getThuNganLap()).build();
     }
 }

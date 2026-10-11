@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 class HoaDonControllerTest {
  MockMvc mvc; IHoaDonService service;
- @BeforeEach void setup(){service=mock(IHoaDonService.class);mvc=MockMvcBuilders.standaloneSetup(new HoaDonController(service)).build();}
+ @BeforeEach void setup(){service=mock(IHoaDonService.class);mvc=MockMvcBuilders.standaloneSetup(new HoaDonController(service,mock(com.medicare.clinic.service.PaymentAccess.class))).build();}
  MockHttpSession session(String role){var s=new MockHttpSession();s.setAttribute("AUTH_USER",new LoginResponse("A","login","User",role,"TN",null));return s;}
  @Test void anonymousDenied() throws Exception {mvc.perform(get("/api/hoadon")).andExpect(status().isUnauthorized());verifyNoInteractions(service);}
  @Test void wrongRoleDenied() throws Exception {mvc.perform(get("/api/hoadon").session(session("LE_TAN"))).andExpect(status().isForbidden());verifyNoInteractions(service);}

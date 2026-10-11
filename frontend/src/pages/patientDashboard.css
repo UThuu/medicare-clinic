@@ -12,7 +12,6 @@ body:has(.mc-patient-app) { margin: 0; }
 .mc-patient-app svg { width: 26px; height: 26px; }
 .mc-patient-app .mc-sidebar__item.is-disabled { width: 100%; text-align: left; font: inherit; border: 0; border-left: 3px solid transparent; background: transparent; color: var(--mc-neutral-600); cursor: not-allowed; }
 .mc-patient-app .mc-sidebar__item small { display: block; font-size: 11px; line-height: 16px; color: var(--mc-neutral-500); }
-.mc-patient-app .mc-sidebar__logout { display: flex; align-items: center; gap: 14px; padding: 16px 14px; margin-top: 24px; border: 0; background: transparent; font: inherit; color: var(--mc-neutral-800); text-align: left; cursor: pointer; }
 .mc-patient-notification { display: grid; place-items: center; border: 0; padding: 8px; margin-right: 14px; background: transparent; color: var(--mc-neutral-600); cursor: not-allowed; }
 .mc-patient-app .mc-main { background: linear-gradient(120deg, #f4f9fc, #f7fbfd); padding: 30px 32px 24px; }
 .mc-patient-dashboard { max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
@@ -74,7 +73,8 @@ body:has(.mc-patient-app) { margin: 0; }
   .mc-patient-app .mc-sidebar { width: 100%; flex-basis: auto; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--mc-neutral-200); }
   .mc-patient-app .mc-sidebar nav { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
   .mc-patient-app .mc-sidebar__item { font-size: 14px; margin-bottom: 0; gap: 10px; }
-  .mc-patient-app .mc-sidebar__logout { margin-top: 6px; padding: 10px 14px; }
+  .mc-patient-app .mc-sidebar__logout { margin-top: 6px; padding: 10px 14px; justify-content: flex-start; gap: 14px; }
+  .mc-patient-app .mc-sidebar__logout span { display: inline; }
   .mc-patient-app .mc-main { padding: 20px 16px; }
   .mc-patient-heading h1 { font-size: 26px; }
   .mc-patient-heading p { font-size: 16px; }

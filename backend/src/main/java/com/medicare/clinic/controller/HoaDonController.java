@@ -20,6 +20,7 @@ import java.util.Map;
 @Slf4j
 public class HoaDonController {
     private final IHoaDonService service;
+    private final com.medicare.clinic.service.PaymentAccess access;
     private LoginResponse cashier(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null || !(session.getAttribute("AUTH_USER") instanceof LoginResponse user))
@@ -81,5 +82,10 @@ public class HoaDonController {
     public ResponseEntity<?> unexpected(Exception ex) {
         log.error("Billing request failed", ex);
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý hóa đơn. Vui lòng thử lại.");
+    }
+
+    @GetMapping("/{id}/in")
+    public ResponseEntity<?> print(@PathVariable String id, HttpServletRequest request) {
+        access.view(request,id); return ok(service.layThongTinInHoaDon(id));
     }
 }

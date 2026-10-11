@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 
 import { DoctorDashboard } from './DoctorDashboard';
-import { TaoHoaDonPage } from './cashier/TaoHoaDonPage';
+import { CashierBillingPage } from './cashier/CashierBillingPage';
 import { ReceptionDashboard } from './ReceptionDashboard';
 
 export const StaffDashboard: React.FC = () => {
@@ -14,7 +14,7 @@ export const StaffDashboard: React.FC = () => {
     return <DoctorDashboard />;
   }
 
-  if (user?.vaiTro === 'THU_NGAN') return <TaoHoaDonPage />;
+  if (user?.vaiTro === 'THU_NGAN') return <CashierBillingPage />;
 
   if (user?.vaiTro === 'LE_TAN') {
     return <ReceptionDashboard />;

@@ -63,8 +63,8 @@ class HoaDonServiceTest {
   creator();visit.setTrangThai(TrangThaiLuotKham.DANG_KHAM);
   assertThrows(IllegalStateException.class,()->service.taoHoaDon(request(null),"TN"));verify(entityManager,never()).persist(any());
  }
- @Test void missingPrescriptionRejected() {
-  creator();assertThrows(IllegalStateException.class,()->service.taoHoaDon(request(null),"TN"));
+ @Test void completedVisitWithoutPrescriptionChargesOnlyExamFee() {
+  creator();assertEquals(new BigDecimal("150000.00"),service.taoHoaDon(request(null),"TN").getTongTien());
  }
  @Test void negativeFeeRejected() {
   creator();when(donThuocRepository.findByLuotKham_IdLuotKham("V")).thenReturn(Optional.of(prescription));

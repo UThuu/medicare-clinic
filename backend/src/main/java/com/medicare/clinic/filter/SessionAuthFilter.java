@@ -26,7 +26,7 @@ public class SessionAuthFilter extends OncePerRequestFilter {
     // Map of HTTP Method -> Set of Paths
     private static final Map<String, Set<String>> PUBLIC_ENDPOINTS = Map.of(
             HttpMethod.POST.name(), Set.of("/api/auth/login", "/api/auth/logout"),
-            HttpMethod.GET.name(), Set.of("/api/auth/me")
+            HttpMethod.GET.name(), Set.of("/api/auth/me", "/api/thanhtoan/vnpay/callback")
     );
 
     @Override

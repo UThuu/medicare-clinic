@@ -1,3 +1,6 @@
+import { CashierBillingPage } from './pages/cashier/CashierBillingPage';
+import { ThanhToanOnlinePage } from './pages/patient/ThanhToanOnlinePage';
+import { VNPayReturnPage } from './pages/cashier/VNPayReturnPage';
 import React from 'react';
 import { BenhNhanThongBaoLichKham } from './pages/BenhNhanThongBaoLichKham';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -13,7 +16,6 @@ import { LichKhamDatTaiQuay } from './pages/LichKhamDatTaiQuay';
 import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
 import { RecordExamResult } from './pages/RecordExamResult';
 
-import { TaoHoaDonPage } from './pages/cashier/TaoHoaDonPage';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -106,7 +108,9 @@ const App: React.FC = () => {
         <Route path="/patient/thong-bao-lich-kham" element={
           <ProtectedRoute allowedRoles={['BENH_NHAN']}><BenhNhanThongBaoLichKham /></ProtectedRoute>
         } />
-        <Route path="/staff/billing" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><TaoHoaDonPage /></ProtectedRoute>} />
+        <Route path="/staff/billing" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><CashierBillingPage /></ProtectedRoute>} />
+        <Route path="/patient/payment" element={<ProtectedRoute allowedRoles={['BENH_NHAN']}><ThanhToanOnlinePage /></ProtectedRoute>} />
+        <Route path="/payment/vnpay-return" element={<ProtectedRoute allowedRoles={['BENH_NHAN']}><VNPayReturnPage onBackToBilling={() => { window.location.href='/patient/payment'; }} /></ProtectedRoute>} />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

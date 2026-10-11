@@ -19,7 +19,7 @@ export function PatientIcon({ kind }: { kind: IconKind }) {
 
 interface PatientLayoutProps {
   children: ReactNode;
-  active: 'overview' | 'notifications';
+  active: 'overview' | 'notifications' | 'payment';
   notifications: ReturnType<typeof useAppointmentNotifications>;
 }
 
@@ -47,6 +47,6 @@ export function PatientLayout({ children, active, notifications }: PatientLayout
       { label: 'Đặt lịch khám', href: '/patient/dat-lich-kham', icon: <PatientIcon kind="calendar" /> },
       { label: 'Thông báo', href: '/patient/thong-bao-lich-kham', icon: <PatientIcon kind="bell" />, active: active === 'notifications' },
       { label: 'Hồ sơ y tế', icon: <PatientIcon kind="record" />, disabled: true },
-      { label: 'Thanh toán', icon: <PatientIcon kind="payment" />, disabled: true },
+      { label: 'Thanh toán', href: '/patient/payment', icon: <PatientIcon kind="payment" />, active: active === 'payment' },
     ]}>{children}</MainLayout>;
 }
