@@ -1,3 +1,4 @@
+import { HoaDonTraCuu } from './pages/HoaDonTraCuu';
 import { CashierBillingPage } from './pages/cashier/CashierBillingPage';
 import { ThanhToanOnlinePage } from './pages/patient/ThanhToanOnlinePage';
 import { VNPayReturnPage } from './pages/cashier/VNPayReturnPage';
@@ -111,6 +112,7 @@ const App: React.FC = () => {
         <Route path="/staff/billing" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><CashierBillingPage /></ProtectedRoute>} />
         <Route path="/patient/payment" element={<ProtectedRoute allowedRoles={['BENH_NHAN']}><ThanhToanOnlinePage /></ProtectedRoute>} />
         <Route path="/payment/vnpay-return" element={<ProtectedRoute allowedRoles={['BENH_NHAN']}><VNPayReturnPage onBackToBilling={() => { window.location.href='/patient/payment'; }} /></ProtectedRoute>} />
+        <Route path="/staff/hoadon/tra-cuu" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><HoaDonTraCuu /></ProtectedRoute>} />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

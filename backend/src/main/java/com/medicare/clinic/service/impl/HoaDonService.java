@@ -1,5 +1,6 @@
 package com.medicare.clinic.service.impl;
 import com.medicare.clinic.dto.request.TaoHoaDonRequest;
+import com.medicare.clinic.dto.request.HoaDonTraCuuRequest;
 import com.medicare.clinic.dto.response.*;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.entity.enums.*;
@@ -155,4 +156,140 @@ public class HoaDonService implements IHoaDonService {
             .danhSachKhoanThu(dto.getDanhSachChiTiet()).phiKham(dto.getPhiKham()).tienThuoc(dto.getTienThuoc()).tongTien(h.getTongTien()).tongTienBangChu(com.medicare.clinic.util.MoneyToWordsUtil.docSoTien(h.getTongTien()))
             .phuongThucThanhToan(payment==null?null:payment.getPhuongThuc().name()).tenPhuongThuc(payment==null?null:payment.getPhuongThuc().name()).maGiaoDich(payment==null?null:payment.getMaGiaoDich()).thuNganThu(dto.getThuNganLap()).build();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public HoaDonTraCuuResponse traCuuHoaDon(HoaDonTraCuuRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Thong tin tra cuu hoa don khong duoc de trong.");
+        }
+
+        LocalDate tuNgay = request.getTuNgay();
+        LocalDate denNgay = request.getDenNgay();
+
+        if (tuNgay != null && denNgay != null && tuNgay.isAfter(denNgay)) {
+            throw new IllegalArgumentException("Tu ngay khong duoc sau den ngay.");
+        }
+
+        if (request.getPage() < 0 || request.getSize() < 1 || request.getSize() > 100) {
+            throw new IllegalArgumentException("Trang hoặc số lượng kết quả không hợp lệ.");
+        }
+        String idHoaDon = chuanHoa(request.getIdHoaDon());
+        if (idHoaDon != null && !idHoaDon.matches("[A-Za-z0-9_-]{1,36}")) {
+            throw new IllegalArgumentException("Mã hóa đơn không hợp lệ.");
+        }
+        String soDienThoai = chuanHoaSoDienThoai(request.getSoDienThoaiBenhNhan());
+        TrangThaiHoaDon trangThai = request.getTrangThai();
+
+        // Dung moc den ngay theo kieu exclusive de lay du toan bo ngay ket thuc.
+        LocalDateTime tuNgayDateTime = tuNgay == null ? null : tuNgay.atStartOfDay();
+        LocalDateTime denNgayExclusive = denNgay == null ? null : denNgay.plusDays(1).atStartOfDay();
+
+        org.springframework.data.domain.Page<HoaDon> hoaDons = hoaDonRepository.traCuuHoaDon(
+                idHoaDon,
+                soDienThoai,
+                tuNgayDateTime,
+                denNgayExclusive,
+                trangThai,
+                org.springframework.data.domain.PageRequest.of(request.getPage(), request.getSize())
+        );
+
+        List<HoaDonTraCuuResponse.HoaDonItem> danhSach = new ArrayList<>();
+        for (HoaDon hoaDon : hoaDons) {
+            danhSach.add(chuyenSangDTO(hoaDon));
+        }
+
+        HoaDonTraCuuResponse response = new HoaDonTraCuuResponse();
+        response.setDanhSachHoaDon(danhSach);
+        response.setTongSoKetQua(hoaDons.getTotalElements());
+        response.setPage(hoaDons.getNumber());
+        response.setSize(hoaDons.getSize());
+        response.setTotalPages(hoaDons.getTotalPages());
+        response.setThongBao(danhSach.isEmpty()
+                ? "Không tìm thấy hóa đơn phù hợp với điều kiện tra cứu."
+                : "Tìm thấy " + hoaDons.getTotalElements() + " hóa đơn.");
+        return response;
+    }
+
+    private HoaDonTraCuuResponse.HoaDonItem chuyenSangDTO(HoaDon hoaDon) {
+        HoaDonTraCuuResponse.HoaDonItem item = new HoaDonTraCuuResponse.HoaDonItem();
+        item.setIdHoaDon(hoaDon.getId());
+        item.setNgayTao(hoaDon.getNgayTao());
+        item.setTongTien(hoaDon.getTongTien());
+        item.setTrangThai(hoaDon.getTrangThai());
+
+        LuotKham luotKham = hoaDon.getLuotKham();
+        if (luotKham != null) {
+            item.setIdLuotKham(luotKham.getIdLuotKham());
+        }
+
+        LichKham lichKham = luotKham == null ? null : luotKham.getLichKham();
+        if (lichKham != null) {
+            BenhNhan benhNhan = lichKham.getBenhNhan();
+            if (benhNhan != null) {
+                item.setIdBenhNhan(benhNhan.getIdBenhNhan());
+                item.setHoTenBenhNhan(benhNhan.getHoTen());
+                item.setSoDienThoaiBenhNhan(benhNhan.getSoDienThoai());
+            }
+
+            BacSi bacSi = lichKham.getBacSi();
+            if (bacSi != null) {
+                item.setMaBacSi(bacSi.getMaNv());
+                NhanVien nhanVienBacSi = bacSi.getNhanVien();
+                if (nhanVienBacSi != null) {
+                    item.setTenBacSi(nhanVienBacSi.getHoTen());
+                }
+            }
+        }
+
+        ThuNgan thuNgan = hoaDon.getThuNgan();
+        if (thuNgan != null) {
+            NhanVien nhanVienThuNgan = thuNgan.getNhanVien();
+            if (nhanVienThuNgan != null) {
+                item.setHoTenThuNgan(nhanVienThuNgan.getHoTen());
+            }
+        }
+
+        List<HoaDonTraCuuResponse.ChiTietHoaDonItem> chiTietItems = new ArrayList<>();
+        if (hoaDon.getChiTietHoaDons() != null) {
+            for (ChiTietHoaDon chiTiet : hoaDon.getChiTietHoaDons()) {
+                if (chiTiet == null) {
+                    continue;
+                }
+                HoaDonTraCuuResponse.ChiTietHoaDonItem chiTietItem =
+                        new HoaDonTraCuuResponse.ChiTietHoaDonItem();
+                chiTietItem.setLoaiChiPhi(chiTiet.getLoaiChiPhi());
+                chiTietItem.setMoTa(chiTiet.getMoTa());
+                chiTietItem.setSoLuong(chiTiet.getSoLuong());
+                chiTietItem.setDonGia(chiTiet.getDonGia());
+                chiTietItem.setThanhTien(chiTiet.getThanhTien());
+                chiTietItems.add(chiTietItem);
+            }
+        }
+        item.setChiTietHoaDon(chiTietItems);
+        return item;
+    }
+
+    private String chuanHoa(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private String chuanHoaSoDienThoai(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        if (!value.trim().matches("[0-9+(). -]+")) {
+            throw new IllegalArgumentException("Số điện thoại chỉ được chứa chữ số và ký tự định dạng điện thoại.");
+        }
+        String digits = value.replaceAll("\\D", "");
+        if (digits.isEmpty() || digits.length() > 15) {
+            throw new IllegalArgumentException("Số điện thoại phải có từ 1 đến 15 chữ số.");
+        }
+        return digits;
+    }
+
 }

@@ -10,6 +10,8 @@ import com.medicare.clinic.dto.response.InHoaDonResponse;
 import java.util.List;
 
 public interface IHoaDonService {
+    com.medicare.clinic.dto.response.HoaDonTraCuuResponse traCuuHoaDon(
+        com.medicare.clinic.dto.request.HoaDonTraCuuRequest request);
     /**
      * Lấy danh sách các lượt khám đã hoàn tất khám / kê đơn nhưng chưa lập hóa đơn
      */

@@ -1,3 +1,6 @@
+import axios from 'axios';
+import { ApiError } from './authService';
+import type { HoaDonTraCuuRequest, HoaDonTraCuuResponse } from '../types/HoaDon';
 import api from './api';
 import {
   ChiPhiKhamPreviewResponse,
@@ -8,6 +11,17 @@ import {
 } from '../types/billing';
 
 export const hoaDonService = {
+  traCuuHoaDon: async (request: HoaDonTraCuuRequest): Promise<HoaDonTraCuuResponse> => {
+    try {
+      return (await api.get<HoaDonTraCuuResponse>('/hoadon/tra-cuu', { params: request })).data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new ApiError(error.response?.data?.error || error.response?.data?.message ||
+          'Không thể tra cứu hóa đơn. Vui lòng thử lại.', error.response?.status);
+      }
+      throw error;
+    }
+  },
   // Lấy danh sách lượt khám chờ lập hóa đơn
   getDanhSachChoLapHoaDon: async (): Promise<LuotKhamChoHoaDonResponse[]> => {
     const response = await api.get<LuotKhamChoHoaDonResponse[]>('/hoadon/cho-lap');

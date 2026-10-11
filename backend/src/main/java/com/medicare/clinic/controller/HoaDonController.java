@@ -34,6 +34,17 @@ public class HoaDonController {
     private ResponseEntity<?> ok(Object data) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(data);
     }
+    @GetMapping("/tra-cuu")
+    public ResponseEntity<?> search(@ModelAttribute com.medicare.clinic.dto.request.HoaDonTraCuuRequest filters,
+                                    HttpServletRequest request) {
+        cashier(request);
+        return ok(service.traCuuHoaDon(filters));
+    }
+    @ExceptionHandler({org.springframework.validation.BindException.class,
+                       org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<?> invalidFilters(Exception ex) {
+        return error(HttpStatus.BAD_REQUEST, "Điều kiện tra cứu không hợp lệ. Kiểm tra ngày, trạng thái và số trang.");
+    }
     @GetMapping("/cho-lap")
     public ResponseEntity<?> pending(HttpServletRequest request) {
         cashier(request); return ok(service.layDanhSachLuotKhamChoLapHoaDon());
@@ -76,7 +87,7 @@ public class HoaDonController {
     public ResponseEntity<?> invalid(IllegalArgumentException ex) { return error(HttpStatus.BAD_REQUEST, ex.getMessage()); }
     @ExceptionHandler({MethodArgumentNotValidException.class, org.springframework.http.converter.HttpMessageNotReadableException.class})
     public ResponseEntity<?> validation(Exception ex) {
-        return error(HttpStatus.BAD_REQUEST, "Mã lượt khám hoặc phí khám không hợp lệ");
+        return error(HttpStatus.BAD_REQUEST, "Dữ liệu hóa đơn hoặc điều kiện tra cứu không hợp lệ");
     }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> unexpected(Exception ex) {
