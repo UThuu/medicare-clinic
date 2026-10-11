@@ -25,12 +25,12 @@ export function ReceptionDashboard() {
             </div>
             <Button size="lg" onClick={() => navigate('/staff/patient-search')}>Tiếp nhận</Button>
           </section>
-          <section className="mc-reception-card mc-reception-function is-unavailable" aria-disabled="true">
+          <section className="mc-reception-card mc-reception-function">
             <div className="mc-reception-function__heading">
               <span className="mc-reception-icon"><ReceptionIcon kind="calendar" /></span>
               <div><h2>Đặt lịch</h2><p>Chọn bác sĩ và thời gian khám phù hợp.</p></div>
             </div>
-            <Button size="lg" disabled>Chưa khả dụng</Button>
+            <Button size="lg" onClick={() => navigate('/staff/lich-kham/dat-tai-quay')}>Đặt lịch</Button>
           </section>
           <section className="mc-reception-card mc-reception-function is-unavailable" aria-disabled="true">
             <div className="mc-reception-function__heading">
@@ -59,7 +59,7 @@ export function ReceptionDashboard() {
         <section className="mc-reception-card mc-reception-process">
           <span className="mc-reception-icon"><ReceptionIcon kind="document" /></span>
           <div><h2>Quy trình tiếp nhận</h2><p>Tìm hồ sơ → Tạo hồ sơ mới → Xác nhận lịch hẹn → Tiếp nhận → Chờ đo sinh hiệu</p>
-            <small>Hiện có bước tìm và tạo hồ sơ. Các bước tiếp theo chưa khả dụng.</small>
+            <small>Đã có tìm hồ sơ, tạo hồ sơ và đặt lịch. Tiếp nhận và danh sách chờ chưa khả dụng.</small>
           </div>
         </section>
       </div>

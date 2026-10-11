@@ -47,9 +47,9 @@ test('reception dashboard displays session identity, active reception entry, and
     assert.ok(nodeText(page.root).includes('Tên từ phiên đăng nhập'));
     assert.ok(nodeText(page.root).includes('Lễ tân'));
     const sidebar = page.root.findByType('aside');
-    assert.deepEqual(sidebar.findAllByType('a').map(x => x.props.href), ['/staff', '/staff/patient-search']);
+    assert.deepEqual(sidebar.findAllByType('a').map(x => x.props.href), ['/staff', '/staff/patient-search', '/staff/lich-kham/dat-tai-quay']);
     const unavailable = sidebar.findAllByType('button').filter(x => x.props.disabled);
-    assert.equal(unavailable.length, 2);
+    assert.equal(unavailable.length, 1);
     for (const button of unavailable) {
       assert.equal(button.props.href, undefined); assert.equal(button.props.onClick, undefined);
       assert.ok(nodeText(button).includes('Chưa khả dụng'));
@@ -57,7 +57,7 @@ test('reception dashboard displays session identity, active reception entry, and
     assert.ok(!nodeText(sidebar).includes('Tìm hồ sơ'));
     assert.ok(!nodeText(sidebar).includes('Tạo hồ sơ'));
     const features = page.root.findAllByProps({ 'aria-disabled': 'true' }).filter(x => x.type === 'section');
-    assert.equal(features.length, 2);
+    assert.equal(features.length, 1);
     for (const feature of features) assert.equal(feature.findByType('button').props.disabled, true);
     const reception = page.root.findAllByType('button').find(x => nodeText(x) === 'Tiếp nhận');
     await act(() => reception.props.onClick());

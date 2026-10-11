@@ -12,6 +12,14 @@ import java.util.List;
 
 @Repository
 public interface LichKhamRepository extends JpaRepository<LichKham, String> {
+    boolean existsByBacSi_MaNvAndNgayKhamAndGioKhamAndTrangThaiNot(
+            String maBacSi, java.time.LocalDate ngayKham, java.time.LocalTime gioKham,
+            com.medicare.clinic.entity.enums.TrangThaiLichKham trangThai);
+
+
+    @Query("select l.gioKham from LichKham l where l.bacSi.maNv = :doctor and l.ngayKham = :date and l.trangThai <> :cancelled")
+    List<java.time.LocalTime> findOccupiedTimes(@Param("doctor") String doctor, @Param("date") LocalDate date,
+                                               @Param("cancelled") TrangThaiLichKham cancelled);
 
     List<LichKham> findByBenhNhan_IdBenhNhanAndNgayKhamOrderByGioKhamAsc(
             String idBenhNhan,

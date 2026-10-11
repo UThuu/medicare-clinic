@@ -117,7 +117,7 @@ test('merged router retains protected UC28 and UC06/07/10 routes and removes pub
         const deps = { react: React, './contexts/AuthContext': { useAuth },
             'react-router-dom': { ...router, BrowserRouter: props => React.createElement(router.MemoryRouter, { initialEntries: [route] }, props.children) },
             './components/common/ProtectedRoute': protectedRoute };
-        for (const [file, name, label] of [['Login', 'Login', 'LOGIN'], ['PatientDashboard', 'PatientDashboard', 'PATIENT'], ['StaffDashboard', 'StaffDashboard', 'STAFF'], ['DoctorSchedule', 'DoctorSchedule', 'UC06'], ['PatientRecord', 'PatientRecord', 'UC07'], ['RecordExamResult', 'RecordExamResult', 'UC10'], ['BenhNhanTimKiem', 'BenhNhanTimKiem', 'UC28']]) {
+        for (const [file, name, label] of [['Login', 'Login', 'LOGIN'], ['PatientDashboard', 'PatientDashboard', 'PATIENT'], ['StaffDashboard', 'StaffDashboard', 'STAFF'], ['DoctorSchedule', 'DoctorSchedule', 'UC06'], ['PatientRecord', 'PatientRecord', 'UC07'], ['RecordExamResult', 'RecordExamResult', 'UC10'], ['BenhNhanTimKiem', 'BenhNhanTimKiem', 'UC28'], ['LichKhamDatTaiQuay', 'LichKhamDatTaiQuay', 'UC30']]) {
             deps['./pages/' + file] = { [name]: () => React.createElement('p', null, label) };
         }
         const { default: App } = load('App.tsx', deps); let page;

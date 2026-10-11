@@ -58,7 +58,7 @@ function layLoiValidation(
   return null;
 }
 
-export function BenhNhanTimKiem() {
+export function BenhNhanTimKiem({ embedded = false, onSelectPatient }: { embedded?: boolean; onSelectPatient?: (patient: BenhNhanTimKiemItem) => void } = {}) {
   const [kieuTimKiem, setKieuTimKiem] = useState<KieuTimKiem>('phone');
   const [soDienThoai, setSoDienThoai] = useState('');
   const [hoTen, setHoTen] = useState('');
@@ -85,6 +85,9 @@ export function BenhNhanTimKiem() {
     { key: 'ngaySinh', header: 'Ngày sinh', width: '115px', render: (bn) => dinhDangNgay(bn.ngaySinh) },
     { key: 'gioiTinh', header: 'Giới tính', width: '90px', render: (bn) => hienThiGioiTinh(bn.gioiTinh) },
     { key: 'soDienThoai', header: 'Số điện thoại', width: '135px', render: (bn) => bn.soDienThoai || '—' },
+    ...(onSelectPatient ? [{ key: 'select', header: 'Chọn hồ sơ', render: (bn: BenhNhanTimKiemItem) => (
+      <Button type="button" size="sm" onClick={() => onSelectPatient(bn)}>Chọn bệnh nhân</Button>
+    ) }] : []),
     {
       key: 'actions',
       header: 'Thao tác',
@@ -95,7 +98,7 @@ export function BenhNhanTimKiem() {
         </Button>
       ),
     },
-  ], []);
+  ], [onSelectPatient]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -142,25 +145,29 @@ export function BenhNhanTimKiem() {
   const handleSaved = (patient: BenhNhanTaoMoiResponse) => {
     setKetQua({ thongBao: patient.thongBao, tongSoKetQua: 1, danhSachBenhNhan: [patient] });
     setSoDienThoai(patient.soDienThoai); setKieuTimKiem('phone'); setLoi('');
+    if (onSelectPatient) onSelectPatient(patient);
   };
-  if (taoMoi) return (
-    <ReceptionLayout section="reception">
+  if (taoMoi) {
+    const creation = (
       <BenhNhanTaoMoi initialValues={thongTinTim} onBack={() => setTaoMoi(false)} onSaved={handleSaved}
         onSelectExisting={patient => {
           setKetQua({ thongBao: 'Đã chọn hồ sơ hiện có.', tongSoKetQua: 1, danhSachBenhNhan: [patient] });
           setSoDienThoai(patient.soDienThoai); setKieuTimKiem('phone'); setLoi('');
-          setBenhNhanDangXem(patient); setTaoMoi(false);
+          if (onSelectPatient) onSelectPatient(patient);
+          else setBenhNhanDangXem(patient);
+          setTaoMoi(false);
         }} />
-    </ReceptionLayout>
-  );
+    );
+    return embedded ? creation : <ReceptionLayout section="reception">{creation}</ReceptionLayout>;
+  }
 
   const mainContent = (
     <div className="uc28-page">
       <div className="uc28-page-heading">
         <div>
-          <div className="uc28-eyebrow">TIẾP NHẬN BỆNH NHÂN · BƯỚC 1</div>
+          <div className="uc28-eyebrow">{onSelectPatient ? 'ĐẶT LỊCH KHÁM TẠI QUẦY · BƯỚC 1' : 'TIẾP NHẬN BỆNH NHÂN · BƯỚC 1'}</div>
           <h1>Tìm kiếm hồ sơ bệnh nhân</h1>
-          <p>Tìm hồ sơ hiện có để bắt đầu quy trình tiếp nhận.</p>
+          <p>{onSelectPatient ? 'Tìm hoặc tạo hồ sơ, rồi chọn bệnh nhân để đặt lịch khám.' : 'Tìm hồ sơ hiện có để bắt đầu quy trình tiếp nhận.'}</p>
         </div>
         <Button onClick={openCreate} disabled={dangTim}>Tạo hồ sơ</Button>
       </div>
@@ -168,7 +175,8 @@ export function BenhNhanTimKiem() {
       <div className="mc-reception-steps" aria-label="Các bước tiếp nhận">
         <span aria-current="step">1. Tìm hồ sơ<small>Đang khả dụng</small></span>
         <button type="button" disabled={dangTim} onClick={openCreate}>2. Tạo hồ sơ bệnh nhân<small>Đang khả dụng</small></button>
-        <button type="button" disabled>3. Xác nhận tiếp nhận<small>Chưa khả dụng</small></button>
+        {onSelectPatient ? <span>3. Chọn bác sĩ và giờ khám<small>Sau khi chọn bệnh nhân</small></span>
+          : <button type="button" disabled>3. Xác nhận tiếp nhận<small>Chưa khả dụng</small></button>}
       </div>
       <Card className="uc28-search-card">
         <div className="uc28-section-heading">
@@ -326,5 +334,5 @@ export function BenhNhanTimKiem() {
     </div>
   );
 
-  return <ReceptionLayout section="reception">{mainContent}</ReceptionLayout>;
+  return embedded ? mainContent : <ReceptionLayout section="reception">{mainContent}</ReceptionLayout>;
 }
