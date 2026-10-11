@@ -26,6 +26,16 @@ public class HoaDonService implements IHoaDonService {
     private final GiaoDichThanhToanRepository giaoDichThanhToanRepository;
     @Value("${billing.exam-fee:${BILLING_EXAM_FEE:150000}}")
     private BigDecimal examFee;
+    @Value("${clinic.name:${CLINIC_NAME:PHÒNG KHÁM ĐA KHOA QUỐC TẾ MEDICARE}}")
+    private String clinicName;
+    @Value("${clinic.address:${CLINIC_ADDRESS:123 Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh}}")
+    private String clinicAddress;
+    @Value("${clinic.hotline:${CLINIC_HOTLINE:1900 6868 - (028) 3835 1024}}")
+    private String clinicHotline;
+    @Value("${clinic.email:${CLINIC_EMAIL:contact@medicare-clinic.vn}}")
+    private String clinicEmail;
+    @Value("${clinic.website:${CLINIC_WEBSITE:https://medicare-clinic.vn}}")
+    private String clinicWebsite;
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("9999999999.99");
     private String id(String value) {
         if (value == null || value.isBlank() || value.trim().length() > 36)
@@ -150,7 +160,9 @@ public class HoaDonService implements IHoaDonService {
         if(h.getTrangThai()!=TrangThaiHoaDon.DA_THANH_TOAN) throw new IllegalStateException("Vui lòng hoàn tất thanh toán trước khi in");
         HoaDonResponse dto=response(h); BenhNhan p=h.getLuotKham().getLichKham().getBenhNhan();
         GiaoDichThanhToan payment=giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc(h.getId()).stream().filter(GiaoDichThanhToan::isThanhCong).findFirst().orElse(null);
-        return InHoaDonResponse.builder().tenPhongKham("MediCare Clinic").idHoaDon(h.getId()).idLuotKham(dto.getIdLuotKham()).ngayLap(h.getNgayTao()).trangThai(h.getTrangThai().name())
+        return InHoaDonResponse.builder().tenPhongKham(clinicName)
+            .diaChiPhongKham(clinicAddress).hotline(clinicHotline).email(clinicEmail).website(clinicWebsite)
+            .idHoaDon(h.getId()).idLuotKham(dto.getIdLuotKham()).ngayLap(h.getNgayTao()).trangThai(h.getTrangThai().name())
             .ngayThanhToan(payment==null?null:payment.getThoiGian()).maBenhNhan(p.getIdBenhNhan()).tenBenhNhan(p.getHoTen()).ngaySinh(p.getNgaySinh()).gioiTinh(p.getGioiTinh()==null?null:p.getGioiTinh().name()).soDienThoai(p.getSoDienThoai()).diaChi(p.getDiaChi())
             .bacSiKham(dto.getBacSiKham()).chuyenKhoa(h.getLuotKham().getLichKham().getBacSi().getChuyenKhoa()).chanDoan(h.getLuotKham().getChanDoan()).lyDoKham(h.getLuotKham().getLyDoKham())
             .danhSachKhoanThu(dto.getDanhSachChiTiet()).phiKham(dto.getPhiKham()).tienThuoc(dto.getTienThuoc()).tongTien(h.getTongTien()).tongTienBangChu(com.medicare.clinic.util.MoneyToWordsUtil.docSoTien(h.getTongTien()))

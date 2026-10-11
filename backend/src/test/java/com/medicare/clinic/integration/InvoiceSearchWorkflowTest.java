@@ -89,4 +89,17 @@ class InvoiceSearchWorkflowTest {
  @Test void searchRouteHasSpaFallback() throws Exception {
   mvc.perform(get("/staff/hoadon/tra-cuu")).andExpect(status().isOk()).andExpect(forwardedUrl("/index.html"));
  }
+ @Test void printIncludesClinicContactInformationForCashierAndPatient() throws Exception {
+  for (String role : List.of("THU_NGAN", "BENH_NHAN")) {
+   var login = new MockHttpSession();
+   login.setAttribute("AUTH_USER", new LoginResponse("UC22-AUTH", "synthetic", "Synthetic user", role,
+       role.equals("THU_NGAN") ? "UC22-CASH" : null, role.equals("BENH_NHAN") ? "UC22-A" : null));
+   mvc.perform(get("/api/hoadon/H-00/in").session(login)).andExpect(status().isOk())
+    .andExpect(jsonPath("$.tenPhongKham").value("PHÒNG KHÁM ĐA KHOA QUỐC TẾ MEDICARE"))
+    .andExpect(jsonPath("$.diaChiPhongKham").value("123 Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh"))
+    .andExpect(jsonPath("$.hotline").value("1900 6868 - (028) 3835 1024"))
+    .andExpect(jsonPath("$.email").value("contact@medicare-clinic.vn"))
+    .andExpect(jsonPath("$.website").value("https://medicare-clinic.vn"));
+  }
+ }
 }
