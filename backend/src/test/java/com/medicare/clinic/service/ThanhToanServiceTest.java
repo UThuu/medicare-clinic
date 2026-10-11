@@ -11,6 +11,7 @@ import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.dto.response.VNPayCallbackResponse;
 import com.medicare.clinic.dto.response.VNPayPaymentResponse;
 import com.medicare.clinic.entity.*;
+import com.medicare.clinic.entity.enums.*;
 import com.medicare.clinic.payment.PaymentGateway;
 import com.medicare.clinic.payment.dto.PaymentRequest;
 import com.medicare.clinic.payment.dto.PaymentResponse;
@@ -57,6 +58,8 @@ public class ThanhToanServiceTest {
     @Mock
     private PaymentGateway paymentGateway;
 
+    @Mock private jakarta.persistence.EntityManager entityManager;
+
     @InjectMocks
     private ThanhToanService thanhToanService;
 
@@ -65,37 +68,37 @@ public class ThanhToanServiceTest {
 
     @BeforeEach
     void setUp() {
-        BenhNhan bn = new BenhNhan("BN-001", "Trần Thị Bảy", LocalDate.of(1956, 3, 15), "Nữ", "0903123456", "123 Lê Lợi");
-        BacSi bs = new BacSi("Nội Tổng quát", "CKI");
-        bs.setMaNv("BS-001");
-        bs.setHoTen("BS. Nguyễn Anh Minh");
-
-        LichKham lk = new LichKham("LICH-001", bn, bs, LocalDate.now(), LocalTime.of(8, 30), "DA_TIEP_NHAN", "TRUC_TUYEN");
+        BenhNhan bn = new BenhNhan(); bn.setIdBenhNhan("BN-001"); bn.setHoTen("Trần Thị Bảy"); bn.setNgaySinh(LocalDate.of(1956,3,15)); bn.setGioiTinh(GioiTinh.NU); bn.setSoDienThoai("0903123456"); bn.setDiaChi("123 Lê Lợi");
+        NhanVien doctor=new NhanVien();doctor.setMaNv("BS-001");doctor.setHoTen("BS. Nguyễn Anh Minh");
+        BacSi bs=new BacSi();bs.setMaNv("BS-001");bs.setNhanVien(doctor);bs.setChuyenKhoa("Nội Tổng quát");
+        LichKham lk=new LichKham();lk.setIdLichKham("LICH-001");lk.setBenhNhan(bn);lk.setBacSi(bs);lk.setNgayKham(LocalDate.now());lk.setGioKham(LocalTime.of(8,30));lk.setTrangThai(TrangThaiLichKham.DA_TIEP_NHAN);lk.setPhuongThucDatLich(PhuongThucDatLich.TRUC_TUYEN);
 
         mockLuotKham = new LuotKham();
         mockLuotKham.setIdLuotKham("LK-001");
         mockLuotKham.setLichKham(lk);
-        mockLuotKham.setTrangThai("CHO_THANH_TOAN");
+        mockLuotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
 
         ThuNgan tn = new ThuNgan();
         tn.setMaNv("TN-001");
-        tn.setHoTen("Nguyễn Thị Thu Ngân");
+        NhanVien cashier=new NhanVien();cashier.setMaNv("TN-001");cashier.setHoTen("Nguyễn Thị Thu Ngân");tn.setNhanVien(cashier);
 
         mockHoaDon = new HoaDon();
         mockHoaDon.setId("HD-001");
         mockHoaDon.setLuotKham(mockLuotKham);
         mockHoaDon.setThuNgan(tn);
         mockHoaDon.setNgayTao(LocalDateTime.now());
-        mockHoaDon.setPhiKham(BigDecimal.valueOf(150000));
-        mockHoaDon.setTienThuoc(BigDecimal.valueOf(50000));
+        ChiTietHoaDon exam=new ChiTietHoaDon();exam.setLoaiChiPhi("TIEN_KHAM");exam.setMoTa("Phí khám");exam.setSoLuong(1);exam.setDonGia(BigDecimal.valueOf(150000));exam.setThanhTien(BigDecimal.valueOf(150000));
+        ChiTietHoaDon drugs=new ChiTietHoaDon();drugs.setLoaiChiPhi("TIEN_THUOC");drugs.setMoTa("Thuốc");drugs.setSoLuong(2);drugs.setDonGia(BigDecimal.valueOf(25000));drugs.setThanhTien(BigDecimal.valueOf(50000));
+        mockHoaDon.setChiTietHoaDons(java.util.List.of(exam,drugs));
         mockHoaDon.setTongTien(BigDecimal.valueOf(200000));
-        mockHoaDon.setTrangThai("CHUA_THANH_TOAN");
+        mockHoaDon.setTrangThai(TrangThaiHoaDon.CHUA_THANH_TOAN);
     }
 
     @Test
     @DisplayName("UC-17: Lấy thông tin thanh toán của hóa đơn thành công")
     void testLayThongTinThanhToan_ThanhCong() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
         when(hoaDonService.layChiPhiDuKien("LK-001")).thenReturn(ChiPhiKhamPreviewResponse.builder()
@@ -114,7 +117,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-17: Xác nhận thanh toán thành công chuyển trạng thái hóa đơn sang DA_THANH_TOAN")
     void testXacNhanThanhToan_ThanhCong() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
@@ -129,8 +133,8 @@ public class ThanhToanServiceTest {
 
         assertNotNull(result);
         assertEquals("THANH_CONG", result.getTrangThai());
-        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
-        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai().name());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai().name());
         verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
         verify(hoaDonRepository, times(1)).save(mockHoaDon);
     }
@@ -138,8 +142,9 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-17: Chặn thanh toán lại nếu hóa đơn đã được thanh toán hoàn tất")
     void testXacNhanThanhToan_DaThanhToan_BaoLoi() {
-        mockHoaDon.setTrangThai("DA_THANH_TOAN");
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        mockHoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         XacNhanThanhToanRequest request = XacNhanThanhToanRequest.builder()
                 .idHoaDon("HD-001")
@@ -154,7 +159,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-17: Báo lỗi nếu số tiền thanh toán nhỏ hơn tổng tiền hóa đơn")
     void testXacNhanThanhToan_ThieuTien_BaoLoi() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         XacNhanThanhToanRequest request = XacNhanThanhToanRequest.builder()
                 .idHoaDon("HD-001")
@@ -173,7 +179,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-18: Thanh toán tiền mặt thành công khi khách đưa vừa đủ tiền")
     void testThanhToanTienMat_VuaDuTien_ThanhCong() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
@@ -193,8 +200,8 @@ public class ThanhToanServiceTest {
         assertEquals(BigDecimal.valueOf(200000), response.getTongTien());
         assertEquals(BigDecimal.valueOf(200000), response.getTienKhachDua());
         assertEquals(BigDecimal.ZERO, response.getTienThoiLai());
-        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
-        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai().name());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai().name());
         verify(hoaDonRepository, times(1)).save(mockHoaDon);
         verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
     }
@@ -202,7 +209,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-18: Thanh toán tiền mặt thành công và tính chính xác tiền thối lại khi khách đưa thừa")
     void testThanhToanTienMat_KhachDuaThua_TinhTienThoiChinhXac() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
@@ -217,14 +225,15 @@ public class ThanhToanServiceTest {
         assertNotNull(response);
         assertEquals(BigDecimal.valueOf(500000), response.getTienKhachDua());
         assertEquals(BigDecimal.valueOf(300000), response.getTienThoiLai());
-        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai().name());
         assertTrue(response.getThongBao().contains("300000"));
     }
 
     @Test
     @DisplayName("UC-18 (E2): Báo lỗi khi tiền khách đưa nhỏ hơn tổng tiền hóa đơn")
     void testThanhToanTienMat_ThieuTien_BaoLoi() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
                 .idHoaDon("HD-001")
@@ -242,7 +251,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-18: Báo lỗi khi tiền khách đưa là null")
     void testThanhToanTienMat_TienNull_BaoLoi() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
                 .idHoaDon("HD-001")
@@ -259,8 +269,9 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-18 (E3): Báo lỗi nếu hóa đơn đã được thanh toán trước đó")
     void testThanhToanTienMat_DaThanhToan_BaoLoi() {
-        mockHoaDon.setTrangThai("DA_THANH_TOAN");
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        mockHoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         ThanhToanTienMatRequest request = ThanhToanTienMatRequest.builder()
                 .idHoaDon("HD-001")
@@ -281,7 +292,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-19: Lấy thông tin mã VietQR thành công với đúng STK, chủ TK và nội dung")
     void testLayThongTinQrThanhToan_ThanhCong() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         ThongTinQrResponse qrResponse = thanhToanService.layThongTinQrThanhToan("HD-001");
 
@@ -299,8 +311,9 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-19 (E3): Báo lỗi khi lấy mã QR cho hóa đơn đã thanh toán")
     void testLayThongTinQrThanhToan_DaThanhToan_BaoLoi() {
-        mockHoaDon.setTrangThai("DA_THANH_TOAN");
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        mockHoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         assertThrows(IllegalStateException.class, () -> thanhToanService.layThongTinQrThanhToan("HD-001"));
     }
@@ -308,7 +321,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-19: Xác nhận thanh toán qua QR thành công cập nhật trạng thái hóa đơn")
     void testXacNhanThanhToanQr_ThanhCong() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
@@ -326,8 +340,8 @@ public class ThanhToanServiceTest {
         assertEquals("VNPAY_QR", response.getPhuongThuc());
         assertEquals("THANH_CONG", response.getTrangThai());
         assertEquals("VCB-TEST-123", response.getMaGiaoDich());
-        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
-        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai().name());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai().name());
         verify(hoaDonRepository, times(1)).save(mockHoaDon);
         verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
     }
@@ -335,8 +349,9 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-19 (E3): Chặn xác nhận thanh toán QR nếu hóa đơn đã được thanh toán")
     void testXacNhanThanhToanQr_DaThanhToan_BaoLoi() {
-        mockHoaDon.setTrangThai("DA_THANH_TOAN");
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        mockHoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         ThanhToanQrRequest request = ThanhToanQrRequest.builder()
                 .idHoaDon("HD-001")
@@ -353,7 +368,8 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-20: Khởi tạo liên kết thanh toán VNPay thành công")
     void testTaoGiaoDichVNPay_ThanhCong() {
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
@@ -378,8 +394,9 @@ public class ThanhToanServiceTest {
     @Test
     @DisplayName("UC-20 (E3): Chặn tạo liên kết VNPay nếu hóa đơn đã thanh toán")
     void testTaoGiaoDichVNPay_DaThanhToan_BaoLoi() {
-        mockHoaDon.setTrangThai("DA_THANH_TOAN");
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        mockHoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
 
         assertThrows(IllegalStateException.class, () -> thanhToanService.taoGiaoDichVNPay("HD-001"));
         verify(paymentGateway, never()).createPaymentRequest(any());
@@ -391,6 +408,7 @@ public class ThanhToanServiceTest {
         java.util.Map<String, String> vnpParams = new java.util.HashMap<>();
         vnpParams.put("vnp_TxnRef", "HD-001_1728192839");
         vnpParams.put("vnp_ResponseCode", "00");
+        vnpParams.put("vnp_TransactionStatus", "00");
         vnpParams.put("vnp_TransactionNo", "14285790");
         vnpParams.put("vnp_BankCode", "NCB");
         vnpParams.put("vnp_Amount", "20000000");
@@ -398,19 +416,23 @@ public class ThanhToanServiceTest {
         vnpParams.put("vnp_SecureHash", "VALID_HASH");
 
         when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(true);
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
 
+        ThanhToan attemptPayment=new ThanhToan();attemptPayment.setIdThanhToan("TT-001");attemptPayment.setHoaDon(mockHoaDon);attemptPayment.setSoTien(mockHoaDon.getTongTien());attemptPayment.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
+        GiaoDichThanhToan attempt=new GiaoDichThanhToan();attempt.setIdGiaoDich("GD-001");attempt.setThanhToan(attemptPayment);attempt.setMaGiaoDich(vnpParams.get("vnp_TxnRef"));attempt.setPhuongThuc(PhuongThucThanhToan.TRUC_TUYEN);attempt.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);attempt.setSoTien(mockHoaDon.getTongTien());
+        when(giaoDichThanhToanRepository.findByMaGiaoDich(vnpParams.get("vnp_TxnRef"))).thenReturn(Optional.of(attempt));
         VNPayCallbackResponse response = thanhToanService.xuLyKetQuaVNPay(vnpParams);
 
         assertNotNull(response);
         assertEquals("HD-001", response.getIdHoaDon());
         assertEquals("THANH_CONG", response.getTrangThai());
-        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai());
-        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai());
+        assertEquals("DA_THANH_TOAN", mockHoaDon.getTrangThai().name());
+        assertEquals("HOAN_TAT", mockLuotKham.getTrangThai().name());
         verify(hoaDonRepository, times(1)).save(mockHoaDon);
     }
 
@@ -436,18 +458,22 @@ public class ThanhToanServiceTest {
         vnpParams.put("vnp_SecureHash", "VALID_HASH");
 
         when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(true);
-        when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
+        lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
         when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
 
+        ThanhToan attemptPayment=new ThanhToan();attemptPayment.setIdThanhToan("TT-001");attemptPayment.setHoaDon(mockHoaDon);attemptPayment.setSoTien(mockHoaDon.getTongTien());attemptPayment.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
+        GiaoDichThanhToan attempt=new GiaoDichThanhToan();attempt.setIdGiaoDich("GD-001");attempt.setThanhToan(attemptPayment);attempt.setMaGiaoDich(vnpParams.get("vnp_TxnRef"));attempt.setPhuongThuc(PhuongThucThanhToan.TRUC_TUYEN);attempt.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);attempt.setSoTien(mockHoaDon.getTongTien());
+        when(giaoDichThanhToanRepository.findByMaGiaoDich(vnpParams.get("vnp_TxnRef"))).thenReturn(Optional.of(attempt));
         VNPayCallbackResponse response = thanhToanService.xuLyKetQuaVNPay(vnpParams);
 
         assertNotNull(response);
         assertEquals("HD-001", response.getIdHoaDon());
         assertEquals("THAT_BAI", response.getTrangThai());
-        assertEquals("CHUA_THANH_TOAN", mockHoaDon.getTrangThai()); // Hóa đơn vẫn giữ nguyên CHUA_THANH_TOAN
+        assertEquals("CHUA_THANH_TOAN", mockHoaDon.getTrangThai().name()); // Hóa đơn vẫn giữ nguyên CHUA_THANH_TOAN
         verify(hoaDonRepository, never()).save(mockHoaDon);
     }
 }

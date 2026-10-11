@@ -22,6 +22,7 @@ public class VNPayGateway implements PaymentGateway {
     @Override
     public PaymentResponse createPaymentRequest(PaymentRequest request) {
         try {
+            if(vnPayConfig.getHashSecret().isBlank() || vnPayConfig.getTmnCode().isBlank() || vnPayConfig.getReturnUrl().isBlank()) throw new IllegalStateException("VNPay chưa được cấu hình");
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
             String vnp_TxnRef = request.getOrderId() + "_" + System.currentTimeMillis();
@@ -102,6 +103,7 @@ public class VNPayGateway implements PaymentGateway {
     @Override
     @SuppressWarnings("unchecked")
     public boolean verifyPaymentResult(Object callbackData) {
+        if (vnPayConfig.getHashSecret().isBlank()) return false;
         if (!(callbackData instanceof Map)) {
             return false;
         }
@@ -117,8 +119,7 @@ public class VNPayGateway implements PaymentGateway {
 
         String calculatedHash = VNPayConfig.hashAllFields(hashParams, vnPayConfig.getHashSecret());
         boolean isValid = calculatedHash.equalsIgnoreCase(vnp_SecureHash);
-        log.info("Xác thực chữ ký VNPay: kết quả={}, calculatedHash={}, receivedHash={}",
-                isValid, calculatedHash, vnp_SecureHash);
+        log.info("Xác thực chữ ký VNPay: {}", isValid);
         return isValid;
     }
 }

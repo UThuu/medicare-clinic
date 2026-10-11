@@ -1,138 +1,91 @@
 package com.medicare.clinic.controller;
-
+import com.medicare.clinic.dto.auth.LoginResponse;
 import com.medicare.clinic.dto.request.TaoHoaDonRequest;
-import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
-import com.medicare.clinic.dto.response.HoaDonResponse;
-import com.medicare.clinic.dto.response.LuotKhamChoHoaDonResponse;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import java.util.Map;
-
 @RestController
 @RequestMapping("/api/hoadon")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Slf4j
 public class HoaDonController {
-
-    private final IHoaDonService hoadonService;
-
-    /**
-     * API 1: Lấy danh sách các lượt khám chờ lập hóa đơn
-     */
+    private final IHoaDonService service;
+    private final com.medicare.clinic.service.PaymentAccess access;
+    private LoginResponse cashier(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null || !(session.getAttribute("AUTH_USER") instanceof LoginResponse user))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        if (!"THU_NGAN".equals(user.getVaiTro()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ thu ngân được truy cập hóa đơn");
+        if (user.getMaNv() == null || user.getMaNv().isBlank())
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa liên kết thu ngân");
+        return user;
+    }
+    private ResponseEntity<?> ok(Object data) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(data);
+    }
     @GetMapping("/cho-lap")
-    public ResponseEntity<List<LuotKhamChoHoaDonResponse>> layDanhSachChoLapHoaDon() {
-        return ResponseEntity.ok(hoadonService.layDanhSachLuotKhamChoLapHoaDon());
+    public ResponseEntity<?> pending(HttpServletRequest request) {
+        cashier(request); return ok(service.layDanhSachLuotKhamChoLapHoaDon());
     }
-
-    /**
-     * API 2 (UC-16): Xem trước bảng kê chi phí và tổng tiền trước khi tạo hóa đơn
-     */
-    @GetMapping("/chi-phi-du-kien/{idLuotKham}")
-    public ResponseEntity<?> layChiPhiDuKien(@PathVariable String idLuotKham) {
-        try {
-            ChiPhiKhamPreviewResponse response = hoadonService.layChiPhiDuKien(idLuotKham);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Lỗi khi tính toán chi phí: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+    @GetMapping("/chi-phi-du-kien/{id}")
+    public ResponseEntity<?> preview(@PathVariable String id, HttpServletRequest request) {
+        cashier(request); return ok(service.layChiPhiDuKien(id));
     }
-
-    /**
-     * API 3 (UC-15): Xác nhận lập hóa đơn cho lượt khám
-     */
     @PostMapping("/tao")
-    public ResponseEntity<?> taoHoaDon(@RequestBody TaoHoaDonRequest request) {
-        try {
-            HoaDonResponse response = hoadonService.taoHoaDon(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        } catch (IllegalStateException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-        } catch (Exception e) {
-            log.error("Lỗi khi tạo hóa đơn: ", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Không thể tạo hóa đơn: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+    public ResponseEntity<?> create(@Valid @RequestBody TaoHoaDonRequest body, HttpServletRequest request) {
+        String cashierId = cashier(request).getMaNv();
+        return ResponseEntity.status(HttpStatus.CREATED).cacheControl(CacheControl.noStore())
+            .body(service.taoHoaDon(body, cashierId));
     }
-
-    /**
-     * API 4: Lấy chi tiết hóa đơn theo ID
-     */
+    @GetMapping("/luot-kham/{id}")
+    public ResponseEntity<?> byVisit(@PathVariable String id, HttpServletRequest request) {
+        cashier(request); return ok(service.layHoaDonTheoLuotKham(id));
+    }
     @GetMapping("/{id}")
-    public ResponseEntity<?> layHoaDonTheoId(@PathVariable String id) {
-        try {
-            return ResponseEntity.ok(hoadonService.layHoaDonTheoId(id));
-        } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
+    public ResponseEntity<?> byId(@PathVariable String id, HttpServletRequest request) {
+        cashier(request); return ok(service.layHoaDonTheoId(id));
     }
-
-    /**
-     * API 5: Lấy hóa đơn theo ID lượt khám
-     */
-    @GetMapping("/luot-kham/{idLuotKham}")
-    public ResponseEntity<?> layHoaDonTheoLuotKham(@PathVariable String idLuotKham) {
-        try {
-            return ResponseEntity.ok(hoadonService.layHoaDonTheoLuotKham(idLuotKham));
-        } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
-    }
-
-    /**
-     * API 6: Lấy danh sách tất cả hóa đơn đã tạo
-     */
     @GetMapping
-    public ResponseEntity<List<HoaDonResponse>> layDanhSachTatCaHoaDon() {
-        return ResponseEntity.ok(hoadonService.layDanhSachTatCaHoaDon());
+    public ResponseEntity<?> all(HttpServletRequest request) {
+        cashier(request); return ok(service.layDanhSachTatCaHoaDon());
+    }
+    private ResponseEntity<?> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).cacheControl(CacheControl.noStore()).body(Map.of("error", message));
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<?> statusError(ResponseStatusException ex) {
+        return error(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
+    }
+    @ExceptionHandler({IllegalStateException.class, DataIntegrityViolationException.class, PessimisticLockingFailureException.class, org.hibernate.exception.ConstraintViolationException.class, jakarta.persistence.PessimisticLockException.class, jakarta.persistence.LockTimeoutException.class})
+    public ResponseEntity<?> conflict(Exception ex) {
+        log.warn("Billing conflict: {}", ex.getClass().getSimpleName());
+        return error(HttpStatus.CONFLICT, ex instanceof IllegalStateException ? ex.getMessage() : "Dữ liệu vừa thay đổi. Vui lòng tải lại và kiểm tra hóa đơn.");
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> invalid(IllegalArgumentException ex) { return error(HttpStatus.BAD_REQUEST, ex.getMessage()); }
+    @ExceptionHandler({MethodArgumentNotValidException.class, org.springframework.http.converter.HttpMessageNotReadableException.class})
+    public ResponseEntity<?> validation(Exception ex) {
+        return error(HttpStatus.BAD_REQUEST, "Mã lượt khám hoặc phí khám không hợp lệ");
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> unexpected(Exception ex) {
+        log.error("Billing request failed", ex);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý hóa đơn. Vui lòng thử lại.");
     }
 
-    /**
-     * API 7 (UC-21): Lấy thông tin bản in hóa đơn chi tiết dạng snapshot
-     * AC-1: Trả về snapshot hóa đơn khi đã thanh toán (DA_THANH_TOAN)
-     * AC-2: Trả về HTTP 400 Bad Request kèm "Vui lòng hoàn tất thanh toán trước khi in" nếu chưa thanh toán
-     */
     @GetMapping("/{id}/in")
-    public ResponseEntity<?> layThongTinInHoaDon(@PathVariable String id) {
-        try {
-            return ResponseEntity.ok(hoadonService.layThongTinInHoaDon(id));
-        } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        } catch (IllegalStateException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        } catch (Exception e) {
-            log.error("Lỗi khi lấy thông tin in hóa đơn: ", e);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Lỗi máy chủ khi tạo bản in hóa đơn: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+    public ResponseEntity<?> print(@PathVariable String id, HttpServletRequest request) {
+        access.view(request,id); return ok(service.layThongTinInHoaDon(id));
     }
 }

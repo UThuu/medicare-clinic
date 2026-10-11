@@ -14,16 +14,16 @@ import java.util.*;
 @Getter
 public class VNPayConfig {
 
-    @Value("${vnpay.tmnCode:UC53080L}")
+    @Value("${vnpay.tmnCode:${VNPAY_TMN_CODE:}}")
     private String tmnCode;
 
-    @Value("${vnpay.hashSecret:DKBTZDQHMDTRTLKCXZXNVCZOEGLCIBCR}")
+    @Value("${vnpay.hashSecret:${VNPAY_HASH_SECRET:}}")
     private String hashSecret;
 
     @Value("${vnpay.payUrl:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}")
     private String payUrl;
 
-    @Value("${vnpay.returnUrl:http://localhost:5174/payment/vnpay-return}")
+    @Value("${vnpay.returnUrl:${VNPAY_RETURN_URL:}}")
     private String returnUrl;
 
     @Value("${vnpay.apiUrl:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}")

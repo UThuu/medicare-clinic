@@ -1,195 +1,89 @@
 package com.medicare.clinic.service;
-
 import com.medicare.clinic.dto.request.TaoHoaDonRequest;
-import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
-import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.entity.*;
-import com.medicare.clinic.dto.response.InHoaDonResponse;
+import com.medicare.clinic.entity.enums.*;
 import com.medicare.clinic.repository.*;
 import com.medicare.clinic.service.impl.HoaDonService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
-public class HoaDonServiceTest {
-
-    @Mock
-    private HoaDonRepository hoaDonRepository;
-
-    @Mock
-    private LuotKhamRepository luotKhamRepository;
-
-    @Mock
-    private DonThuocRepository donThuocRepository;
-
-    @Mock
-    private ThuNganRepository thuNganRepository;
-
-    @Mock
-    private ThanhToanRepository thanhToanRepository;
-
-    @Mock
-    private GiaoDichThanhToanRepository giaoDichThanhToanRepository;
-
-    @InjectMocks
-    private HoaDonService hoaDonService;
-
-    private LuotKham sampleLuotKham;
-    private DonThuoc sampleDonThuoc;
-    private ThuNgan sampleThuNgan;
-
-    @BeforeEach
-    void setUp() {
-        BenhNhan bn = new BenhNhan("BN-001", "Trần Thị Bảy", LocalDate.of(1956, 3, 15), "Nữ", "0903123456", "TP.HCM");
-        BacSi bs = new BacSi();
-        bs.setMaNv("BS-001");
-        bs.setHoTen("BS. Nguyễn Anh Minh");
-        bs.setChuyenKhoa("Nội Tổng quát");
-
-        LichKham lk = new LichKham("LICH-001", bn, bs, LocalDate.now(), LocalTime.of(8, 30), "DA_TIEP_NHAN", "TRUC_TUYEN");
-
-        sampleLuotKham = new LuotKham();
-        sampleLuotKham.setIdLuotKham("LK-001");
-        sampleLuotKham.setLichKham(lk);
-        sampleLuotKham.setTrangThai("CHO_THANH_TOAN");
-        sampleLuotKham.setChanDoan("Tăng huyết áp độ 1");
-
-        Thuoc t1 = new Thuoc("THUOC-01", "Panadol Extra", "Vỉ", BigDecimal.valueOf(25000));
-        sampleDonThuoc = new DonThuoc();
-        sampleDonThuoc.setIdDonThuoc("DT-001");
-        sampleDonThuoc.setLuotKham(sampleLuotKham);
-        sampleDonThuoc.setChiTietDonThuocs(new ArrayList<>());
-
-        ChiTietDonThuoc ct = new ChiTietDonThuoc("CT-001", sampleDonThuoc, t1, 2, "1 viên/lần", "Sáng, chiều", BigDecimal.valueOf(25000), null);
-        sampleDonThuoc.getChiTietDonThuocs().add(ct);
-
-        sampleThuNgan = new ThuNgan();
-        sampleThuNgan.setMaNv("TN-001");
-        sampleThuNgan.setHoTen("Nguyễn Thị Thu Ngân");
-    }
-
-    @Test
-    @DisplayName("UC-16: Xem trước chi phí và tính đúng tổng tiền (Phí khám + Tiền thuốc)")
-    void testLayChiPhiDuKien() {
-        when(luotKhamRepository.findById("LK-001")).thenReturn(Optional.of(sampleLuotKham));
-        when(hoaDonRepository.findByLuotKham_IdLuotKham("LK-001")).thenReturn(Optional.empty());
-        when(donThuocRepository.findByLuotKham_IdLuotKham("LK-001")).thenReturn(Optional.of(sampleDonThuoc));
-
-        ChiPhiKhamPreviewResponse res = hoaDonService.layChiPhiDuKien("LK-001");
-
-        assertNotNull(res);
-        assertEquals("LK-001", res.getIdLuotKham());
-        assertEquals("Trần Thị Bảy", res.getTenBenhNhan());
-        assertEquals(BigDecimal.valueOf(150000), res.getPhiKham());
-        assertEquals(BigDecimal.valueOf(50000), res.getTienThuoc()); // 2 vỉ * 25.000 = 50.000
-        assertEquals(BigDecimal.valueOf(200000), res.getTongTien()); // 150.000 + 50.000 = 200.000
-        assertEquals(2, res.getDanhSachKhoanThu().size()); // 1 dòng khám + 1 dòng thuốc
-    }
-
-    @Test
-    @DisplayName("UC-15: Tạo hóa đơn thành công và lưu trạng thái CHUA_THANH_TOAN")
-    void testTaoHoaDonThanhCong() {
-        TaoHoaDonRequest req = new TaoHoaDonRequest("LK-001", "TN-001", null, null);
-
-        when(luotKhamRepository.findById("LK-001")).thenReturn(Optional.of(sampleLuotKham));
-        when(hoaDonRepository.existsByLuotKham_IdLuotKham("LK-001")).thenReturn(false);
-        when(thuNganRepository.findById("TN-001")).thenReturn(Optional.of(sampleThuNgan));
-        when(donThuocRepository.findByLuotKham_IdLuotKham("LK-001")).thenReturn(Optional.of(sampleDonThuoc));
-        when(hoaDonRepository.save(any(HoaDon.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        HoaDonResponse res = hoaDonService.taoHoaDon(req);
-
-        assertNotNull(res);
-        assertNotNull(res.getIdHoaDon());
-        assertTrue(res.getIdHoaDon().startsWith("HD-"));
-        assertEquals("CHUA_THANH_TOAN", res.getTrangThai());
-        assertEquals(BigDecimal.valueOf(200000), res.getTongTien());
-        assertEquals("Nguyễn Thị Thu Ngân", res.getThuNganLap());
-        verify(hoaDonRepository, times(1)).save(any(HoaDon.class));
-    }
-
-    @Test
-    @DisplayName("UC-15 Exception: Chặn tạo trùng lặp khi lượt khám đã có hóa đơn")
-    void testTaoHoaDon_DaCoHoaDon_NemLoi() {
-        TaoHoaDonRequest req = new TaoHoaDonRequest("LK-001", "TN-001", null, null);
-
-        when(luotKhamRepository.findById("LK-001")).thenReturn(Optional.of(sampleLuotKham));
-        when(hoaDonRepository.existsByLuotKham_IdLuotKham("LK-001")).thenReturn(true);
-
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
-            hoaDonService.taoHoaDon(req);
-        });
-
-        assertTrue(ex.getMessage().contains("đã được lập hóa đơn trước đó"));
-        verify(hoaDonRepository, never()).save(any(HoaDon.class));
-    }
-
-    @Test
-    @DisplayName("UC-21 AC-1: In hóa đơn thành công khi hóa đơn ở trạng thái DA_THANH_TOAN")
-    void testLayThongTinInHoaDon_ThanhCong_KhiDaThanhToan() {
-        HoaDon hd = new HoaDon();
-        hd.setId("HD-12345678");
-        hd.setLuotKham(sampleLuotKham);
-        hd.setThuNgan(sampleThuNgan);
-        hd.setNgayTao(LocalDateTime.of(2026, 10, 11, 9, 0));
-        hd.setPhiKham(BigDecimal.valueOf(150000));
-        hd.setTienThuoc(BigDecimal.valueOf(50000));
-        hd.setTongTien(BigDecimal.valueOf(200000));
-        hd.setTrangThai("DA_THANH_TOAN");
-
-        when(hoaDonRepository.findById("HD-12345678")).thenReturn(Optional.of(hd));
-        when(donThuocRepository.findByLuotKham_IdLuotKham("LK-001")).thenReturn(Optional.of(sampleDonThuoc));
-
-        ThanhToan tt = new ThanhToan("TT-001", hd, BigDecimal.valueOf(200000), "THANH_CONG", LocalDateTime.now());
-        GiaoDichThanhToan gd = new GiaoDichThanhToan("GD-001", tt, "GD-VNPAY-9999", "VNPAY", BigDecimal.valueOf(200000), "THANH_CONG", LocalDateTime.now());
-        when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-12345678")).thenReturn(List.of(gd));
-
-        InHoaDonResponse res = hoaDonService.layThongTinInHoaDon("HD-12345678");
-
-        assertNotNull(res);
-        assertEquals("HD-12345678", res.getIdHoaDon());
-        assertEquals("DA_THANH_TOAN", res.getTrangThai());
-        assertEquals("Trần Thị Bảy", res.getTenBenhNhan());
-        assertEquals(BigDecimal.valueOf(200000), res.getTongTien());
-        assertNotNull(res.getTongTienBangChu());
-        assertTrue(res.getTongTienBangChu().contains("đồng chẵn"));
-        assertEquals("Thanh toán trực tuyến VNPay", res.getTenPhuongThuc());
-        assertEquals("GD-VNPAY-9999", res.getMaGiaoDich());
-        assertEquals(2, res.getDanhSachKhoanThu().size());
-    }
-
-    @Test
-    @DisplayName("UC-21 AC-2: Chặn in và thông báo khi hóa đơn chưa thanh toán")
-    void testLayThongTinInHoaDon_NemNgoaiLe_KhiChuaThanhToan() {
-        HoaDon hd = new HoaDon();
-        hd.setId("HD-CHUA-TT");
-        hd.setLuotKham(sampleLuotKham);
-        hd.setTrangThai("CHUA_THANH_TOAN");
-        hd.setTongTien(BigDecimal.valueOf(150000));
-
-        when(hoaDonRepository.findById("HD-CHUA-TT")).thenReturn(Optional.of(hd));
-
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
-            hoaDonService.layThongTinInHoaDon("HD-CHUA-TT");
-        });
-
-        assertEquals("Vui lòng hoàn tất thanh toán trước khi in", ex.getMessage());
-    }
+class HoaDonServiceTest {
+ @Mock jakarta.persistence.EntityManager entityManager;
+ @Mock HoaDonRepository hoaDonRepository;
+ @Mock LuotKhamRepository luotKhamRepository;
+ @Mock DonThuocRepository donThuocRepository;
+ @Mock ThuNganRepository thuNganRepository;
+ @InjectMocks HoaDonService service;
+ LuotKham visit; DonThuoc prescription; ThuNgan cashier;
+ @BeforeEach void setup() {
+  ReflectionTestUtils.setField(service,"examFee",new BigDecimal("150000"));
+  NhanVien doctorEmployee=new NhanVien(); doctorEmployee.setHoTen("Doctor");
+  BacSi doctor=new BacSi();doctor.setNhanVien(doctorEmployee);
+  BenhNhan patient=new BenhNhan();patient.setIdBenhNhan("BN");patient.setHoTen("Patient");
+  LichKham appointment=new LichKham();appointment.setBenhNhan(patient);appointment.setBacSi(doctor);
+  visit=new LuotKham();visit.setIdLuotKham("V");visit.setTrangThai(TrangThaiLuotKham.HOAN_TAT);visit.setLichKham(appointment);
+  Thuoc drug=new Thuoc();drug.setTenThuoc("Medicine");
+  ChiTietDonThuoc detail=new ChiTietDonThuoc();detail.setThuoc(drug);detail.setSoLuong(2);detail.setDonGia(new BigDecimal("25000"));
+  prescription=new DonThuoc();prescription.setChiTietDonThuocs(List.of(detail));
+  NhanVien employee=new NhanVien();employee.setHoTen("Cashier");
+  cashier=new ThuNgan();cashier.setMaNv("TN");cashier.setNhanVien(employee);
+ }
+ TaoHoaDonRequest request(BigDecimal fee) {TaoHoaDonRequest r=new TaoHoaDonRequest();r.setIdLuotKham("V");r.setPhiKhamTuyChinh(fee);return r;}
+ void creator() {
+  when(thuNganRepository.findById("TN")).thenReturn(Optional.of(cashier));
+  when(luotKhamRepository.findForBilling("V")).thenReturn(Optional.of(visit));
+ }
+ @Test void previewCalculates() {
+  when(luotKhamRepository.findById("V")).thenReturn(Optional.of(visit));
+  when(donThuocRepository.findByLuotKham_IdLuotKham("V")).thenReturn(Optional.of(prescription));
+  assertEquals(new BigDecimal("200000.00"),service.layChiPhiDuKien("V").getTongTien());
+ }
+ @Test void creationSavesSnapshotsAndPreservesCompletedState() {
+  creator();when(donThuocRepository.findByLuotKham_IdLuotKham("V")).thenReturn(Optional.of(prescription));
+  var result=service.taoHoaDon(request(null),"TN");assertEquals(new BigDecimal("200000.00"),result.getTongTien());
+  ArgumentCaptor<HoaDon> capture=ArgumentCaptor.forClass(HoaDon.class);verify(entityManager).persist(capture.capture());
+  assertEquals(2,capture.getValue().getChiTietHoaDons().size());
+  assertEquals(TrangThaiLuotKham.HOAN_TAT,visit.getTrangThai());verify(luotKhamRepository,never()).save(any());
+  assertEquals("Cashier",result.getThuNganLap());
+ }
+ @Test void duplicateRejectedAfterVisitLock() {
+  creator();when(hoaDonRepository.existsByLuotKham_IdLuotKham("V")).thenReturn(true);
+  assertThrows(IllegalStateException.class,()->service.taoHoaDon(request(null),"TN"));
+  InOrder order=inOrder(luotKhamRepository,hoaDonRepository);order.verify(luotKhamRepository).findForBilling("V");order.verify(hoaDonRepository).existsByLuotKham_IdLuotKham("V");
+  verify(entityManager,never()).persist(any());
+ }
+ @Test void ongoingVisitRejected() {
+  creator();visit.setTrangThai(TrangThaiLuotKham.DANG_KHAM);
+  assertThrows(IllegalStateException.class,()->service.taoHoaDon(request(null),"TN"));verify(entityManager,never()).persist(any());
+ }
+ @Test void completedVisitWithoutPrescriptionChargesOnlyExamFee() {
+  creator();assertEquals(new BigDecimal("150000.00"),service.taoHoaDon(request(null),"TN").getTongTien());
+ }
+ @Test void negativeFeeRejected() {
+  creator();when(donThuocRepository.findByLuotKham_IdLuotKham("V")).thenReturn(Optional.of(prescription));
+  assertThrows(IllegalArgumentException.class,()->service.taoHoaDon(request(new BigDecimal("-1")),"TN"));
+ }
+ @Test void invalidQuantityRejected() {
+  creator();prescription.getChiTietDonThuocs().get(0).setSoLuong(0);
+  when(donThuocRepository.findByLuotKham_IdLuotKham("V")).thenReturn(Optional.of(prescription));
+  assertThrows(IllegalArgumentException.class,()->service.taoHoaDon(request(null),"TN"));
+ }
+ @Test void invalidCashierDoesNotCreateEmployee() {
+  assertThrows(org.springframework.web.server.ResponseStatusException.class,()->service.taoHoaDon(request(null),"MISSING"));
+  verify(thuNganRepository,never()).save(any());verify(luotKhamRepository,never()).findForBilling(any());
+ }
+ @Test void storedPreviewUsesSnapshotWithoutReadingPrescription() {
+  when(luotKhamRepository.findById("V")).thenReturn(Optional.of(visit));
+  HoaDon invoice=new HoaDon();invoice.setId("H");invoice.setTongTien(new BigDecimal("42.00"));
+  ChiTietHoaDon line=new ChiTietHoaDon();line.setLoaiChiPhi("TIEN_KHAM");line.setMoTa("Fee");line.setThanhTien(new BigDecimal("42.00"));
+  invoice.setChiTietHoaDons(List.of(line));when(hoaDonRepository.findByLuotKham_IdLuotKham("V")).thenReturn(Optional.of(invoice));
+  assertEquals(new BigDecimal("42.00"),service.layChiPhiDuKien("V").getTongTien());verifyNoInteractions(donThuocRepository);
+ }
 }

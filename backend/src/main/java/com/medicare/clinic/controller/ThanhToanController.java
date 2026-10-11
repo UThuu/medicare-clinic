@@ -25,17 +25,20 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/thanhtoan")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+
 @Slf4j
 public class ThanhToanController {
 
     private final IThanhToanService thanhToanService;
+    private final com.medicare.clinic.service.PaymentAccess access;
+    private final jakarta.servlet.http.HttpServletRequest httpRequest;
 
     /**
      * API 1: Lấy danh sách các hóa đơn chưa thanh toán chờ xử lý tại quầy
      */
     @GetMapping("/cho-thanh-toan")
     public ResponseEntity<List<HoaDonResponse>> layDanhSachHoaDonChuaThanhToan() {
+        access.cashier(httpRequest);
         return ResponseEntity.ok(thanhToanService.layDanhSachHoaDonChuaThanhToan());
     }
 
@@ -44,6 +47,7 @@ public class ThanhToanController {
      */
     @GetMapping("/hoa-don/{idHoaDon}")
     public ResponseEntity<?> layThongTinThanhToan(@PathVariable String idHoaDon) {
+        access.view(httpRequest,idHoaDon);
         try {
             ThongTinThanhToanResponse response = thanhToanService.layThongTinThanhToan(idHoaDon);
             return ResponseEntity.ok(response);
@@ -64,6 +68,7 @@ public class ThanhToanController {
      */
     @PostMapping("/xac-nhan")
     public ResponseEntity<?> xacNhanThanhToan(@RequestBody XacNhanThanhToanRequest request) {
+        access.cashier(httpRequest); if(!"TIEN_MAT".equals(request.getPhuongThuc())) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST,"Chọn tiền mặt hoặc QR tại quầy");
         try {
             KetQuaThanhToanResponse response = thanhToanService.xacNhanThanhToan(request);
             return ResponseEntity.ok(response);
@@ -88,6 +93,7 @@ public class ThanhToanController {
      */
     @PostMapping("/tien-mat")
     public ResponseEntity<?> thanhToanTienMat(@RequestBody ThanhToanTienMatRequest request) {
+        access.cashier(httpRequest);
         try {
             ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
             return ResponseEntity.ok(response);
@@ -112,6 +118,7 @@ public class ThanhToanController {
      */
     @GetMapping("/qr/{idHoaDon}")
     public ResponseEntity<?> layThongTinQrThanhToan(@PathVariable String idHoaDon) {
+        access.cashier(httpRequest);
         try {
             ThongTinQrResponse response = thanhToanService.layThongTinQrThanhToan(idHoaDon);
             return ResponseEntity.ok(response);
@@ -136,6 +143,7 @@ public class ThanhToanController {
      */
     @PostMapping("/qr-xac-nhan")
     public ResponseEntity<?> xacNhanThanhToanQr(@RequestBody ThanhToanQrRequest request) {
+        access.cashier(httpRequest);
         try {
             KetQuaThanhToanResponse response = thanhToanService.xacNhanThanhToanQr(request);
             return ResponseEntity.ok(response);
@@ -158,8 +166,9 @@ public class ThanhToanController {
     /**
      * API UC-20: Khởi tạo liên kết thanh toán trực tuyến VNPay
      */
-    @GetMapping("/vnpay/create/{idHoaDon}")
+    @PostMapping("/vnpay/create/{idHoaDon}")
     public ResponseEntity<?> taoGiaoDichVNPay(@PathVariable String idHoaDon) {
+        access.own(httpRequest,idHoaDon);
         try {
             VNPayPaymentResponse response = thanhToanService.taoGiaoDichVNPay(idHoaDon);
             return ResponseEntity.ok(response);
@@ -204,6 +213,7 @@ public class ThanhToanController {
      */
     @GetMapping("/lich-su/{idHoaDon}")
     public ResponseEntity<List<GiaoDichResponse>> layLichSuGiaoDich(@PathVariable String idHoaDon) {
+        access.view(httpRequest,idHoaDon);
         return ResponseEntity.ok(thanhToanService.layLichSuGiaoDich(idHoaDon));
     }
 }

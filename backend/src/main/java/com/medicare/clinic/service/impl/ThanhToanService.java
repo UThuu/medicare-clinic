@@ -8,6 +8,7 @@ import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.*;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
 import com.medicare.clinic.service.interfaces.IThanhToanService;
+import com.medicare.clinic.entity.enums.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,12 +42,13 @@ public class ThanhToanService implements IThanhToanService {
     private final LuotKhamRepository luotKhamRepository;
     private final IHoaDonService hoaDonService;
     private final PaymentGateway paymentGateway;
+    private final jakarta.persistence.EntityManager entityManager;
 
     @Override
     @Transactional(readOnly = true)
     public List<HoaDonResponse> layDanhSachHoaDonChuaThanhToan() {
         return hoaDonRepository.findAll().stream()
-                .filter(hd -> "CHUA_THANH_TOAN".equalsIgnoreCase(hd.getTrangThai()))
+                .filter(hd -> "CHUA_THANH_TOAN".equals(hd.getTrangThai().name()))
                 .map(this::chuyenThanhHoaDonResponse)
                 .collect(Collectors.toList());
     }
@@ -68,46 +70,40 @@ public class ThanhToanService implements IThanhToanService {
 
         // Lấy thông tin thanh toán hiện tại nếu có
         ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(idHoaDon).orElse(null);
-        String trangThaiThanhToan = (thanhToan != null) ? thanhToan.getTrangThai() : "CHUA_THANH_TOAN";
+        String trangThaiThanhToan = (thanhToan != null) ? thanhToan.getTrangThai().name() : "CHUA_THANH_TOAN";
 
         // Lấy lịch sử giao dịch
         List<GiaoDichResponse> lichSuGiaoDich = layLichSuGiaoDich(idHoaDon);
 
         // Lấy bảng chi tiết khoản thu
-        List<ChiTietKhoanThuDTO> danhSachChiTiet = new ArrayList<>();
-        if (luotKham != null) {
-            try {
-                ChiPhiKhamPreviewResponse preview = hoaDonService.layChiPhiDuKien(luotKham.getIdLuotKham());
-                danhSachChiTiet = preview.getDanhSachKhoanThu();
-            } catch (Exception e) {
-                log.warn("Không thể tải chi tiết khoản thu từ lượt khám: {}", e.getMessage());
-            }
-        }
+        List<ChiTietKhoanThuDTO> danhSachChiTiet = hoaDon.getChiTietHoaDons().stream().map(d -> ChiTietKhoanThuDTO.builder()
+            .loaiKhoanThu(d.getLoaiChiPhi()).tenKhoanThu(d.getMoTa()).soLuong(d.getSoLuong()).donGia(d.getDonGia()).thanhTien(d.getThanhTien()).build()).toList();
+        List<GiaoDichResponse> lichSu = layLichSuGiaoDich(idHoaDon);
 
         return ThongTinThanhToanResponse.builder()
                 .idHoaDon(hoaDon.getId())
-                .idThanhToan(thanhToan != null ? thanhToan.getId() : null)
+                .idThanhToan(thanhToan != null ? thanhToan.getIdThanhToan() : null)
                 .idLuotKham(luotKham != null ? luotKham.getIdLuotKham() : null)
                 .maBenhNhan(bn != null ? bn.getIdBenhNhan() : "")
                 .tenBenhNhan(bn != null ? bn.getHoTen() : "Chưa rõ")
                 .soDienThoai(bn != null ? bn.getSoDienThoai() : "")
                 .diaChi(bn != null ? bn.getDiaChi() : "")
-                .bacSiKham(bs != null ? bs.getHoTen() : "Bác sĩ phụ trách")
+                .bacSiKham(bs != null ? bs.getNhanVien().getHoTen() : "Bác sĩ phụ trách")
                 .chuyenKhoa(bs != null ? bs.getChuyenKhoa() : "")
                 .chanDoan(luotKham != null ? luotKham.getChanDoan() : "")
                 .ngayLapHoaDon(hoaDon.getNgayTao())
-                .phiKham(hoaDon.getPhiKham())
-                .tienThuoc(hoaDon.getTienThuoc())
+                .phiKham(fee(hoaDon,"TIEN_KHAM"))
+                .tienThuoc(fee(hoaDon,"TIEN_THUOC"))
                 .tongTien(hoaDon.getTongTien())
-                .trangThaiHoaDon(hoaDon.getTrangThai())
+                .trangThaiHoaDon(hoaDon.getTrangThai().name())
                 .trangThaiThanhToan(trangThaiThanhToan)
                 .danhSachChiTiet(danhSachChiTiet)
-                .lichSuGiaoDich(lichSuGiaoDich)
+                .lichSuGiaoDich(lichSu)
                 .build();
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public KetQuaThanhToanResponse xacNhanThanhToan(XacNhanThanhToanRequest request) {
         log.info("Bắt đầu xử lý xác nhận thanh toán cho hóa đơn: {}", request.getIdHoaDon());
 
@@ -115,11 +111,11 @@ public class ThanhToanService implements IThanhToanService {
             throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
         }
 
-        HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
+        HoaDon hoaDon = hoaDonRepository.findForPayment(request.getIdHoaDon())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + request.getIdHoaDon()));
 
         // Chặn thanh toán lại nếu hóa đơn đã thanh toán hoàn tất
-        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+        if ("DA_THANH_TOAN".equals(hoaDon.getTrangThai().name())) {
             throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
         }
 
@@ -134,11 +130,11 @@ public class ThanhToanService implements IThanhToanService {
         ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
                 .orElseGet(() -> {
                     ThanhToan tt = new ThanhToan();
-                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setIdThanhToan("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
                     tt.setHoaDon(hoaDon);
                     tt.setSoTien(hoaDon.getTongTien());
                     tt.setNgayTao(LocalDateTime.now());
-                    tt.setTrangThai("DANG_XU_LY");
+                    tt.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
                     return thanhToanRepository.save(tt);
                 });
 
@@ -155,24 +151,24 @@ public class ThanhToanService implements IThanhToanService {
         giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         giaoDich.setThanhToan(thanhToan);
         giaoDich.setMaGiaoDich(maGiaoDich);
-        giaoDich.setPhuongThuc(phuongThuc);
+        giaoDich.setPhuongThuc(PhuongThucThanhToan.valueOf(phuongThuc));
         giaoDich.setSoTien(soTienThanhToan);
-        giaoDich.setTrangThai("THANH_CONG");
+        giaoDich.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
         giaoDich.setThoiGian(LocalDateTime.now());
         giaoDichThanhToanRepository.save(giaoDich);
 
         // Cập nhật trạng thái ThanhToan -> THANH_CONG
-        thanhToan.setTrangThai("THANH_CONG");
+        thanhToan.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
         thanhToanRepository.save(thanhToan);
 
         // Cập nhật trạng thái HoaDon -> DA_THANH_TOAN
-        hoaDon.setTrangThai("DA_THANH_TOAN");
+        hoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
         hoaDonRepository.save(hoaDon);
 
         // Cập nhật trạng thái LuotKham -> HOAN_TAT
         LuotKham luotKham = hoaDon.getLuotKham();
         if (luotKham != null) {
-            luotKham.setTrangThai("HOAN_TAT");
+            luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
             luotKhamRepository.save(luotKham);
         }
 
@@ -180,7 +176,7 @@ public class ThanhToanService implements IThanhToanService {
                 hoaDon.getId(), phuongThuc, soTienThanhToan);
 
         return KetQuaThanhToanResponse.builder()
-                .idThanhToan(thanhToan.getId())
+                .idThanhToan(thanhToan.getIdThanhToan())
                 .idGiaoDich(giaoDich.getIdGiaoDich())
                 .maGiaoDich(giaoDich.getMaGiaoDich())
                 .idHoaDon(hoaDon.getId())
@@ -193,7 +189,7 @@ public class ThanhToanService implements IThanhToanService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public ThanhToanTienMatResponse thanhToanTienMat(ThanhToanTienMatRequest request) {
         log.info("Bắt đầu xử lý thanh toán tiền mặt cho hóa đơn: {}", request.getIdHoaDon());
 
@@ -201,11 +197,11 @@ public class ThanhToanService implements IThanhToanService {
             throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
         }
 
-        HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
+        HoaDon hoaDon = hoaDonRepository.findForPayment(request.getIdHoaDon())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + request.getIdHoaDon()));
 
         // Chặn thanh toán lại nếu hóa đơn đã thanh toán hoàn tất (E3)
-        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+        if ("DA_THANH_TOAN".equals(hoaDon.getTrangThai().name())) {
             throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
         }
 
@@ -229,11 +225,11 @@ public class ThanhToanService implements IThanhToanService {
         ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
                 .orElseGet(() -> {
                     ThanhToan tt = new ThanhToan();
-                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setIdThanhToan("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
                     tt.setHoaDon(hoaDon);
                     tt.setSoTien(hoaDon.getTongTien());
                     tt.setNgayTao(LocalDateTime.now());
-                    tt.setTrangThai("DANG_XU_LY");
+                    tt.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
                     return thanhToanRepository.save(tt);
                 });
 
@@ -243,24 +239,24 @@ public class ThanhToanService implements IThanhToanService {
         giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         giaoDich.setThanhToan(thanhToan);
         giaoDich.setMaGiaoDich(maGiaoDich);
-        giaoDich.setPhuongThuc("TIEN_MAT");
+        giaoDich.setPhuongThuc(PhuongThucThanhToan.TIEN_MAT);
         giaoDich.setSoTien(tongTien);
-        giaoDich.setTrangThai("THANH_CONG");
+        giaoDich.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
         giaoDich.setThoiGian(LocalDateTime.now());
         giaoDichThanhToanRepository.save(giaoDich);
 
         // Cập nhật trạng thái ThanhToan -> THANH_CONG
-        thanhToan.setTrangThai("THANH_CONG");
+        thanhToan.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
         thanhToanRepository.save(thanhToan);
 
         // Cập nhật trạng thái HoaDon -> DA_THANH_TOAN
-        hoaDon.setTrangThai("DA_THANH_TOAN");
+        hoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
         hoaDonRepository.save(hoaDon);
 
         // Cập nhật trạng thái LuotKham -> HOAN_TAT
         LuotKham luotKham = hoaDon.getLuotKham();
         if (luotKham != null) {
-            luotKham.setTrangThai("HOAN_TAT");
+            luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
             luotKhamRepository.save(luotKham);
         }
 
@@ -268,7 +264,7 @@ public class ThanhToanService implements IThanhToanService {
                 hoaDon.getId(), tienKhachDua, tienThoiLai);
 
         return ThanhToanTienMatResponse.builder()
-                .idThanhToan(thanhToan.getId())
+                .idThanhToan(thanhToan.getIdThanhToan())
                 .idGiaoDich(giaoDich.getIdGiaoDich())
                 .maGiaoDich(giaoDich.getMaGiaoDich())
                 .idHoaDon(hoaDon.getId())
@@ -294,7 +290,7 @@ public class ThanhToanService implements IThanhToanService {
         HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + idHoaDon));
 
-        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+        if ("DA_THANH_TOAN".equals(hoaDon.getTrangThai().name())) {
             throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó!");
         }
 
@@ -332,7 +328,7 @@ public class ThanhToanService implements IThanhToanService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public KetQuaThanhToanResponse xacNhanThanhToanQr(ThanhToanQrRequest request) {
         log.info("Bắt đầu xử lý xác nhận thanh toán qua QR cho hóa đơn: {}", request.getIdHoaDon());
 
@@ -340,11 +336,11 @@ public class ThanhToanService implements IThanhToanService {
             throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
         }
 
-        HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
+        HoaDon hoaDon = hoaDonRepository.findForPayment(request.getIdHoaDon())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + request.getIdHoaDon()));
 
         // Chặn thanh toán lại nếu hóa đơn đã thanh toán hoàn tất (E3)
-        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+        if ("DA_THANH_TOAN".equals(hoaDon.getTrangThai().name())) {
             throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
         }
 
@@ -354,11 +350,11 @@ public class ThanhToanService implements IThanhToanService {
         ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
                 .orElseGet(() -> {
                     ThanhToan tt = new ThanhToan();
-                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setIdThanhToan("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
                     tt.setHoaDon(hoaDon);
                     tt.setSoTien(tongTien);
                     tt.setNgayTao(LocalDateTime.now());
-                    tt.setTrangThai("DANG_XU_LY");
+                    tt.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
                     return thanhToanRepository.save(tt);
                 });
 
@@ -371,24 +367,24 @@ public class ThanhToanService implements IThanhToanService {
         giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         giaoDich.setThanhToan(thanhToan);
         giaoDich.setMaGiaoDich(maGiaoDich);
-        giaoDich.setPhuongThuc("VNPAY_QR");
+        giaoDich.setPhuongThuc(PhuongThucThanhToan.QR_NGAN_HANG);
         giaoDich.setSoTien(tongTien);
-        giaoDich.setTrangThai("THANH_CONG");
+        giaoDich.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
         giaoDich.setThoiGian(LocalDateTime.now());
         giaoDichThanhToanRepository.save(giaoDich);
 
         // Cập nhật trạng thái ThanhToan -> THANH_CONG
-        thanhToan.setTrangThai("THANH_CONG");
+        thanhToan.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
         thanhToanRepository.save(thanhToan);
 
         // Cập nhật trạng thái HoaDon -> DA_THANH_TOAN
-        hoaDon.setTrangThai("DA_THANH_TOAN");
+        hoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
         hoaDonRepository.save(hoaDon);
 
         // Cập nhật trạng thái LuotKham -> HOAN_TAT
         LuotKham luotKham = hoaDon.getLuotKham();
         if (luotKham != null) {
-            luotKham.setTrangThai("HOAN_TAT");
+            luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
             luotKhamRepository.save(luotKham);
         }
 
@@ -396,7 +392,7 @@ public class ThanhToanService implements IThanhToanService {
                 hoaDon.getId(), maGiaoDich);
 
         return KetQuaThanhToanResponse.builder()
-                .idThanhToan(thanhToan.getId())
+                .idThanhToan(thanhToan.getIdThanhToan())
                 .idGiaoDich(giaoDich.getIdGiaoDich())
                 .maGiaoDich(giaoDich.getMaGiaoDich())
                 .idHoaDon(hoaDon.getId())
@@ -420,16 +416,16 @@ public class ThanhToanService implements IThanhToanService {
                 .map(gd -> GiaoDichResponse.builder()
                         .idGiaoDich(gd.getIdGiaoDich())
                         .maGiaoDich(gd.getMaGiaoDich())
-                        .phuongThuc(gd.getPhuongThuc())
+                        .phuongThuc(gd.getPhuongThuc().name())
                         .soTien(gd.getSoTien())
-                        .trangThai(gd.getTrangThai())
+                        .trangThai(gd.getTrangThai().name())
                         .thoiGian(gd.getThoiGian())
                         .build())
                 .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public VNPayPaymentResponse taoGiaoDichVNPay(String idHoaDon) {
         log.info("Bắt đầu khởi tạo giao dịch VNPay cho hóa đơn: {}", idHoaDon);
 
@@ -437,11 +433,11 @@ public class ThanhToanService implements IThanhToanService {
             throw new IllegalArgumentException("Mã hóa đơn không được để trống!");
         }
 
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+        HoaDon hoaDon = hoaDonRepository.findForPayment(idHoaDon)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + idHoaDon));
 
         // Chặn nếu hóa đơn đã thanh toán hoàn tất (E3)
-        if ("DA_THANH_TOAN".equalsIgnoreCase(hoaDon.getTrangThai())) {
+        if ("DA_THANH_TOAN".equals(hoaDon.getTrangThai().name())) {
             throw new IllegalStateException("Hóa đơn này đã được thanh toán hoàn tất trước đó! Không thể thanh toán lại.");
         }
 
@@ -451,11 +447,11 @@ public class ThanhToanService implements IThanhToanService {
         ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
                 .orElseGet(() -> {
                     ThanhToan tt = new ThanhToan();
-                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                    tt.setIdThanhToan("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
                     tt.setHoaDon(hoaDon);
                     tt.setSoTien(tongTien);
                     tt.setNgayTao(LocalDateTime.now());
-                    tt.setTrangThai("DANG_XU_LY");
+                    tt.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
                     return thanhToanRepository.save(tt);
                 });
 
@@ -464,15 +460,15 @@ public class ThanhToanService implements IThanhToanService {
         giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         giaoDich.setThanhToan(thanhToan);
         giaoDich.setMaGiaoDich("VNP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        giaoDich.setPhuongThuc("TRUC_TUYEN");
+        giaoDich.setPhuongThuc(PhuongThucThanhToan.TRUC_TUYEN);
         giaoDich.setSoTien(tongTien);
-        giaoDich.setTrangThai("DANG_XU_LY");
+        giaoDich.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
         giaoDich.setThoiGian(LocalDateTime.now());
         giaoDichThanhToanRepository.save(giaoDich);
 
         // 3. Gọi PaymentGateway để sinh URL thanh toán VNPay
         PaymentRequest paymentRequest = PaymentRequest.builder()
-                .orderId(hoaDon.getId())
+                .orderId(giaoDich.getIdGiaoDich())
                 .amount(tongTien)
                 .orderInfo("Thanh toan vien phi Medicare " + hoaDon.getId())
                 .build();
@@ -480,10 +476,13 @@ public class ThanhToanService implements IThanhToanService {
         PaymentResponse paymentResponse = paymentGateway.createPaymentRequest(paymentRequest);
 
         if (!"SUCCESS".equalsIgnoreCase(paymentResponse.getStatus())) {
-            giaoDich.setTrangThai("THAT_BAI");
+            giaoDich.setTrangThai(TrangThaiXuLyThanhToan.THAT_BAI);
             giaoDichThanhToanRepository.save(giaoDich);
             throw new IllegalStateException("Không thể tạo liên kết thanh toán VNPay: " + paymentResponse.getMessage());
         }
+
+        giaoDich.setMaGiaoDich(paymentResponse.getTransactionId());
+        giaoDichThanhToanRepository.save(giaoDich);
 
         return VNPayPaymentResponse.builder()
                 .idHoaDon(hoaDon.getId())
@@ -496,9 +495,9 @@ public class ThanhToanService implements IThanhToanService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public VNPayCallbackResponse xuLyKetQuaVNPay(Map<String, String> vnpParams) {
-        log.info("Bắt đầu xử lý kết quả callback từ VNPay: {}", vnpParams);
+        log.info("Xử lý kết quả VNPay");
 
         if (vnpParams == null || vnpParams.isEmpty()) {
             throw new IllegalArgumentException("Tham số callback từ VNPay không hợp lệ!");
@@ -523,65 +522,42 @@ public class ThanhToanService implements IThanhToanService {
             throw new IllegalArgumentException("Mã tham chiếu đơn hàng (vnp_TxnRef) không được để trống!");
         }
 
-        // Parse idHoaDon từ vnp_TxnRef (ví dụ HD-xxx_17281928392)
-        String idHoaDon = vnp_TxnRef.contains("_") ? vnp_TxnRef.substring(0, vnp_TxnRef.lastIndexOf("_")) : vnp_TxnRef;
+        GiaoDichThanhToan giaoDich = giaoDichThanhToanRepository.findByMaGiaoDich(vnp_TxnRef)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy giao dịch VNPay"));
+        if(giaoDich.getPhuongThuc()!=PhuongThucThanhToan.TRUC_TUYEN) throw new IllegalArgumentException("Giao dịch không hợp lệ");
+        ThanhToan thanhToan = giaoDich.getThanhToan();
+        HoaDon hoaDon = hoaDonRepository.findForPayment(thanhToan.getHoaDon().getId()).orElseThrow();
+        entityManager.refresh(giaoDich);
+        entityManager.refresh(thanhToan);
+        BigDecimal soTien;
+        try { soTien = new BigDecimal(vnp_AmountStr).divide(new BigDecimal(100)); }
+        catch(Exception ex) { throw new IllegalArgumentException("Số tiền VNPay không hợp lệ"); }
+        if(soTien.compareTo(giaoDich.getSoTien())!=0 || soTien.compareTo(hoaDon.getTongTien())!=0)
+            throw new IllegalArgumentException("Số tiền VNPay không khớp hóa đơn");
+        if(giaoDich.getTrangThai()!=TrangThaiXuLyThanhToan.DANG_XU_LY || hoaDon.getTrangThai()!=TrangThaiHoaDon.CHUA_THANH_TOAN)
+            return VNPayCallbackResponse.builder().idHoaDon(hoaDon.getId()).soTien(soTien).thanhCong(hoaDon.getTrangThai()==TrangThaiHoaDon.DA_THANH_TOAN).trangThai(giaoDich.getTrangThai().name()).thongBao("Giao dịch đã được xử lý").build();
 
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với mã: " + idHoaDon));
-
-        BigDecimal soTien = (vnp_AmountStr != null && !vnp_AmountStr.isEmpty())
-                ? new BigDecimal(vnp_AmountStr).divide(new BigDecimal(100))
-                : hoaDon.getTongTien();
-
-        ThanhToan thanhToan = thanhToanRepository.findByHoaDon_Id(hoaDon.getId())
-                .orElseGet(() -> {
-                    ThanhToan tt = new ThanhToan();
-                    tt.setId("TT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-                    tt.setHoaDon(hoaDon);
-                    tt.setSoTien(hoaDon.getTongTien());
-                    tt.setNgayTao(LocalDateTime.now());
-                    tt.setTrangThai("DANG_XU_LY");
-                    return thanhToanRepository.save(tt);
-                });
-
-        // Tìm giao dịch gần nhất đang xử lý của thanh toán này
-        List<GiaoDichThanhToan> dsGiaoDich = giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc(hoaDon.getId());
-        GiaoDichThanhToan giaoDich;
-        if (!dsGiaoDich.isEmpty()) {
-            giaoDich = dsGiaoDich.get(0);
-        } else {
-            giaoDich = new GiaoDichThanhToan();
-            giaoDich.setIdGiaoDich("GD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-            giaoDich.setThanhToan(thanhToan);
-            giaoDich.setPhuongThuc("TRUC_TUYEN");
-            giaoDich.setSoTien(soTien);
-            giaoDich.setThoiGian(LocalDateTime.now());
-        }
-
-        boolean isThanhCong = "00".equals(vnp_ResponseCode);
+        boolean isThanhCong = "00".equals(vnp_ResponseCode) && "00".equals(vnpParams.get("vnp_TransactionStatus"));
 
         if (isThanhCong) {
             // Thanh toán thành công!
-            giaoDich.setTrangThai("THANH_CONG");
-            if (vnp_TransactionNo != null && !vnp_TransactionNo.isEmpty()) {
-                giaoDich.setMaGiaoDich("VNP-" + vnp_TransactionNo);
-            }
+            giaoDich.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
             giaoDich.setThoiGian(LocalDateTime.now());
             giaoDichThanhToanRepository.save(giaoDich);
 
-            thanhToan.setTrangThai("THANH_CONG");
+            thanhToan.setTrangThai(TrangThaiXuLyThanhToan.THANH_CONG);
             thanhToanRepository.save(thanhToan);
 
-            hoaDon.setTrangThai("DA_THANH_TOAN");
+            hoaDon.setTrangThai(TrangThaiHoaDon.DA_THANH_TOAN);
             hoaDonRepository.save(hoaDon);
 
             LuotKham luotKham = hoaDon.getLuotKham();
             if (luotKham != null) {
-                luotKham.setTrangThai("HOAN_TAT");
+                luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
                 luotKhamRepository.save(luotKham);
             }
 
-            log.info("Xử lý thanh toán VNPay thành công cho hóa đơn: {}, Mã GD VNPay: {}", idHoaDon, vnp_TransactionNo);
+            log.info("Xử lý thanh toán VNPay thành công cho hóa đơn: {}, Mã GD VNPay: {}", hoaDon.getId(), vnp_TransactionNo);
 
             String thoiGianHienThi = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
             if (vnp_PayDate != null && vnp_PayDate.length() == 14) {
@@ -606,12 +582,12 @@ public class ThanhToanService implements IThanhToanService {
                     .build();
         } else {
             // Thanh toán thất bại hoặc người dùng hủy
-            giaoDich.setTrangThai("THAT_BAI");
+            giaoDich.setTrangThai(TrangThaiXuLyThanhToan.THAT_BAI);
             giaoDich.setThoiGian(LocalDateTime.now());
             giaoDichThanhToanRepository.save(giaoDich);
 
             // Giữ nguyên hóa đơn là CHUA_THANH_TOAN để khách có thể thanh toán lại theo SRS
-            log.warn("Thanh toán VNPay không thành công cho hóa đơn: {}, Mã phản hồi: {}", idHoaDon, vnp_ResponseCode);
+            log.warn("Thanh toán VNPay không thành công cho hóa đơn: {}, Mã phản hồi: {}", hoaDon.getId(), vnp_ResponseCode);
 
             String thoiGianHienThi = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"));
             if (vnp_PayDate != null && vnp_PayDate.length() == 14) {
@@ -658,14 +634,17 @@ public class ThanhToanService implements IThanhToanService {
                 .tenBenhNhan(bn != null ? bn.getHoTen() : "Chưa rõ")
                 .soDienThoai(bn != null ? bn.getSoDienThoai() : "")
                 .diaChi(bn != null ? bn.getDiaChi() : "")
-                .bacSiKham(bs != null ? bs.getHoTen() : "Bác sĩ phụ trách")
-                .thuNganLap(tn != null ? tn.getHoTen() : "Thu ngân")
+                .bacSiKham(bs != null ? bs.getNhanVien().getHoTen() : "Bác sĩ phụ trách")
+                .thuNganLap(tn != null ? tn.getNhanVien().getHoTen() : "Thu ngân")
                 .ngayTao(hd.getNgayTao())
-                .phiKham(hd.getPhiKham())
-                .tienThuoc(hd.getTienThuoc())
+                .phiKham(fee(hd,"TIEN_KHAM"))
+                .tienThuoc(fee(hd,"TIEN_THUOC"))
                 .tongTien(hd.getTongTien())
-                .trangThai(hd.getTrangThai())
+                .trangThai(hd.getTrangThai().name())
                 .build();
+    }
+    private BigDecimal fee(HoaDon invoice, String kind) {
+        return invoice.getChiTietHoaDons().stream().filter(d -> kind.equals(d.getLoaiChiPhi())).map(ChiTietHoaDon::getThanhTien).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
 

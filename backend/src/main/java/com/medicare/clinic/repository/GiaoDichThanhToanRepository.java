@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface GiaoDichThanhToanRepository extends JpaRepository<GiaoDichThanhToan, String> {
-    List<GiaoDichThanhToan> findByThanhToan_IdOrderByThoiGianDesc(String idThanhToan);
+    List<GiaoDichThanhToan> findByThanhToan_IdThanhToanOrderByThoiGianDesc(String idThanhToan);
     List<GiaoDichThanhToan> findByThanhToan_HoaDon_IdOrderByThoiGianDesc(String idHoaDon);
+    java.util.Optional<GiaoDichThanhToan> findByMaGiaoDich(String reference);
 }

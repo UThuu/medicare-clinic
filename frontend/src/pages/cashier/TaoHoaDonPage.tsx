@@ -5,9 +5,9 @@ import {
   HoaDonResponse,
   LuotKhamChoHoaDonResponse,
 } from '../../types/billing';
-import { Button } from './components/Button';
+import { Button } from '../../components/common/Button';
 import { StatusBadge } from './components/StatusBadge';
-import { Modal } from './components/Modal';
+import { Modal } from '../../components/common/Modal';
 import { InHoaDonModal } from './components/InHoaDonModal';
 
 interface TaoHoaDonPageProps {
@@ -31,7 +31,6 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
   const [previewData, setPreviewData] = useState<ChiPhiKhamPreviewResponse | null>(null);
   const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [ghiChu, setGhiChu] = useState<string>('');
 
   // State Modal Xem chi tiết hóa đơn đã lập
   const [selectedInvoice, setSelectedInvoice] = useState<HoaDonResponse | null>(null);
@@ -84,7 +83,6 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
     try {
       const preview = await hoaDonService.getChiPhiDuKien(idLuotKham);
       setPreviewData(preview);
-      setGhiChu('');
       setIsModalOpen(true);
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Không thể tải bảng kê chi phí!';
@@ -102,8 +100,6 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
     try {
       const res = await hoaDonService.taoHoaDon({
         idLuotKham: previewData.idLuotKham,
-        maThuNgan: 'TN-001',
-        ghiChu: ghiChu,
       });
 
       showToast(` Tạo hóa đơn thành công! Mã: ${res.idHoaDon}`, 'success');
@@ -144,7 +140,7 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
             {danhSachChoLap.length}
           </div>
           <div style={{ fontSize: '12px', color: '#059669', marginTop: '4px' }}>
-            Đã hoàn tất khám và kê đơn
+            Đã hoàn tất khám
           </div>
         </div>
 
@@ -155,9 +151,6 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
           <div style={{ fontSize: '28px', fontWeight: 800, color: '#334155', marginTop: '4px' }}>
             {danhSachHoaDon.length}
           </div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-            Lưu trong cơ sở dữ liệu
-          </div>
         </div>
 
         <div className="med-card" style={{ margin: 0, padding: '20px' }}>
@@ -166,9 +159,6 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
           </div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#0d9488', marginTop: '6px' }}>
             {formatVND(danhSachHoaDon.reduce((acc, cur) => acc + (cur.tongTien || 0), 0))}
-          </div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-            Tiền khám + Tiền thuốc
           </div>
         </div>
       </div>
@@ -213,7 +203,7 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
           <div className="med-card-header">
             <div className="med-card-title">
               <span>🩺</span>
-              <span>Bệnh nhân hoàn tất khám - Chờ thu ngân lập hóa đơn</span>
+              <span>Bệnh nhân hoàn tất khám</span>
             </div>
             <Button variant="secondary" size="sm" onClick={loadData} loading={loading} id="btn-refresh-cho-lap">
               🔄 Làm mới
@@ -384,7 +374,7 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
 
       {/* MODAL LẬP HÓA ĐƠN & TÍNH TỔNG CHI PHÍ (UC-15 & UC-16) */}
       <Modal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Lập Hóa Đơn Khám Chữa Bệnh (UC-15)"
         footer={
@@ -482,32 +472,14 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
               </div>
             </div>
 
-            <div style={{ marginTop: '16px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                Ghi chú hóa đơn (tùy chọn):
-              </label>
-              <input
-                id="input-invoice-note"
-                type="text"
-                placeholder="Nhập ghi chú cho bệnh nhân hoặc quầy thu ngân..."
-                value={ghiChu}
-                onChange={(e) => setGhiChu(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '13px',
-                }}
-              />
-            </div>
+
           </div>
         )}
       </Modal>
 
       {/* MODAL XEM CHI TIẾT HÓA ĐƠN ĐÃ LẬP */}
       <Modal
-        isOpen={!!selectedInvoice}
+        open={!!selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
         title={`Chi Tiết Hóa Đơn: ${selectedInvoice?.idHoaDon}`}
         footer={

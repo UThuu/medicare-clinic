@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { hoaDonService } from '../../../services/hoaDonService';
 import { InHoaDonResponse } from '../../../types/billing';
-import { Button } from './Button';
+import { Button } from '../../../components/common/Button';
+import '../billing.css';
+import '../uc21Billing.css';
 
 interface InHoaDonModalProps {
   isOpen: boolean;
@@ -369,7 +371,7 @@ export const InHoaDonModal: React.FC<InHoaDonModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" id="in-hoadon-modal-overlay" onClick={onClose}>
+    <div className="mc-billing"><div className="modal-overlay" id="in-hoadon-modal-overlay" onClick={onClose}>
       <div
         className="modal-content print-modal-content"
         id="in-hoadon-modal-content"
@@ -664,6 +666,6 @@ export const InHoaDonModal: React.FC<InHoaDonModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div></div>
   );
 };

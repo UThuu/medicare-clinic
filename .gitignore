@@ -23,29 +23,26 @@ Thumbs.db
 !backend/mvnw.cmd
 !backend/.mvn/
 
-# Local reference documents & project context (keep local only, do not push to git)
-docs/*
-!docs/.gitkeep
-context/*
-!context/.gitkeep
-AGENTS.md
-
-# Local database scripts (keep local for dev/testing, managed by TV1)
-database/*
-!database/.gitkeep
-
-# Local backend configuration (keep private, only push .example)
-backend/src/main/resources/application.properties
-!backend/src/main/resources/application.properties.example
-
-# Local helper / test data initializer (managed locally by dev)
-backend/src/main/java/com/medicare/clinic/config/
-
-# Logs & temp cache
-*.log
-.vite/
-scratch/
-
-
-
-
+# Local review artifacts and session cookie jars
+/compact.py
+/cookies.txt
+/fix_compact.py
+/fix_compact2.py
+/fix_compact3.py
+/fix_compact4.py
+/fix_encoding.py
+/fix_encoding2.py
+/fix_scroll.py
+/fix_scroll2.py
+/fix_scroll_history.py
+/full_backup.patch
+/full_backup_staged.patch
+/restore_record.py
+/restore_record2.py
+/restore_record3.py
+/restore_summary.py
+/test.ps1
+/test2.ps1
+/test3.ps1
+/cookie.txt
+/*.log

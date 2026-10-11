@@ -30,9 +30,7 @@ export interface ChiPhiKhamPreviewResponse {
 
 export interface TaoHoaDonRequest {
   idLuotKham: string;
-  maThuNgan?: string;
   phiKhamTuyChinh?: number;
-  ghiChu?: string;
 }
 
 export interface HoaDonResponse {
@@ -48,7 +46,7 @@ export interface HoaDonResponse {
   phiKham: number;
   tienThuoc: number;
   tongTien: number;
-  trangThai: 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN' | 'HUY';
+  trangThai: 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN';
   danhSachChiTiet: ChiTietKhoanThuDTO[];
 }
 

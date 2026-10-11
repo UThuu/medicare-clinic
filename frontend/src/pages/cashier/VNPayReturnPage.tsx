@@ -1,14 +1,16 @@
+import { useAppointmentNotifications } from '../../hooks/useAppointmentNotifications';
 import React, { useEffect, useState } from 'react';
 import { thanhToanService } from '../../services/thanhToanService';
 import { VNPayCallbackResponse } from '../../types/billing';
-import { Button } from './components/Button';
+import { Button } from '../../components/common/Button';
+import { PatientLayout } from '../../components/layout/PatientLayout';
 import { InHoaDonModal } from './components/InHoaDonModal';
 
 interface VNPayReturnPageProps {
   onBackToBilling: () => void;
 }
 
-export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBilling }) => {
+const VNPayReturnContent: React.FC<VNPayReturnPageProps> = ({ onBackToBilling }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [result, setResult] = useState<VNPayCallbackResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -208,3 +210,5 @@ export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = ({ onBackToBillin
     </div>
   );
 };
+
+export const VNPayReturnPage: React.FC<VNPayReturnPageProps> = props => { const notifications=useAppointmentNotifications(); return <PatientLayout active="payment" notifications={notifications}><VNPayReturnContent {...props}/></PatientLayout>; };
