@@ -1,29 +1,116 @@
-import React, { useState } from 'react';
-import { Header } from './pages/cashier/components/Header';
-import { Sidebar } from './pages/cashier/components/Sidebar';
+import React from 'react';
+import { BenhNhanThongBaoLichKham } from './pages/BenhNhanThongBaoLichKham';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import { Login } from './pages/Login';
+import { PatientDashboard } from './pages/PatientDashboard';
+import { StaffDashboard } from './pages/StaffDashboard';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { DoctorSchedule } from './pages/DoctorSchedule';
+import { PatientRecord } from './pages/PatientRecord';
+import { LichKhamDatTrucTuyen } from './pages/LichKhamDatTrucTuyen';
+import { LichKhamDatTaiQuay } from './pages/LichKhamDatTaiQuay';
+import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
+import { RecordExamResult } from './pages/RecordExamResult';
+
 import { TaoHoaDonPage } from './pages/cashier/TaoHoaDonPage';
 
-export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cho-lap' | 'da-lap'>('cho-lap');
+// Điều hướng theo vai trò khi truy cập trang chủ /
+const RootRedirect: React.FC = () => {
+  const { user, isInitializing } = useAuth();
+  
+  if (isInitializing) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải thông tin phiên...</div>;
+  }
+  
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.vaiTro === 'BENH_NHAN') return <Navigate to="/patient" replace />;
+  if (['BAC_SI', 'DIEU_DUONG', 'LE_TAN', 'THU_NGAN'].includes(user.vaiTro)) return <Navigate to="/staff" replace />;
+  
+  return <div style={{ padding: '2rem', textAlign: 'center' }}>Tài khoản không có quyền truy cập hệ thống.</div>;
+};
 
+const NotFound: React.FC = () => (
+  <div style={{ padding: '2rem', textAlign: 'center' }}>
+    <h2>404 - Không tìm thấy trang</h2>
+  </div>
+);
+
+const App: React.FC = () => {
   return (
-    <div className="app-container">
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        pendingCount={3}
-        totalInvoiceCount={0}
-      />
-      <div className="main-wrapper">
-        <Header
-          title="Quản Lý Hóa Đơn Khám Chữa Bệnh"
-          subtitle="Thực hiện UC-15 (Tạo hóa đơn) và UC-16 (Tính tổng chi phí)"
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        
+        <Route 
+          path="/patient" 
+          element={
+            <ProtectedRoute allowedRoles={['BENH_NHAN']}>
+              <PatientDashboard />
+            </ProtectedRoute>
+          } 
         />
-        <main className="content-body">
-          <TaoHoaDonPage />
-        </main>
-      </div>
-    </div>
+        
+        <Route 
+          path="/staff" 
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI', 'DIEU_DUONG', 'LE_TAN', 'THU_NGAN']}>
+              <StaffDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/staff/schedules" 
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI']}>
+              <DoctorSchedule />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/staff/medical-record/:id" 
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI']}>
+              <PatientRecord />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route
+          path="/staff/patient-search"
+          element={
+            <ProtectedRoute allowedRoles={['LE_TAN']}>
+              <BenhNhanTimKiem />
+            </ProtectedRoute>
+          }
+        />
+
+
+
+        <Route
+          path="/staff/medical-record/:id/record-exam"
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI']}>
+              <RecordExamResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/staff/lich-kham/dat-tai-quay" element={
+          <ProtectedRoute allowedRoles={['LE_TAN']}><LichKhamDatTaiQuay /></ProtectedRoute>
+        } />
+        <Route path="/patient/dat-lich-kham" element={
+          <ProtectedRoute allowedRoles={['BENH_NHAN']}><LichKhamDatTrucTuyen /></ProtectedRoute>
+        } />
+        <Route path="/patient/thong-bao-lich-kham" element={
+          <ProtectedRoute allowedRoles={['BENH_NHAN']}><BenhNhanThongBaoLichKham /></ProtectedRoute>
+        } />
+        <Route path="/staff/billing" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><TaoHoaDonPage /></ProtectedRoute>} />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

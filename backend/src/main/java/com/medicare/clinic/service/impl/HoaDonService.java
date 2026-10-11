@@ -1,292 +1,145 @@
 package com.medicare.clinic.service.impl;
-
 import com.medicare.clinic.dto.request.TaoHoaDonRequest;
-import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
-import com.medicare.clinic.dto.response.ChiTietKhoanThuDTO;
-import com.medicare.clinic.dto.response.HoaDonResponse;
-import com.medicare.clinic.dto.response.LuotKhamChoHoaDonResponse;
+import com.medicare.clinic.dto.response.*;
 import com.medicare.clinic.entity.*;
-import com.medicare.clinic.repository.DonThuocRepository;
-import com.medicare.clinic.repository.HoaDonRepository;
-import com.medicare.clinic.repository.LuotKhamRepository;
-import com.medicare.clinic.repository.ThuNganRepository;
+import com.medicare.clinic.entity.enums.*;
+import com.medicare.clinic.repository.*;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import java.time.*;
+import java.util.*;
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class HoaDonService implements IHoaDonService {
-
+    private final jakarta.persistence.EntityManager entityManager;
     private final HoaDonRepository hoaDonRepository;
     private final LuotKhamRepository luotKhamRepository;
     private final DonThuocRepository donThuocRepository;
     private final ThuNganRepository thuNganRepository;
-
-    private static final BigDecimal PHI_KHAM_MAC_DINH = BigDecimal.valueOf(150000);
-
-    @Override
-    @Transactional(readOnly = true)
+    @Value("${billing.exam-fee:${BILLING_EXAM_FEE:150000}}")
+    private BigDecimal examFee;
+    private static final BigDecimal MAX_AMOUNT = new BigDecimal("9999999999.99");
+    private String id(String value) {
+        if (value == null || value.isBlank() || value.trim().length() > 36)
+            throw new IllegalArgumentException("Mã lượt khám không hợp lệ");
+        return value.trim();
+    }
+    private BigDecimal money(BigDecimal value) {
+        if (value == null || value.signum() < 0 || value.compareTo(MAX_AMOUNT) > 0 || value.stripTrailingZeros().scale() > 2)
+            throw new IllegalArgumentException("Số tiền không hợp lệ");
+        return value.setScale(2);
+    }
+    private LuotKham visit(String visitId) {
+        return luotKhamRepository.findById(id(visitId)).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lượt khám"));
+    }
+    private DonThuoc ready(LuotKham visit) {
+        if (visit.getTrangThai() != TrangThaiLuotKham.HOAN_TAT)
+            throw new IllegalStateException("Lượt khám chưa hoàn tất, chưa thể lập hóa đơn");
+        return donThuocRepository.findByLuotKham_IdLuotKham(visit.getIdLuotKham()).orElseThrow(() ->
+            new IllegalStateException("Chưa có đơn thuốc hoàn tất để lập hóa đơn"));
+    }
+    private List<ChiTietHoaDon> charges(DonThuoc prescription, BigDecimal fee) {
+        List<ChiTietHoaDon> details = new ArrayList<>();
+        details.add(line("TIEN_KHAM", "Phí khám", 1, money(fee)));
+        if (prescription.getChiTietDonThuocs() != null) for (ChiTietDonThuoc drug : prescription.getChiTietDonThuocs()) {
+            if (drug.getThuoc() == null || drug.getSoLuong() == null || drug.getSoLuong() <= 0)
+                throw new IllegalArgumentException("Chi tiết đơn thuốc không hợp lệ");
+            details.add(line("TIEN_THUOC", drug.getThuoc().getTenThuoc(), drug.getSoLuong(), money(drug.getDonGia())));
+        }
+        money(details.stream().map(ChiTietHoaDon::getThanhTien).reduce(BigDecimal.ZERO, BigDecimal::add));
+        return details;
+    }
+    private ChiTietHoaDon line(String kind, String description, int quantity, BigDecimal price) {
+        if (description == null || description.isBlank() || description.length() > 255)
+            throw new IllegalArgumentException("Mô tả khoản thu không hợp lệ");
+        ChiTietHoaDon detail = new ChiTietHoaDon();
+        detail.setId(UUID.randomUUID().toString()); detail.setLoaiChiPhi(kind); detail.setMoTa(description);
+        detail.setSoLuong(quantity); detail.setDonGia(price);
+        detail.setThanhTien(money(price.multiply(BigDecimal.valueOf(quantity))));
+        return detail;
+    }
+    private List<ChiTietKhoanThuDTO> lines(List<ChiTietHoaDon> details) {
+        return details.stream().map(d -> ChiTietKhoanThuDTO.builder().loaiKhoanThu(d.getLoaiChiPhi())
+            .tenKhoanThu(d.getMoTa()).soLuong(d.getSoLuong()).donGia(d.getDonGia()).thanhTien(d.getThanhTien()).build()).toList();
+    }
+    private BigDecimal sum(List<ChiTietHoaDon> details, String kind) {
+        return details.stream().filter(d -> kind.equals(d.getLoaiChiPhi())).map(ChiTietHoaDon::getThanhTien)
+            .reduce(new BigDecimal("0.00"), BigDecimal::add);
+    }
+    @Override @Transactional(readOnly = true)
     public List<LuotKhamChoHoaDonResponse> layDanhSachLuotKhamChoLapHoaDon() {
-        List<LuotKham> ds = luotKhamRepository.findLuotKhamChoLapHoaDon();
-        return ds.stream().map(this::mapToLuotKhamChoHoaDonResponse).collect(Collectors.toList());
+        return luotKhamRepository.findReadyForBilling(TrangThaiLuotKham.HOAN_TAT).stream().map(v -> {
+            LichKham a = v.getLichKham(); BenhNhan p = a.getBenhNhan(); BacSi d = a.getBacSi();
+            return LuotKhamChoHoaDonResponse.builder().idLuotKham(v.getIdLuotKham()).idLichKham(a.getIdLichKham())
+                .maBenhNhan(p.getIdBenhNhan()).tenBenhNhan(p.getHoTen()).soDienThoai(p.getSoDienThoai())
+                .bacSiKham(d.getNhanVien().getHoTen()).chuyenKhoa(d.getChuyenKhoa()).ngayKham(a.getNgayKham())
+                .gioKham(a.getGioKham()).lyDoKham(v.getLyDoKham()).chanDoan(v.getChanDoan())
+                .trangThaiLuotKham(v.getTrangThai().name()).daCoDonThuoc(true).build();
+        }).toList();
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ChiPhiKhamPreviewResponse layChiPhiDuKien(String idLuotKham) {
-        LuotKham luotKham = luotKhamRepository.findById(idLuotKham)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lượt khám với ID: " + idLuotKham));
-
-        Optional<HoaDon> hoaDonDaCo = hoaDonRepository.findByLuotKham_IdLuotKham(idLuotKham);
-
-        BigDecimal phiKham = PHI_KHAM_MAC_DINH;
-        BigDecimal tienThuoc = BigDecimal.ZERO;
-        List<ChiTietKhoanThuDTO> danhSachKhoanThu = new ArrayList<>();
-
-        // Thêm dòng Phí khám bệnh
-        String chuyenKhoa = (luotKham.getLichKham() != null && luotKham.getLichKham().getBacSi() != null)
-                ? luotKham.getLichKham().getBacSi().getChuyenKhoa() : "Đa khoa";
-
-        danhSachKhoanThu.add(ChiTietKhoanThuDTO.builder()
-                .loaiKhoanThu("TIEN_KHAM")
-                .tenKhoanThu("Phí khám lâm sàng (" + chuyenKhoa + ")")
-                .donViTinh("Lần")
-                .soLuong(1)
-                .donGia(phiKham)
-                .thanhTien(phiKham)
-                .huongDan("Khám chuyên khoa & tư vấn chẩn đoán y tế")
-                .build());
-
-        // Lấy thông tin đơn thuốc nếu có
-        Optional<DonThuoc> donThuocOpt = donThuocRepository.findByLuotKham_IdLuotKham(idLuotKham);
-        if (donThuocOpt.isPresent() && donThuocOpt.get().getChiTietDonThuocs() != null) {
-            for (ChiTietDonThuoc ct : donThuocOpt.get().getChiTietDonThuocs()) {
-                BigDecimal thanhTien = ct.getDonGia().multiply(BigDecimal.valueOf(ct.getSoLuong()));
-                tienThuoc = tienThuoc.add(thanhTien);
-
-                danhSachKhoanThu.add(ChiTietKhoanThuDTO.builder()
-                        .loaiKhoanThu("TIEN_THUOC")
-                        .tenKhoanThu(ct.getThuoc() != null ? ct.getThuoc().getTenThuoc() : "Thuốc điều trị")
-                        .donViTinh(ct.getThuoc() != null ? ct.getThuoc().getDonViTinh() : "Đơn vị")
-                        .soLuong(ct.getSoLuong())
-                        .donGia(ct.getDonGia())
-                        .thanhTien(thanhTien)
-                        .huongDan(ct.getLieuLuong() + (ct.getHuongDanSuDung() != null ? " - " + ct.getHuongDanSuDung() : ""))
-                        .build());
-            }
-        }
-
-        // UC-16: Tính tổng chi phí = Tiền khám + Tiền thuốc
-        BigDecimal tongTien = phiKham.add(tienThuoc);
-
-        BenhNhan bn = luotKham.getLichKham() != null ? luotKham.getLichKham().getBenhNhan() : null;
-        BacSi bs = luotKham.getLichKham() != null ? luotKham.getLichKham().getBacSi() : null;
-
-        return ChiPhiKhamPreviewResponse.builder()
-                .idLuotKham(luotKham.getIdLuotKham())
-                .maBenhNhan(bn != null ? bn.getIdBenhNhan() : "")
-                .tenBenhNhan(bn != null ? bn.getHoTen() : "Chưa rõ")
-                .soDienThoai(bn != null ? bn.getSoDienThoai() : "")
-                .ngaySinh(bn != null ? bn.getNgaySinh() : null)
-                .gioiTinh(bn != null ? bn.getGioiTinh() : "")
-                .bacSiKham(bs != null ? bs.getHoTen() : "Bác sĩ phụ trách")
-                .chuyenKhoa(bs != null ? bs.getChuyenKhoa() : "")
-                .lyDoKham(luotKham.getLyDoKham())
-                .chanDoan(luotKham.getChanDoan())
-                .ngayKham(luotKham.getLichKham() != null ? luotKham.getLichKham().getNgayKham() : null)
-                .phiKham(phiKham)
-                .tienThuoc(tienThuoc)
-                .tongTien(tongTien)
-                .danhSachKhoanThu(danhSachKhoanThu)
-                .daCoHoaDon(hoaDonDaCo.isPresent())
-                .idHoaDonHienTai(hoaDonDaCo.map(HoaDon::getId).orElse(null))
-                .build();
+    @Override @Transactional(readOnly = true)
+    public ChiPhiKhamPreviewResponse layChiPhiDuKien(String visitId) {
+        LuotKham v = visit(visitId);
+        Optional<HoaDon> stored = hoaDonRepository.findByLuotKham_IdLuotKham(v.getIdLuotKham());
+        List<ChiTietHoaDon> details = stored.isPresent() ? stored.get().getChiTietHoaDons() : charges(ready(v), examFee);
+        LichKham a = v.getLichKham(); BenhNhan p = a.getBenhNhan(); BacSi d = a.getBacSi();
+        return ChiPhiKhamPreviewResponse.builder().idLuotKham(v.getIdLuotKham()).maBenhNhan(p.getIdBenhNhan())
+            .tenBenhNhan(p.getHoTen()).soDienThoai(p.getSoDienThoai()).ngaySinh(p.getNgaySinh())
+            .gioiTinh(p.getGioiTinh() == null ? null : p.getGioiTinh().name()).bacSiKham(d.getNhanVien().getHoTen())
+            .chuyenKhoa(d.getChuyenKhoa()).lyDoKham(v.getLyDoKham()).chanDoan(v.getChanDoan()).ngayKham(a.getNgayKham())
+            .phiKham(sum(details,"TIEN_KHAM")).tienThuoc(sum(details,"TIEN_THUOC"))
+            .tongTien(stored.isPresent() ? stored.get().getTongTien() : sum(details,"TIEN_KHAM").add(sum(details,"TIEN_THUOC")))
+            .danhSachKhoanThu(lines(details)).daCoHoaDon(stored.isPresent()).idHoaDonHienTai(stored.map(HoaDon::getId).orElse(null)).build();
     }
-
-    @Override
-    @Transactional
-    public HoaDonResponse taoHoaDon(TaoHoaDonRequest request) {
-        log.info("Bắt đầu xử lý tạo hóa đơn cho lượt khám: {}", request.getIdLuotKham());
-
-        if (request.getIdLuotKham() == null || request.getIdLuotKham().trim().isEmpty()) {
-            throw new IllegalArgumentException("Mã lượt khám không được để trống!");
-        }
-
-        LuotKham luotKham = luotKhamRepository.findById(request.getIdLuotKham())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lượt khám với ID: " + request.getIdLuotKham()));
-
-        // Kiểm tra xem lượt khám này đã có hóa đơn hợp lệ chưa
-        if (hoaDonRepository.existsByLuotKham_IdLuotKham(luotKham.getIdLuotKham())) {
-            throw new IllegalStateException("Lượt khám này đã được lập hóa đơn trước đó! Không thể tạo trùng lặp.");
-        }
-
-        // Lấy thu ngân xử lý
-        ThuNgan thuNgan = null;
-        if (request.getMaThuNgan() != null && !request.getMaThuNgan().trim().isEmpty()) {
-            thuNgan = thuNganRepository.findById(request.getMaThuNgan()).orElse(null);
-        }
-        if (thuNgan == null) {
-            List<ThuNgan> dsThuNgan = thuNganRepository.findAll();
-            if (!dsThuNgan.isEmpty()) {
-                thuNgan = dsThuNgan.get(0);
-            } else {
-                // Khởi tạo thu ngân mặc định nếu chưa có
-                thuNgan = new ThuNgan();
-                thuNgan.setMaNv("TN-001");
-                thuNgan.setHoTen("Nguyễn Thị Thu Ngân");
-                thuNgan.setSdt("0908111222");
-                thuNgan.setDiaChi("Quầy thu ngân số 1");
-                thuNgan.setCaLamViec("Ca sáng");
-                thuNgan.setQuayLamViec("Quầy 1");
-                thuNgan = thuNganRepository.save(thuNgan);
-            }
-        }
-
-        // Tính tiền khám và tiền thuốc
-        BigDecimal phiKham = request.getPhiKhamTuyChinh() != null ? request.getPhiKhamTuyChinh() : PHI_KHAM_MAC_DINH;
-        BigDecimal tienThuoc = BigDecimal.ZERO;
-
-        Optional<DonThuoc> donThuocOpt = donThuocRepository.findByLuotKham_IdLuotKham(luotKham.getIdLuotKham());
-        if (donThuocOpt.isPresent() && donThuocOpt.get().getChiTietDonThuocs() != null) {
-            for (ChiTietDonThuoc ct : donThuocOpt.get().getChiTietDonThuocs()) {
-                BigDecimal tt = ct.getDonGia().multiply(BigDecimal.valueOf(ct.getSoLuong()));
-                tienThuoc = tienThuoc.add(tt);
-            }
-        }
-
-        // UC-16: Tính tổng tiền
-        BigDecimal tongTien = phiKham.add(tienThuoc);
-
-        // Sinh mã hóa đơn chuẩn y tế (Ví dụ: HD-YYYYMMDD-XXXX)
-        String maHoaDon = "HD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-
-        HoaDon hoaDon = new HoaDon();
-        hoaDon.setId(maHoaDon);
-        hoaDon.setLuotKham(luotKham);
-        hoaDon.setThuNgan(thuNgan);
-        hoaDon.setNgayTao(LocalDateTime.now());
-        hoaDon.setPhiKham(phiKham);
-        hoaDon.setTienThuoc(tienThuoc);
-        hoaDon.setTongTien(tongTien);
-        hoaDon.setTrangThai("CHUA_THANH_TOAN");
-
-        HoaDon saved = hoaDonRepository.save(hoaDon);
-
-        // Cập nhật trạng thái lượt khám sang chờ thanh toán
-        luotKham.setTrangThai("CHO_THANH_TOAN");
-        luotKhamRepository.save(luotKham);
-
-        log.info("Lập hóa đơn thành công! Mã hóa đơn: {}, Tổng tiền: {}", saved.getId(), saved.getTongTien());
-        return mapToHoaDonResponse(saved);
+    @Override @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public HoaDonResponse taoHoaDon(TaoHoaDonRequest request, String cashierId) {
+        if (request == null) throw new IllegalArgumentException("Yêu cầu không hợp lệ");
+        ThuNgan cashier = thuNganRepository.findById(id(cashierId)).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.FORBIDDEN,"Tài khoản không liên kết thu ngân hợp lệ"));
+        // Lock the visit before checking its invoice; all creators acquire the same lock.
+        LuotKham v = luotKhamRepository.findForBilling(id(request.getIdLuotKham())).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy lượt khám"));
+        if (hoaDonRepository.existsByLuotKham_IdLuotKham(v.getIdLuotKham()))
+            throw new IllegalStateException("Lượt khám đã có hóa đơn");
+        List<ChiTietHoaDon> details = charges(ready(v), request.getPhiKhamTuyChinh() == null ? examFee : request.getPhiKhamTuyChinh());
+        HoaDon invoice = new HoaDon(); invoice.setId(UUID.randomUUID().toString());
+        invoice.setLuotKham(v); invoice.setThuNgan(cashier);
+        invoice.setNgayTao(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+        invoice.setTrangThai(TrangThaiHoaDon.CHUA_THANH_TOAN);
+        details.forEach(d -> d.setHoaDon(invoice)); invoice.setChiTietHoaDons(details); invoice.tinhTongChiPhi();
+        // Persist totals and immutable charge snapshots atomically; preserve HOAN_TAT.
+        entityManager.persist(invoice);
+        entityManager.flush();
+        return response(invoice);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public HoaDonResponse layHoaDonTheoId(String idHoaDon) {
-        HoaDon hd = hoaDonRepository.findById(idHoaDon)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn với ID: " + idHoaDon));
-        return mapToHoaDonResponse(hd);
+    private HoaDonResponse response(HoaDon h) {
+        LichKham a = h.getLuotKham().getLichKham(); BenhNhan p = a.getBenhNhan();
+        return HoaDonResponse.builder().idHoaDon(h.getId()).idLuotKham(h.getLuotKham().getIdLuotKham())
+            .maBenhNhan(p.getIdBenhNhan()).tenBenhNhan(p.getHoTen()).soDienThoai(p.getSoDienThoai()).diaChi(p.getDiaChi())
+            .bacSiKham(a.getBacSi().getNhanVien().getHoTen()).thuNganLap(h.getThuNgan().getNhanVien().getHoTen())
+            .ngayTao(h.getNgayTao()).phiKham(sum(h.getChiTietHoaDons(),"TIEN_KHAM"))
+            .tienThuoc(sum(h.getChiTietHoaDons(),"TIEN_THUOC")).tongTien(h.getTongTien())
+            .trangThai(h.getTrangThai().name()).danhSachChiTiet(lines(h.getChiTietHoaDons())).build();
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public HoaDonResponse layHoaDonTheoLuotKham(String idLuotKham) {
-        HoaDon hd = hoaDonRepository.findByLuotKham_IdLuotKham(idLuotKham)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hóa đơn cho lượt khám: " + idLuotKham));
-        return mapToHoaDonResponse(hd);
+    @Override @Transactional(readOnly = true)
+    public HoaDonResponse layHoaDonTheoId(String invoiceId) {
+        return response(hoaDonRepository.findById(id(invoiceId)).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy hóa đơn")));
     }
-
-    @Override
-    @Transactional(readOnly = true)
+    @Override @Transactional(readOnly = true)
+    public HoaDonResponse layHoaDonTheoLuotKham(String visitId) {
+        return response(hoaDonRepository.findByLuotKham_IdLuotKham(id(visitId)).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy hóa đơn")));
+    }
+    @Override @Transactional(readOnly = true)
     public List<HoaDonResponse> layDanhSachTatCaHoaDon() {
-        return hoaDonRepository.findAllByOrderByNgayTaoDesc().stream()
-                .map(this::mapToHoaDonResponse)
-                .collect(Collectors.toList());
-    }
-
-    private LuotKhamChoHoaDonResponse mapToLuotKhamChoHoaDonResponse(LuotKham lk) {
-        BenhNhan bn = lk.getLichKham() != null ? lk.getLichKham().getBenhNhan() : null;
-        BacSi bs = lk.getLichKham() != null ? lk.getLichKham().getBacSi() : null;
-        boolean coDon = donThuocRepository.findByLuotKham_IdLuotKham(lk.getIdLuotKham()).isPresent();
-
-        return LuotKhamChoHoaDonResponse.builder()
-                .idLuotKham(lk.getIdLuotKham())
-                .idLichKham(lk.getLichKham() != null ? lk.getLichKham().getIdLichKham() : null)
-                .maBenhNhan(bn != null ? bn.getIdBenhNhan() : "")
-                .tenBenhNhan(bn != null ? bn.getHoTen() : "Không rõ")
-                .soDienThoai(bn != null ? bn.getSoDienThoai() : "")
-                .bacSiKham(bs != null ? bs.getHoTen() : "Bác sĩ phụ trách")
-                .chuyenKhoa(bs != null ? bs.getChuyenKhoa() : "")
-                .ngayKham(lk.getLichKham() != null ? lk.getLichKham().getNgayKham() : null)
-                .gioKham(lk.getLichKham() != null ? lk.getLichKham().getGioKham() : null)
-                .lyDoKham(lk.getLyDoKham())
-                .chanDoan(lk.getChanDoan())
-                .trangThaiLuotKham(lk.getTrangThai())
-                .daCoDonThuoc(coDon)
-                .build();
-    }
-
-    private HoaDonResponse mapToHoaDonResponse(HoaDon hd) {
-        LuotKham lk = hd.getLuotKham();
-        BenhNhan bn = lk != null && lk.getLichKham() != null ? lk.getLichKham().getBenhNhan() : null;
-        BacSi bs = lk != null && lk.getLichKham() != null ? lk.getLichKham().getBacSi() : null;
-
-        List<ChiTietKhoanThuDTO> danhSachKhoanThu = new ArrayList<>();
-        danhSachKhoanThu.add(ChiTietKhoanThuDTO.builder()
-                .loaiKhoanThu("TIEN_KHAM")
-                .tenKhoanThu("Phí khám lâm sàng (" + (bs != null ? bs.getChuyenKhoa() : "Đa khoa") + ")")
-                .donViTinh("Lần")
-                .soLuong(1)
-                .donGia(hd.getPhiKham())
-                .thanhTien(hd.getPhiKham())
-                .huongDan("Khám chuyên khoa")
-                .build());
-
-        if (lk != null) {
-            Optional<DonThuoc> dtOpt = donThuocRepository.findByLuotKham_IdLuotKham(lk.getIdLuotKham());
-            if (dtOpt.isPresent() && dtOpt.get().getChiTietDonThuocs() != null) {
-                for (ChiTietDonThuoc ct : dtOpt.get().getChiTietDonThuocs()) {
-                    BigDecimal tt = ct.getDonGia().multiply(BigDecimal.valueOf(ct.getSoLuong()));
-                    danhSachKhoanThu.add(ChiTietKhoanThuDTO.builder()
-                            .loaiKhoanThu("TIEN_THUOC")
-                            .tenKhoanThu(ct.getThuoc() != null ? ct.getThuoc().getTenThuoc() : "Thuốc điều trị")
-                            .donViTinh(ct.getThuoc() != null ? ct.getThuoc().getDonViTinh() : "Đơn vị")
-                            .soLuong(ct.getSoLuong())
-                            .donGia(ct.getDonGia())
-                            .thanhTien(tt)
-                            .huongDan(ct.getLieuLuong() + (ct.getHuongDanSuDung() != null ? " - " + ct.getHuongDanSuDung() : ""))
-                            .build());
-                }
-            }
-        }
-
-        return HoaDonResponse.builder()
-                .idHoaDon(hd.getId())
-                .idLuotKham(lk != null ? lk.getIdLuotKham() : "")
-                .maBenhNhan(bn != null ? bn.getIdBenhNhan() : "")
-                .tenBenhNhan(bn != null ? bn.getHoTen() : "Không rõ")
-                .soDienThoai(bn != null ? bn.getSoDienThoai() : "")
-                .diaChi(bn != null ? bn.getDiaChi() : "")
-                .bacSiKham(bs != null ? bs.getHoTen() : "Bác sĩ phụ trách")
-                .thuNganLap(hd.getThuNgan() != null ? hd.getThuNgan().getHoTen() : "Thu ngân")
-                .ngayTao(hd.getNgayTao())
-                .phiKham(hd.getPhiKham())
-                .tienThuoc(hd.getTienThuoc())
-                .tongTien(hd.getTongTien())
-                .trangThai(hd.getTrangThai())
-                .danhSachChiTiet(danhSachKhoanThu)
-                .build();
+        return hoaDonRepository.findAllByOrderByNgayTaoDesc().stream().map(this::response).toList();
     }
 }

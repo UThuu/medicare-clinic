@@ -1,33 +1,33 @@
 package com.medicare.clinic.entity;
-
+import com.medicare.clinic.entity.enums.GioiTinh;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.time.LocalDate;
-
+import java.util.List;
 @Entity
 @Table(name = "benh_nhan")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class BenhNhan {
     @Id
-    @Column(name = "id_benh_nhan", length = 36)
+    @Column(name = "id_benh_nhan")
     private String idBenhNhan;
-
-    @Column(name = "ho_ten", length = 100, nullable = false)
+    
+    @Column(name = "ho_ten", nullable = false)
     private String hoTen;
-
+    
     @Column(name = "ngay_sinh", nullable = false)
     private LocalDate ngaySinh;
-
-    @Column(name = "gioi_tinh", length = 20)
-    private String gioiTinh;
-
-    @Column(name = "so_dien_thoai", length = 20, nullable = false)
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gioi_tinh", nullable = false)
+    private GioiTinh gioiTinh;
+    
+    @Column(name = "so_dien_thoai", nullable = false)
     private String soDienThoai;
-
-    @Column(name = "dia_chi", length = 255)
+    
+    @Column(name = "dia_chi")
     private String diaChi;
+    
+    @OneToMany(mappedBy = "benhNhan")
+    private List<BenhNhanDiUng> diUngs;
 }

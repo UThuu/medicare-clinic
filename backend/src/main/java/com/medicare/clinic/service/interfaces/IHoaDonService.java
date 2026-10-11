@@ -21,7 +21,7 @@ public interface IHoaDonService {
     /**
      * UC-15: Lập và lưu hóa đơn cho lượt khám
      */
-    HoaDonResponse taoHoaDon(TaoHoaDonRequest request);
+    HoaDonResponse taoHoaDon(TaoHoaDonRequest request, String maThuNgan);
 
     /**
      * Xem chi tiết hóa đơn theo ID hóa đơn

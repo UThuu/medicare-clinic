@@ -1,16 +1,11 @@
 package com.medicare.clinic.dto.request;
-
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class TaoHoaDonRequest {
+    @NotBlank @Size(max = 36)
     private String idLuotKham;
-    private String maThuNgan;
+    @DecimalMin("0.00") @Digits(integer = 10, fraction = 2)
     private BigDecimal phiKhamTuyChinh;
-    private String ghiChu;
 }

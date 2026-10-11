@@ -1,42 +1,48 @@
 package com.medicare.clinic.entity;
-
+import com.medicare.clinic.entity.enums.TrangThaiHoaDon;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+import java.util.List;
 @Entity
 @Table(name = "hoa_don")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class HoaDon {
     @Id
-    @Column(name = "id", length = 36)
+    @Column(name = "id")
     private String id;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_luot_kham", nullable = false)
+    
+    @OneToOne
+    @JoinColumn(name = "id_luot_kham", nullable = false, unique = true)
     private LuotKham luotKham;
-
-    @ManyToOne(fetch = FetchType.EAGER)
+    
+    @ManyToOne
     @JoinColumn(name = "id_thu_ngan", nullable = false)
     private ThuNgan thuNgan;
-
+    
     @Column(name = "ngay_tao", nullable = false)
     private LocalDateTime ngayTao;
-
-    @Column(name = "phi_kham", precision = 12, scale = 2, nullable = false)
-    private BigDecimal phiKham;
-
-    @Column(name = "tien_thuoc", precision = 12, scale = 2, nullable = false)
-    private BigDecimal tienThuoc;
-
-    @Column(name = "tong_tien", precision = 12, scale = 2, nullable = false)
+    
+    @Column(name = "tong_tien", nullable = false)
     private BigDecimal tongTien;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "trang_thai", nullable = false)
+    private TrangThaiHoaDon trangThai;
+    
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, orphanRemoval = true)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
+    private List<ChiTietHoaDon> chiTietHoaDons;
 
-    @Column(name = "trang_thai", length = 30, nullable = false)
-    private String trangThai; // CHUA_THANH_TOAN, DA_THANH_TOAN, HUY
+    public void tinhTongChiPhi() {
+        if (chiTietHoaDons != null) {
+            this.tongTien = chiTietHoaDons.stream()
+                .map(ChiTietHoaDon::getThanhTien)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+            this.tongTien = BigDecimal.ZERO;
+        }
+    }
 }

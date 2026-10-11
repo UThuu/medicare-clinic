@@ -1,21 +1,21 @@
 package com.medicare.clinic.entity;
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-
 @Entity
 @Table(name = "bac_si")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class BacSi extends NhanVien {
-    @Column(name = "chuyen_khoa", length = 100, nullable = false)
+public class BacSi {
+    @Id
+    @Column(name = "ma_nv")
+    private String maNv;
+    
+    @Column(name = "chuyen_khoa", nullable = false)
     private String chuyenKhoa;
-
-    @Column(name = "bang_cap", length = 100)
+    @Column(name = "bang_cap", nullable = false)
     private String bangCap;
+    
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "ma_nv")
+    private NhanVien nhanVien;
 }

@@ -1,16 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { hoaDonService } from '../../services/hoaDonService';
 import {
   ChiPhiKhamPreviewResponse,
   HoaDonResponse,
   LuotKhamChoHoaDonResponse,
 } from '../../types/billing';
-import { Button } from './components/Button';
+import { Button } from '../../components/common/Button';
+import { MainLayout } from '../../components/layout/MainLayout';
+import { useAuth } from '../../contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
+import './billing.css';
 import { StatusBadge } from './components/StatusBadge';
-import { Modal } from './components/Modal';
+import { Modal } from '../../components/common/Modal';
 
 export const TaoHoaDonPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cho-lap' | 'da-lap'>('cho-lap');
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const activeTab = params.get('tab') === 'da-lap' ? 'da-lap' : 'cho-lap';
+  const setActiveTab = (tab: 'cho-lap' | 'da-lap') => setParams({ tab });
+  const saving = useRef(false);
   const [danhSachChoLap, setDanhSachChoLap] = useState<LuotKhamChoHoaDonResponse[]>([]);
   const [danhSachHoaDon, setDanhSachHoaDon] = useState<HoaDonResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -22,7 +30,6 @@ export const TaoHoaDonPage: React.FC = () => {
   const [previewData, setPreviewData] = useState<ChiPhiKhamPreviewResponse | null>(null);
   const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [ghiChu, setGhiChu] = useState<string>('');
 
   // State Modal Xem chi tiết hóa đơn đã lập
   const [selectedInvoice, setSelectedInvoice] = useState<HoaDonResponse | null>(null);
@@ -44,7 +51,7 @@ export const TaoHoaDonPage: React.FC = () => {
       setDanhSachHoaDon(hoaDonRes);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg('Không thể kết nối đến máy chủ backend (http://localhost:8080). Vui lòng đảm bảo backend đang chạy.');
+      setErrorMsg(err.response?.data?.error || err.response?.data?.message || 'Không thể tải danh sách hóa đơn. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -59,8 +66,8 @@ export const TaoHoaDonPage: React.FC = () => {
     setLoadingPreview(true);
     try {
       const preview = await hoaDonService.getChiPhiDuKien(idLuotKham);
+      if (preview.daCoHoaDon) { showToast('Lượt khám đã có hóa đơn. Vui lòng xem danh sách đã lập.', 'error'); await loadData(); return; }
       setPreviewData(preview);
-      setGhiChu('');
       setIsModalOpen(true);
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Không thể tải bảng kê chi phí!';
@@ -72,14 +79,13 @@ export const TaoHoaDonPage: React.FC = () => {
 
   // Xác nhận tạo hóa đơn (UC-15)
   const handleConfirmCreateInvoice = async () => {
-    if (!previewData) return;
+    if (!previewData || saving.current) return;
+    saving.current = true;
 
     setSubmitting(true);
     try {
       const res = await hoaDonService.taoHoaDon({
         idLuotKham: previewData.idLuotKham,
-        maThuNgan: 'TN-001',
-        ghiChu: ghiChu,
       });
 
       showToast(` Tạo hóa đơn thành công! Mã: ${res.idHoaDon}`, 'success');
@@ -92,6 +98,7 @@ export const TaoHoaDonPage: React.FC = () => {
       const msg = err.response?.data?.error || 'Lỗi khi tạo hóa đơn!';
       showToast(msg, 'error');
     } finally {
+      saving.current = false;
       setSubmitting(false);
     }
   };
@@ -101,7 +108,12 @@ export const TaoHoaDonPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <MainLayout doctorName={user?.hoTen || user?.tenDangNhap || ''} roleLabel="Thu ngân" sidebarLogout className="mc-billing-app" sidebarItems={[
+      { label: `Chờ lập hóa đơn (${danhSachChoLap.length})`, href: '/staff/billing?tab=cho-lap', active: activeTab === 'cho-lap' },
+      { label: `Hóa đơn đã lập (${danhSachHoaDon.length})`, href: '/staff/billing?tab=da-lap', active: activeTab === 'da-lap' },
+    ]}>
+    <div className="mc-billing" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <h1>Quản lý hóa đơn</h1><p>Kiểm tra các khoản thu của lượt khám đã hoàn tất trước khi lập hóa đơn.</p>
       {/* Toast Notification */}
       {toastMsg && (
         <div className={`toast-msg ${toastMsg.type === 'success' ? 'toast-success' : 'toast-error'}`} id="app-toast">
@@ -345,9 +357,9 @@ export const TaoHoaDonPage: React.FC = () => {
 
       {/* MODAL LẬP HÓA ĐƠN & TÍNH TỔNG CHI PHÍ (UC-15 & UC-16) */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Lập Hóa Đơn Khám Chữa Bệnh (UC-15)"
+        open={isModalOpen}
+        onClose={() => { if (!saving.current) setIsModalOpen(false); }}
+        title="Lập hóa đơn khám chữa bệnh"
         footer={
           <>
             <Button
@@ -436,39 +448,21 @@ export const TaoHoaDonPage: React.FC = () => {
                 <span style={{ fontWeight: 600 }}>{formatVND(previewData.tienThuoc)}</span>
               </div>
               <div className="bill-total-row">
-                <span>TỔNG CỘNG THANH TOÁN (UC-16):</span>
+                <span>TỔNG CỘNG THANH TOÁN:</span>
                 <span className="bill-total-amount" id="modal-total-amount">
                   {formatVND(previewData.tongTien)}
                 </span>
               </div>
             </div>
 
-            <div style={{ marginTop: '16px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                Ghi chú hóa đơn (tùy chọn):
-              </label>
-              <input
-                id="input-invoice-note"
-                type="text"
-                placeholder="Nhập ghi chú cho bệnh nhân hoặc quầy thu ngân..."
-                value={ghiChu}
-                onChange={(e) => setGhiChu(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '13px',
-                }}
-              />
-            </div>
+
           </div>
         )}
       </Modal>
 
       {/* MODAL XEM CHI TIẾT HÓA ĐƠN ĐÃ LẬP */}
       <Modal
-        isOpen={!!selectedInvoice}
+        open={!!selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
         title={`Chi Tiết Hóa Đơn: ${selectedInvoice?.idHoaDon}`}
         footer={
@@ -549,5 +543,6 @@ export const TaoHoaDonPage: React.FC = () => {
         )}
       </Modal>
     </div>
+    </MainLayout>
   );
 };
