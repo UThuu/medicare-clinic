@@ -15,12 +15,32 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.ConcurrencyFailureException;
 
 @RestController
 @RequestMapping("/api/lichkham")
 @RequiredArgsConstructor
 public class LichKhamController {
     private final ILichKhamService lichkhamService;
+
+    @GetMapping("/bac-si")
+    public ResponseEntity<?> counterDoctors(HttpServletRequest request) {
+        ResponseEntity<?> denied = requireRole(request, "LE_TAN");
+        if (denied != null) return denied;
+        return execute(() -> lichkhamService.danhSachBacSi());
+    }
+
+    @GetMapping("/bac-si-truc-tuyen")
+    public ResponseEntity<?> doctors(HttpServletRequest request) {
+        ResponseEntity<?> denied=requireRole(request,"BENH_NHAN"); if(denied!=null)return denied;
+        return execute(() -> lichkhamService.danhSachBacSi(currentUser(request).getIdBenhNhan()));
+    }
+    @GetMapping("/khung-gio")
+    public ResponseEntity<?> slots(@RequestParam String maBacSi,@RequestParam java.time.LocalDate ngayKham,HttpServletRequest request) {
+        ResponseEntity<?> denied=requireRole(request,"BENH_NHAN","LE_TAN"); if(denied!=null)return denied;
+        return execute(() -> lichkhamService.khungGioTrong(maBacSi,ngayKham));
+    }
 
     @PostMapping("/kiem-tra-trong")
     public ResponseEntity<?> kiemTraLichTrong(@RequestBody LichKhamKiemTraTrongRequest request,
@@ -80,8 +100,10 @@ public class LichKhamController {
 
     private ResponseEntity<?> execute(java.util.function.Supplier<Object> action) {
         try { return ResponseEntity.ok(action.get()); }
+        catch (ConcurrencyFailureException e) { return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Khung giờ đang được đặt. Hãy tải lại và chọn giờ khác.")); }
         catch (IllegalStateException e) { return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage())); }
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
+        catch (DataAccessException e) { return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message", "Không thể tải hoặc lưu lịch khám. Vui lòng thử lại.")); }
     }
 
     private ResponseEntity<?> unauthorized() {

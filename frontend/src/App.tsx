@@ -8,6 +8,9 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
 import { LichKhamDatTrucTuyen } from './pages/LichKhamDatTrucTuyen';
+import { LichKhamDatTaiQuay } from './pages/LichKhamDatTaiQuay';
+import { BenhNhanTimKiem } from './pages/BenhNhanTimKiem';
+import { RecordExamResult } from './pages/RecordExamResult';
 
 // Điều hướng theo vai trò khi truy cập trang chủ /
 const RootRedirect: React.FC = () => {
@@ -34,7 +37,6 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-
         <Route path="/login" element={<Login />} />
         
         <Route 
@@ -46,15 +48,6 @@ const App: React.FC = () => {
           } 
         />
         
-        <Route
-          path="/patient/dat-lich-kham"
-          element={
-            <ProtectedRoute allowedRoles={['BENH_NHAN']}>
-              <LichKhamDatTrucTuyen />
-            </ProtectedRoute>
-          }
-        />
-
         <Route 
           path="/staff" 
           element={
@@ -82,6 +75,31 @@ const App: React.FC = () => {
           } 
         />
         
+        <Route
+          path="/staff/patient-search"
+          element={
+            <ProtectedRoute allowedRoles={['LE_TAN']}>
+              <BenhNhanTimKiem />
+            </ProtectedRoute>
+          }
+        />
+
+
+
+        <Route
+          path="/staff/medical-record/:id/record-exam"
+          element={
+            <ProtectedRoute allowedRoles={['BAC_SI']}>
+              <RecordExamResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/staff/lich-kham/dat-tai-quay" element={
+          <ProtectedRoute allowedRoles={['LE_TAN']}><LichKhamDatTaiQuay /></ProtectedRoute>
+        } />
+        <Route path="/patient/dat-lich-kham" element={
+          <ProtectedRoute allowedRoles={['BENH_NHAN']}><LichKhamDatTrucTuyen /></ProtectedRoute>
+        } />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

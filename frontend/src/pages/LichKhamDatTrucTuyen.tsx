@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { lichKhamDatTrucTuyenService, LichKhamApiError } from '../services/lichKhamDatTrucTuyenService';
@@ -43,15 +43,13 @@ const sampleDoctors: BacSiGoiYItem[] = [
 ];
 
 function localDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const parts = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'}).formatToParts(date);
+  const value = (type: string) => parts.find(part => part.type === type)?.value;
+  return `${value('year')}-${value('month')}-${value('day')}`;
 }
 
 function getTomorrowDate(): string {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
   return localDateString(tomorrow);
 }
 
@@ -80,6 +78,14 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
   const [doctors, setDoctors] = useState<BacSiGoiYItem[]>([]);
   const [doctorMessage, setDoctorMessage] = useState('');
   const [maBacSi, setMaBacSi] = useState('');
+  const [khoa, setKhoa] = useState('');
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [slotError, setSlotError] = useState('');
+  const [refreshSlots, setRefreshSlots] = useState(0);
+  const slotRevision = useRef(0);
+  const bookingInFlight = useRef(false);
+  const slotTime = useRef('09:00');
   const [ngayKham, setNgayKham] = useState(getTomorrowDate);
   const [gioKham, setGioKham] = useState('09:00');
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
@@ -93,6 +99,9 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
   const [alternativeMessage, setAlternativeMessage] = useState('');
   const [bookingResult, setBookingResult] = useState<LichKhamDatTrucTuyenResponse | null>(null);
 
+  slotTime.current = gioKham;
+  const departments = useMemo(() => [...new Set(doctors.map(d => d.chuyenKhoa).filter((d): d is string => Boolean(d)))], [doctors]);
+  const filteredDoctors = useMemo(() => doctors.filter(d => !khoa || d.chuyenKhoa === khoa), [doctors, khoa]);
   const selectedDoctor = useMemo(
     () => doctors.find((doctor) => doctor.maBacSi === maBacSi),
     [doctors, maBacSi],
@@ -112,7 +121,7 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
         return;
       }
       try {
-        const response = await lichKhamDatTrucTuyenService.getRecommendedDoctors({ soLuongToiDa: 5 });
+        const response = await lichKhamDatTrucTuyenService.getDoctors();
         if (!active) return;
         setDoctors(response.danhSachBacSi ?? []);
         setDoctorMessage(response.thongBao ?? '');
@@ -129,7 +138,27 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
     return () => { active = false; };
   }, [devMode]);
 
+  useEffect(() => {
+    let active = true; setAvailableTimes([]); setSlotError('');
+    if (!maBacSi || !ngayKham) { setIsLoadingSlots(false); return; }
+    setIsLoadingSlots(true);
+    const load = devMode
+      ? Promise.resolve({maBacSi, ngayKham, gioTrong: Array.from({length: 54}, (_, i) => `${String(7 + Math.floor(i / 6)).padStart(2, '0')}:${String((i % 6) * 10).padStart(2, '0')}:00`)})
+      : lichKhamDatTrucTuyenService.getAvailableSlots(maBacSi, ngayKham);
+    load.then(response => {
+      if (!active) return;
+      const times = response.gioTrong.map(normalizeTime); setAvailableTimes(times);
+      if (!times.includes(slotTime.current)) {
+        slotRevision.current++; setSlotResult(null); setGioKham(times[0] || '');
+      }
+    }).catch(error => { if(active) setSlotError(toFriendlyError(error)); })
+      .finally(() => { if(active) setIsLoadingSlots(false); });
+    return () => { active = false; };
+  }, [maBacSi, ngayKham, refreshSlots, devMode]);
+
   const invalidateSlot = () => {
+    slotRevision.current++;
+    setIsCheckingSlot(false); setIsLoadingAlternatives(false);
     setSlotResult(null);
     setAlternativeSlots([]);
     setAlternativeMessage('');
@@ -144,10 +173,12 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
   });
 
   const getAlternatives = async () => {
-    if (!maBacSi.trim() || !ngayKham || !gioKham) {
+    if (!maBacSi.trim() || !ngayKham) {
       setActionError('Hãy chọn bác sĩ, ngày khám và giờ khám trước khi tìm giờ thay thế.');
       return;
     }
+    const revision = slotRevision.current;
+    const request = {maBacSi: maBacSi.trim(), ngayKham, gioKhamMongMuon: `${gioKham || '07:00'}:00`.slice(0,8), soLuongGoiY: 3};
     setIsLoadingAlternatives(true);
     setActionError('');
     try {
@@ -162,19 +193,15 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
         })));
         setAlternativeMessage('Các khung giờ minh họa gần giờ bạn chọn.');
       } else {
-        const response = await lichKhamDatTrucTuyenService.getAlternativeSlots({
-          maBacSi: maBacSi.trim(),
-          ngayKham,
-          gioKhamMongMuon: `${gioKham}:00`.slice(0, 8),
-          soLuongGoiY: 5,
-        });
+        const response = await lichKhamDatTrucTuyenService.getAlternativeSlots(request);
+        if (revision !== slotRevision.current) return;
         setAlternativeSlots(response.danhSachKhungGio ?? []);
         setAlternativeMessage(response.thongBao ?? '');
       }
     } catch (error) {
-      setActionError(toFriendlyError(error));
+      if (revision === slotRevision.current) setActionError(toFriendlyError(error));
     } finally {
-      setIsLoadingAlternatives(false);
+      if (revision === slotRevision.current) setIsLoadingAlternatives(false);
     }
   };
 
@@ -183,6 +210,8 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
       setActionError('Vui lòng chọn bác sĩ, ngày khám và giờ khám.');
       return;
     }
+    if (!devMode && (isLoadingSlots || !availableTimes.includes(gioKham))) { setActionError('Hãy chọn giờ trống được tải từ hệ thống.'); return; }
+    const request = getRequest(); const revision = slotRevision.current;
     setIsCheckingSlot(true);
     setActionError('');
     setSlotResult(null);
@@ -203,18 +232,20 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
             : 'Khung giờ còn trống (kết quả minh họa).',
         };
       } else {
-        result = await lichKhamDatTrucTuyenService.checkAvailability(getRequest());
+        result = await lichKhamDatTrucTuyenService.checkAvailability(request);
       }
+      if (revision !== slotRevision.current || result.maBacSi !== request.maBacSi || result.ngayKham !== request.ngayKham || normalizeTime(result.gioKham) !== normalizeTime(request.gioKham)) return;
       setSlotResult(result);
       if (!result.conTrong) await getAlternatives();
     } catch (error) {
-      setActionError(toFriendlyError(error));
+      if (revision === slotRevision.current) setActionError(toFriendlyError(error));
     } finally {
-      setIsCheckingSlot(false);
+      if (revision === slotRevision.current) setIsCheckingSlot(false);
     }
   };
 
   const handleSelectAlternative = (slot: KhungGioGoiYItem) => {
+    invalidateSlot();
     setMaBacSi(slot.maBacSi);
     setNgayKham(slot.ngayKham);
     setGioKham(normalizeTime(slot.gioKham));
@@ -226,10 +257,13 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
   };
 
   const handleBook = async () => {
-    if (!slotResult?.conTrong) {
+    if (bookingInFlight.current) return;
+    const request = getRequest();
+    if (!slotResult?.conTrong || isLoadingSlots || slotResult.maBacSi !== request.maBacSi || slotResult.ngayKham !== request.ngayKham || normalizeTime(slotResult.gioKham) !== normalizeTime(request.gioKham)) {
       setActionError('Hãy kiểm tra và xác nhận khung giờ còn trống trước khi đặt lịch.');
       return;
     }
+    bookingInFlight.current = true;
     setIsBooking(true);
     setActionError('');
     try {
@@ -248,14 +282,18 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
           phuongThucDatLich: 'TRUC_TUYEN',
         };
       } else {
-        result = await lichKhamDatTrucTuyenService.bookOnline(getRequest());
+        result = await lichKhamDatTrucTuyenService.bookOnline(request);
       }
       setBookingResult(result);
       setSlotResult(null);
     } catch (error) {
+      if (error instanceof LichKhamApiError && error.status === 409) {
+        slotRevision.current++; setSlotResult(null); setRefreshSlots(n => n + 1);
+        await getAlternatives();
+      }
       setActionError(toFriendlyError(error));
     } finally {
-      setIsBooking(false);
+      bookingInFlight.current = false; setIsBooking(false);
     }
   };
 
@@ -265,7 +303,7 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
   };
 
   const resetForm = () => {
-    setMaBacSi(doctors[0]?.maBacSi ?? '');
+    setMaBacSi(filteredDoctors[0]?.maBacSi ?? '');
     setNgayKham(getTomorrowDate());
     setGioKham('09:00');
     invalidateSlot();
@@ -319,17 +357,23 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
               <div><h2>Thông tin lịch hẹn</h2><p>Các trường có dấu * là bắt buộc</p></div>
             </div>
 
+            <div className="uc24-field-group"><label htmlFor="uc24-department">Khoa khám</label>
+              <select id="uc24-department" value={khoa} disabled={isBooking || isLoadingDoctors} onChange={event => {
+                const value=event.target.value; setKhoa(value); changeDoctor(doctors.find(d => !value || d.chuyenKhoa===value)?.maBacSi || '');
+              }}><option value="">Tất cả khoa khám</option>{departments.map(value => <option key={value} value={value}>{value}</option>)}</select>
+            </div>
             <div className="uc24-field-group">
-              <div className="uc24-label-line"><label>Bác sĩ khám <span>*</span></label><span className="uc24-label-helper">Gợi ý từ lịch sử khám</span></div>
+              <div className="uc24-label-line"><label>Bác sĩ khám <span>*</span></label><span className="uc24-label-helper">Ưu tiên bác sĩ từng khám</span></div>
               {isLoadingDoctors ? (
                 <div className="uc24-loading"><span className="uc24-spinner" /> Đang tải danh sách bác sĩ...</div>
-              ) : doctors.length > 0 ? (
+              ) : filteredDoctors.length > 0 ? (
                 <div className="uc24-doctor-list">
-                  {doctors.map((doctor) => (
+                  {filteredDoctors.map((doctor) => (
                     <button
                       type="button"
                       key={doctor.maBacSi}
                       className={`uc24-doctor-card ${maBacSi === doctor.maBacSi ? 'is-selected' : ''}`}
+                      disabled={isBooking}
                       onClick={() => changeDoctor(doctor.maBacSi)}
                       aria-pressed={maBacSi === doctor.maBacSi}
                     >
@@ -343,34 +387,32 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
                     </button>
                   ))}
                   {doctorMessage && <p className="uc24-help-text">{doctorMessage}</p>}
-                  <details className="uc24-manual-doctor">
-                    <summary>Nhập mã bác sĩ khác</summary>
-                    <label htmlFor="uc24-doctor-id">Mã bác sĩ</label>
-                    <input id="uc24-doctor-id" value={maBacSi} onChange={(event) => changeDoctor(event.target.value)} placeholder="Ví dụ: BS001" />
-                    <small>API hiện tại chưa có chức năng liệt kê toàn bộ bác sĩ; chỉ có gợi ý bác sĩ từng khám và tra cứu bằng mã.</small>
-                  </details>
                 </div>
               ) : (
                 <div className="uc24-no-doctors">
                   <span className="uc24-no-doctors__icon" aria-hidden="true">i</span>
-                  <div><strong>{doctorMessage || 'Chưa có gợi ý bác sĩ từ lịch sử khám.'}</strong><p>Nhập mã bác sĩ nếu bạn đã biết mã. Có thể bổ sung danh sách bác sĩ khi backend có API tra cứu bác sĩ.</p></div>
+                  <div><strong>Chưa có bác sĩ phù hợp</strong><p>Chưa có bác sĩ trong khoa đã chọn. Hãy chọn khoa khác hoặc tải lại danh sách.</p></div>
                 </div>
-              )}
-              {doctors.length === 0 && !isLoadingDoctors && (
-                <div className="uc24-inline-input"><label htmlFor="uc24-doctor-id-fallback">Mã bác sĩ <span>*</span></label><input id="uc24-doctor-id-fallback" value={maBacSi} onChange={(event) => changeDoctor(event.target.value)} placeholder="Nhập mã bác sĩ" /></div>
               )}
             </div>
 
             <div className="uc24-form-grid">
-              <div className="uc24-field-group"><label htmlFor="uc24-date">Ngày khám <span>*</span></label><input id="uc24-date" type="date" min={minDate} value={ngayKham} onChange={(event) => { setNgayKham(event.target.value); invalidateSlot(); }} /></div>
-              <div className="uc24-field-group"><label htmlFor="uc24-time">Giờ khám <span>*</span></label><input id="uc24-time" type="time" step={1800} value={gioKham} onChange={(event) => { setGioKham(event.target.value); invalidateSlot(); }} /><small>Khung giờ cách nhau 30 phút theo cấu hình hiện tại.</small></div>
+              <div className="uc24-field-group"><label htmlFor="uc24-date">Ngày khám <span>*</span></label><input id="uc24-date" type="date" disabled={isBooking} min={minDate} value={ngayKham} onChange={(event) => { setNgayKham(event.target.value); invalidateSlot(); }} /></div>
+              <div className="uc24-field-group"><label htmlFor="uc24-time">Giờ khám <span>*</span></label>
+                <select id="uc24-time" disabled={isBooking || isLoadingSlots || !availableTimes.length} value={gioKham} onChange={event => {setGioKham(event.target.value);invalidateSlot();}}>
+                  {!availableTimes.length && <option value="">{isLoadingSlots ? 'Đang tải giờ trống...' : slotError ? 'Không tải được giờ trống' : 'Không còn giờ trống'}</option>}
+                  {availableTimes.map(time => <option key={time} value={time}>{time}</option>)}
+                </select><small>07:00–16:00, mỗi lượt 10 phút; giờ bắt đầu cuối 15:50.</small>
+                {slotError && <><span role="alert">{slotError}</span><button type="button" onClick={() => setRefreshSlots(n => n+1)}>Thử tải lại giờ</button></>}
+                {!isLoadingSlots && !slotError && maBacSi && !availableTimes.length && <button type="button" onClick={() => void getAlternatives()} disabled={isBooking || isLoadingAlternatives}>Gợi ý ngày khác</button>}
+              </div>
             </div>
 
             <div className="uc24-form-actions">
-              <button type="button" className="uc24-button uc24-button--primary" onClick={handleCheckSlot} disabled={isCheckingSlot || isLoadingDoctors}>
+              <button type="button" className="uc24-button uc24-button--primary" onClick={handleCheckSlot} disabled={isCheckingSlot || isLoadingDoctors || isLoadingSlots || isBooking || !availableTimes.length}>
                 {isCheckingSlot ? <><span className="uc24-spinner uc24-spinner--light" /> Đang kiểm tra...</> : 'Kiểm tra khung giờ'}
               </button>
-              <button type="button" className="uc24-button uc24-button--outline" onClick={resetForm}>Đặt lại</button>
+              <button type="button" className="uc24-button uc24-button--outline" onClick={resetForm} disabled={isBooking}>Đặt lại</button>
             </div>
 
             {slotResult && (
@@ -399,7 +441,7 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
                   <div><dt>Thời gian</dt><dd>{formatDate(bookingResult.ngayKham)} · {normalizeTime(bookingResult.gioKham)}</dd></div>
                   <div><dt>Trạng thái</dt><dd><span className="uc24-status-pill">{bookingResult.trangThai}</span></dd></div>
                 </dl>
-                <button className="uc24-button uc24-button--outline" onClick={resetForm}>Đặt lịch khác</button>
+                <button className="uc24-button uc24-button--outline" onClick={resetForm} disabled={isBooking}>Đặt lịch khác</button>
               </div>
             )}
 
@@ -409,7 +451,7 @@ export const LichKhamDatTrucTuyen: React.FC<LichKhamDatTrucTuyenProps> = ({ devM
                 {alternativeMessage && <p>{alternativeMessage}</p>}
                 <div className="uc24-alternative-grid">
                   {alternativeSlots.map((slot, index) => (
-                    <button type="button" key={`${slot.maBacSi}-${slot.ngayKham}-${slot.gioKham}-${index}`} className="uc24-alternative-card" onClick={() => handleSelectAlternative(slot)}>
+                    <button type="button" key={`${slot.maBacSi}-${slot.ngayKham}-${slot.gioKham}-${index}`} className="uc24-alternative-card" disabled={isBooking || isLoadingSlots} onClick={() => handleSelectAlternative(slot)}>
                       <strong>{normalizeTime(slot.gioKham)}</strong><span>{formatDate(slot.ngayKham)}</span><small>{slot.hoTenBacSi || slot.maBacSi}</small><em>Chọn giờ này →</em>
                     </button>
                   ))}

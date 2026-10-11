@@ -12,6 +12,9 @@ import com.medicare.clinic.dto.response.LichKhamGoiYKhungGioThayTheResponse;
 import com.medicare.clinic.dto.response.LichKhamKiemTraTrongResponse;
 
 public interface ILichKhamService {
+    java.util.List<com.medicare.clinic.dto.response.BacSiDatLichResponse> danhSachBacSi();
+    BacSiGoiYDaTungKhamResponse danhSachBacSi(String idBenhNhan);
+    com.medicare.clinic.dto.response.LichKhamKhungGioResponse khungGioTrong(String doctor, java.time.LocalDate date);
 
     LichKhamKiemTraTrongResponse kiemTraLichTrong(LichKhamKiemTraTrongRequest request);
 

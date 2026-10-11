@@ -45,6 +45,14 @@ function handleError(error: unknown): never {
 }
 
 export const lichKhamDatTrucTuyenService = {
+  getDoctors: async (): Promise<BacSiGoiYDaTungKhamResponse> => {
+    try { return (await apiClient.get<BacSiGoiYDaTungKhamResponse>('/api/lichkham/bac-si-truc-tuyen')).data; }
+    catch (error) { return handleError(error); }
+  },
+  getAvailableSlots: async (maBacSi: string, ngayKham: string): Promise<{maBacSi: string; ngayKham: string; gioTrong: string[]}> => {
+    try { return (await apiClient.get('/api/lichkham/khung-gio', {params: {maBacSi, ngayKham}})).data; }
+    catch (error) { return handleError(error); }
+  },
   getRecommendedDoctors: async (
     request: BacSiGoiYDaTungKhamRequest = { soLuongToiDa: 5 },
   ): Promise<BacSiGoiYDaTungKhamResponse> => {
