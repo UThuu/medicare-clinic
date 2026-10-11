@@ -10,6 +10,8 @@ import com.medicare.clinic.dto.response.InHoaDonResponse;
 import java.util.List;
 
 public interface IHoaDonService {
+    com.medicare.clinic.dto.response.HoaDonTongDoanhThuResponse xemTongDoanhThu(
+        com.medicare.clinic.dto.request.HoaDonTongDoanhThuRequest request);
     com.medicare.clinic.dto.response.HoaDonTraCuuResponse traCuuHoaDon(
         com.medicare.clinic.dto.request.HoaDonTraCuuRequest request);
     /**

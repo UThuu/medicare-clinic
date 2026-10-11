@@ -292,4 +292,27 @@ public class HoaDonService implements IHoaDonService {
         return digits;
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public HoaDonTongDoanhThuResponse xemTongDoanhThu(
+            com.medicare.clinic.dto.request.HoaDonTongDoanhThuRequest request) {
+        if (request == null || request.getTuNgay() == null || request.getDenNgay() == null)
+            throw new IllegalArgumentException("Vui lòng chọn cả ngày bắt đầu và ngày kết thúc");
+        if (request.getTuNgay().isAfter(request.getDenNgay()))
+            throw new IllegalArgumentException("Ngày bắt đầu không được sau ngày kết thúc");
+        if (request.getDenNgay().equals(LocalDate.MAX))
+            throw new IllegalArgumentException("Ngày kết thúc vượt giới hạn cho phép");
+        HoaDonRepository.RevenueSummary totals = hoaDonRepository.tongDoanhThu(
+            request.getTuNgay().atStartOfDay(), request.getDenNgay().plusDays(1).atStartOfDay());
+        HoaDonTongDoanhThuResponse response = new HoaDonTongDoanhThuResponse();
+        response.setTuNgay(request.getTuNgay());
+        response.setDenNgay(request.getDenNgay());
+        response.setTongDoanhThu(totals.getTongDoanhThu());
+        response.setSoHoaDonDaThanhToan(totals.getSoHoaDonDaThanhToan());
+        response.setThongBao(totals.getSoHoaDonDaThanhToan() == 0
+            ? "Không có hóa đơn thanh toán thành công trong khoảng thời gian này."
+            : "Thống kê doanh thu thành công.");
+        return response;
+    }
 }

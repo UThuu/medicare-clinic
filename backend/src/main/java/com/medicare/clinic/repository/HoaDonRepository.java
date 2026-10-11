@@ -43,4 +43,24 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, String> {
         @org.springframework.data.repository.query.Param("denNgayExclusive") java.time.LocalDateTime denNgayExclusive,
         @org.springframework.data.repository.query.Param("trangThai") com.medicare.clinic.entity.enums.TrangThaiHoaDon trangThai,
         org.springframework.data.domain.Pageable pageable);
+
+    interface RevenueSummary {
+        java.math.BigDecimal getTongDoanhThu();
+        long getSoHoaDonDaThanhToan();
+    }
+    @org.springframework.data.jpa.repository.Query("""
+        select coalesce(sum(h.tongTien), 0) as tongDoanhThu,
+               count(h) as soHoaDonDaThanhToan
+        from HoaDon h
+        where h.trangThai = com.medicare.clinic.entity.enums.TrangThaiHoaDon.DA_THANH_TOAN
+          and (select min(g.thoiGian) from GiaoDichThanhToan g
+               where g.thanhToan.hoaDon = h
+                 and g.trangThai = com.medicare.clinic.entity.enums.TrangThaiXuLyThanhToan.THANH_CONG) >= :start
+          and (select min(g.thoiGian) from GiaoDichThanhToan g
+               where g.thanhToan.hoaDon = h
+                 and g.trangThai = com.medicare.clinic.entity.enums.TrangThaiXuLyThanhToan.THANH_CONG) < :end
+        """)
+    RevenueSummary tongDoanhThu(
+        @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start,
+        @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end);
 }

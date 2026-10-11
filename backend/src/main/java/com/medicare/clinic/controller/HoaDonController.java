@@ -34,6 +34,11 @@ public class HoaDonController {
     private ResponseEntity<?> ok(Object data) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(data);
     }
+    @PostMapping("/tong-doanh-thu")
+    public ResponseEntity<?> revenue(@Valid @RequestBody com.medicare.clinic.dto.request.HoaDonTongDoanhThuRequest filters, HttpServletRequest request) {
+        cashier(request);
+        return ok(service.xemTongDoanhThu(filters));
+    }
     @GetMapping("/tra-cuu")
     public ResponseEntity<?> search(@ModelAttribute com.medicare.clinic.dto.request.HoaDonTraCuuRequest filters,
                                     HttpServletRequest request) {

@@ -3,6 +3,7 @@ import { CashierBillingPage } from './pages/cashier/CashierBillingPage';
 import { ThanhToanOnlinePage } from './pages/patient/ThanhToanOnlinePage';
 import { VNPayReturnPage } from './pages/cashier/VNPayReturnPage';
 import React from 'react';
+import { HoaDonTongDoanhThu } from './pages/HoaDonTongDoanhThu';
 import { BenhNhanThongBaoLichKham } from './pages/BenhNhanThongBaoLichKham';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/staff/hoadon/tong-doanh-thu" element={<ProtectedRoute allowedRoles={['THU_NGAN']}><HoaDonTongDoanhThu /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         
         <Route 
