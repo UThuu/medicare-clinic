@@ -280,10 +280,10 @@ class PatientSearchWorkflowTest {
         return mvc.perform(post("/api/benhnhan/tao-moi").session(session).contentType("application/json")
                 .content(json.writeValueAsString(body)));
     }
-    @Test void unfinishedReminderEndpointIsNotExposed() throws Exception {
+    @Test void patientReminderEndpointIsAvailableAfterUC25Integration() throws Exception {
         mvc.perform(post("/api/benhnhan/thong-bao-lich-kham").session(login("uc28-patient"))
                 .contentType("application/json").content("{}"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk());
     }
     private NhanVien employee(String id) {
         NhanVien nv = new NhanVien(); nv.setMaNv(id); nv.setHoTen("Synthetic staff");

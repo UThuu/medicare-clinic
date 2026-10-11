@@ -8,6 +8,12 @@ import com.medicare.clinic.dto.response.BenhNhanTimKiemResponse;
 import com.medicare.clinic.entity.BenhNhan;
 import com.medicare.clinic.repository.BenhNhanRepository;
 import com.medicare.clinic.service.interfaces.IBenhNhanService;
+import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
+import com.medicare.clinic.dto.response.BenhNhanThongBaoLichKhamResponse;
+import com.medicare.clinic.entity.LichKham;
+import com.medicare.clinic.entity.enums.TrangThaiLichKham;
+import com.medicare.clinic.repository.LichKhamRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +29,7 @@ public class BenhNhanService implements IBenhNhanService {
 
     private static final ZoneId ZONE_VIETNAM = ZoneId.of("Asia/Ho_Chi_Minh");
     private final BenhNhanRepository benhNhanRepository;
+    private final LichKhamRepository lichKhamRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -126,4 +133,74 @@ public class BenhNhanService implements IBenhNhanService {
         return phone;
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public BenhNhanThongBaoLichKhamResponse thongBaoLichKham(
+            String idBenhNhan, BenhNhanThongBaoLichKhamRequest request) {
+        if (idBenhNhan == null || idBenhNhan.isBlank())
+            throw new IllegalArgumentException("Tài khoản hiện tại chưa được liên kết với hồ sơ bệnh nhân.");
+        if (!benhNhanRepository.existsById(idBenhNhan))
+            throw new IllegalArgumentException("Không tìm thấy hồ sơ bệnh nhân đang đăng nhập.");
+
+        LocalDateTime now = LocalDateTime.now(ZONE_VIETNAM);
+        List<LichKham> appointments = lichKhamRepository
+                .findNotificationAppointments(idBenhNhan);
+        return buildNotifications(appointments, now);
+    }
+
+    BenhNhanThongBaoLichKhamResponse buildNotifications(List<LichKham> appointments, LocalDateTime now) {
+        BenhNhanThongBaoLichKhamResponse response = new BenhNhanThongBaoLichKhamResponse();
+        response.setThoiDiemTruyVan(now);
+
+        for (LichKham appointment : appointments) {
+            LocalDateTime appointmentAt = LocalDateTime.of(appointment.getNgayKham(), appointment.getGioKham());
+            if (!appointmentAt.isAfter(now)) continue;
+            if (appointment.getTrangThai() == TrangThaiLichKham.DA_HUY) {
+                BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem cancelled = new BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem();
+                cancelled.setIdLichKham(appointment.getIdLichKham()); cancelled.setLoaiThongBao("HUY_LICH");
+                cancelled.setTieuDe("Hủy lịch khám");
+                cancelled.setNoiDung("Lịch khám ngày " + appointment.getNgayKham() + " lúc " + appointment.getGioKham() + " đã được hủy.");
+                fillAppointmentDetails(cancelled, appointment);
+                response.getDanhSachThongBao().add(cancelled);
+                continue;
+            }
+
+
+            BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem confirmation = new BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem();
+            confirmation.setIdLichKham(appointment.getIdLichKham()); confirmation.setLoaiThongBao("XAC_NHAN_DAT_LICH");
+            confirmation.setTieuDe("Xác nhận lịch khám");
+            confirmation.setNoiDung("Lịch khám của bạn đã được ghi nhận vào ngày " + appointment.getNgayKham() + " lúc " + appointment.getGioKham() + ".");
+            fillAppointmentDetails(confirmation, appointment);
+            response.getDanhSachThongBao().add(confirmation);
+
+            // Because LichKham has no createdAt field, these are dynamically reconstructed reminders, not sent/persisted events.
+            if (!now.isBefore(appointmentAt.minusDays(1))) {
+                BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem reminder = new BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem();
+                reminder.setIdLichKham(appointment.getIdLichKham()); reminder.setLoaiThongBao("NHAC_LICH_1_NGAY");
+                reminder.setTieuDe("Nhắc lịch khám trước 1 ngày");
+                reminder.setNoiDung("Bạn có lịch khám vào ngày " + appointment.getNgayKham() + " lúc " + appointment.getGioKham() + ".");
+                reminder.setThoiDiemNhac(appointmentAt.minusDays(1)); fillAppointmentDetails(reminder, appointment);
+                response.getDanhSachThongBao().add(reminder);
+            }
+            if (!now.isBefore(appointmentAt.minusHours(2))) {
+                BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem reminder = new BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem();
+                reminder.setIdLichKham(appointment.getIdLichKham()); reminder.setLoaiThongBao("NHAC_LICH_2_GIO");
+                reminder.setTieuDe("Nhắc lịch khám trong 2 giờ tới");
+                reminder.setNoiDung("Lịch khám của bạn sắp bắt đầu vào lúc " + appointment.getGioKham() + ".");
+                reminder.setThoiDiemNhac(appointmentAt.minusHours(2)); fillAppointmentDetails(reminder, appointment);
+                response.getDanhSachThongBao().add(reminder);
+            }
+        }
+        response.setTongSoThongBao(response.getDanhSachThongBao().size());
+        return response;
+    }
+
+    private void fillAppointmentDetails(
+            BenhNhanThongBaoLichKhamResponse.ThongBaoLichKhamItem item, LichKham appointment) {
+        item.setMaBacSi(appointment.getBacSi().getMaNv());
+        item.setHoTenBacSi(appointment.getBacSi().getNhanVien() == null ? null : appointment.getBacSi().getNhanVien().getHoTen());
+        item.setNgayKham(appointment.getNgayKham()); item.setGioKham(appointment.getGioKham());
+        item.setTrangThaiLichKham(appointment.getTrangThai());
+    }
 }

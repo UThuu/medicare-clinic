@@ -1,4 +1,5 @@
 import React from 'react';
+import { BenhNhanThongBaoLichKham } from './pages/BenhNhanThongBaoLichKham';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { Login } from './pages/Login';
@@ -99,6 +100,9 @@ const App: React.FC = () => {
         } />
         <Route path="/patient/dat-lich-kham" element={
           <ProtectedRoute allowedRoles={['BENH_NHAN']}><LichKhamDatTrucTuyen /></ProtectedRoute>
+        } />
+        <Route path="/patient/thong-bao-lich-kham" element={
+          <ProtectedRoute allowedRoles={['BENH_NHAN']}><BenhNhanThongBaoLichKham /></ProtectedRoute>
         } />
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />

@@ -105,7 +105,7 @@ test('UC28 transport propagates 400/401/403 instead of substituting demo results
 });
 test('merged router retains protected UC28 and UC06/07/10 routes and removes public demo', async () => {
     for (const [route, role, expected] of [
-        ['/patient/dat-lich-kham', 'BENH_NHAN', 'UC24'], ['/patient/dat-lich-kham', 'LE_TAN', 'Từ chối truy cập'], ['/staff/lich-kham/dat-tai-quay', 'LE_TAN', 'UC30'], ['/staff/lich-kham/dat-tai-quay', 'BENH_NHAN', 'Từ chối truy cập'], ['/staff/patient-search', 'LE_TAN', 'UC28'], ['/staff/patient-search', 'BAC_SI', 'Từ chối truy cập'],
+        ['/patient/thong-bao-lich-kham', 'BENH_NHAN', 'UC25'], ['/patient/thong-bao-lich-kham', 'LE_TAN', 'Từ chối truy cập'], ['/dev/uc25', 'BENH_NHAN', '404'], ['/patient/dat-lich-kham', 'BENH_NHAN', 'UC24'], ['/patient/dat-lich-kham', 'LE_TAN', 'Từ chối truy cập'], ['/staff/lich-kham/dat-tai-quay', 'LE_TAN', 'UC30'], ['/staff/lich-kham/dat-tai-quay', 'BENH_NHAN', 'Từ chối truy cập'], ['/staff/patient-search', 'LE_TAN', 'UC28'], ['/staff/patient-search', 'BAC_SI', 'Từ chối truy cập'],
         ['/staff/schedules', 'BAC_SI', 'UC06'], ['/staff/medical-record/A', 'BAC_SI', 'UC07'],
         ['/staff/medical-record/A/record-exam', 'BAC_SI', 'UC10'], ['/dev/uc28', 'LE_TAN', '404'],
     ]) {
@@ -117,7 +117,7 @@ test('merged router retains protected UC28 and UC06/07/10 routes and removes pub
         const deps = { react: React, './contexts/AuthContext': { useAuth },
             'react-router-dom': { ...router, BrowserRouter: props => React.createElement(router.MemoryRouter, { initialEntries: [route] }, props.children) },
             './components/common/ProtectedRoute': protectedRoute };
-        for (const [file, name, label] of [['Login', 'Login', 'LOGIN'], ['PatientDashboard', 'PatientDashboard', 'PATIENT'], ['StaffDashboard', 'StaffDashboard', 'STAFF'], ['DoctorSchedule', 'DoctorSchedule', 'UC06'], ['PatientRecord', 'PatientRecord', 'UC07'], ['RecordExamResult', 'RecordExamResult', 'UC10'], ['BenhNhanTimKiem', 'BenhNhanTimKiem', 'UC28'], ['LichKhamDatTaiQuay', 'LichKhamDatTaiQuay', 'UC30'], ['LichKhamDatTrucTuyen', 'LichKhamDatTrucTuyen', 'UC24']]) {
+        for (const [file, name, label] of [['BenhNhanThongBaoLichKham', 'BenhNhanThongBaoLichKham', 'UC25'], ['Login', 'Login', 'LOGIN'], ['PatientDashboard', 'PatientDashboard', 'PATIENT'], ['StaffDashboard', 'StaffDashboard', 'STAFF'], ['DoctorSchedule', 'DoctorSchedule', 'UC06'], ['PatientRecord', 'PatientRecord', 'UC07'], ['RecordExamResult', 'RecordExamResult', 'UC10'], ['BenhNhanTimKiem', 'BenhNhanTimKiem', 'UC28'], ['LichKhamDatTaiQuay', 'LichKhamDatTaiQuay', 'UC30'], ['LichKhamDatTrucTuyen', 'LichKhamDatTrucTuyen', 'UC24']]) {
             deps['./pages/' + file] = { [name]: () => React.createElement('p', null, label) };
         }
         const { default: App } = load('App.tsx', deps); let page;

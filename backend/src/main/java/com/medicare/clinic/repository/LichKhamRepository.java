@@ -46,5 +46,8 @@ public interface LichKhamRepository extends JpaRepository<LichKham, String> {
            "WHERE lk.idLichKham = :idLichKham")
     java.util.Optional<LichKham> findByIdWithDetails(@Param("idLichKham") String idLichKham);
 
-    List<LichKham> findByBenhNhan_IdBenhNhanAndTrangThaiNotOrderByNgayKhamAscGioKhamAsc(String idBenhNhan, TrangThaiLichKham trangThai);
+    @Query("SELECT lk FROM LichKham lk JOIN FETCH lk.bacSi bs JOIN FETCH bs.nhanVien WHERE lk.benhNhan.idBenhNhan = :idBenhNhan AND lk.trangThai <> :trangThai ORDER BY lk.ngayKham ASC, lk.gioKham ASC")
+    List<LichKham> findByBenhNhan_IdBenhNhanAndTrangThaiNotOrderByNgayKhamAscGioKhamAsc(@Param("idBenhNhan") String idBenhNhan, @Param("trangThai") TrangThaiLichKham trangThai);
+    @Query("SELECT lk FROM LichKham lk JOIN FETCH lk.bacSi bs JOIN FETCH bs.nhanVien WHERE lk.benhNhan.idBenhNhan = :idBenhNhan ORDER BY lk.ngayKham ASC, lk.gioKham ASC")
+    List<LichKham> findNotificationAppointments(@Param("idBenhNhan") String idBenhNhan);
 }

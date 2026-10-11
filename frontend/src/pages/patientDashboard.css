@@ -90,3 +90,19 @@ body:has(.mc-patient-app) { margin: 0; }
   .mc-patient-functions { grid-template-columns: 1fr; }
   .mc-patient-function__heading { flex-direction: row; gap: 14px; }
 }
+.mc-patient-reminders { min-height:156px; max-height:220px; overflow:auto; margin:14px 0; }
+.mc-patient-reminder { display:flex; align-items:flex-start; gap:12px; padding:14px 0; border-bottom:1px solid var(--mc-neutral-200); }
+.mc-patient-reminder .mc-patient-icon {width:44px;height:44px;flex-basis:44px;}
+.mc-patient-reminder .mc-patient-icon svg {width:24px;height:24px;}
+.mc-patient-reminder p {font-size:13px;line-height:20px;margin:6px 0;}
+.mc-patient-reminder small {color:var(--mc-neutral-600);}
+.mc-patient-reminder > div {min-width:0;overflow-wrap:anywhere;}
+.mc-patient-panel__heading button:not(:disabled) {color:#0671f9;cursor:pointer;}
+
+.mc-patient-upcoming {min-height:156px;max-height:220px;overflow:auto;margin:14px 0;}
+.mc-patient-appointment {display:flex;align-items:center;gap:16px;border:1px solid var(--mc-neutral-200);border-radius:16px;padding:14px;margin-bottom:12px;}
+.mc-patient-date {flex:0 0 76px;border-radius:10px;border-top:16px solid var(--mc-primary-500);background:var(--mc-primary-50);color:var(--mc-primary-500);display:flex;flex-direction:column;align-items:center;padding:6px 0;}
+.mc-patient-date strong {font-size:28px;line-height:34px;}.mc-patient-date span {font-size:11px;}
+.mc-patient-appointment__details {min-width:0;overflow-wrap:anywhere;}.mc-patient-appointment__details > strong {font-size:14px;}.mc-patient-appointment__details p {font-size:14px;margin:8px 0;}
+.mc-patient-appointment__status {display:inline-block;border-radius:20px;padding:4px 10px;background:#e6f7ee;color:#148657;font-size:12px;}
+@media(max-width:600px){.mc-patient-appointment{padding:10px;gap:10px;}.mc-patient-date{flex-basis:60px;}}

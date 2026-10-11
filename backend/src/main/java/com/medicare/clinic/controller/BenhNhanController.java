@@ -1,6 +1,7 @@
 package com.medicare.clinic.controller;
 
 import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
 import com.medicare.clinic.dto.request.BenhNhanTimKiemRequest;
 import com.medicare.clinic.dto.request.BenhNhanTaoMoiRequest;
 import com.medicare.clinic.service.interfaces.IBenhNhanService;
@@ -42,6 +43,17 @@ public class BenhNhanController {
         ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
         if (denied != null) return denied;
         return execute(() -> benhnhanService.kiemTraSoDienThoai(request));
+    }
+
+    @PostMapping("/thong-bao-lich-kham")
+    public ResponseEntity<?> thongBaoLichKham(
+            @RequestBody(required = false) BenhNhanThongBaoLichKhamRequest request,
+            HttpServletRequest httpRequest) {
+        LoginResponse user = currentUser(httpRequest);
+        if (user == null) return unauthorized();
+        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
+        return execute(() -> benhnhanService.thongBaoLichKham(
+                user.getIdBenhNhan(), request == null ? new BenhNhanThongBaoLichKhamRequest() : request));
     }
 
     private LoginResponse currentUser(HttpServletRequest request) {
