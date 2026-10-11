@@ -13,7 +13,10 @@ import java.util.List;
 public class HoaDonTraCuuResponse {
 
     private String thongBao;
-    private int tongSoKetQua;
+    private long tongSoKetQua;
+    private int page;
+    private int size;
+    private int totalPages;
     private List<HoaDonItem> danhSachHoaDon = new ArrayList<>();
 
     @Data

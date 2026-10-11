@@ -1,24 +1,30 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 
 import { DoctorDashboard } from './DoctorDashboard';
+import { CashierBillingPage } from './cashier/CashierBillingPage';
+import { ReceptionDashboard } from './ReceptionDashboard';
 
 export const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
 
   if (user?.vaiTro === 'BAC_SI') {
     return <DoctorDashboard />;
   }
 
+  if (user?.vaiTro === 'THU_NGAN') return <CashierBillingPage />;
+
+  if (user?.vaiTro === 'LE_TAN') {
+    return <ReceptionDashboard />;
+  }
+
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Đăng xuất thất bại');
+    } catch (err: any) {
+      setError(err.message || 'Đăng xuất thất bại');
     }
   };
 
@@ -29,22 +35,9 @@ export const StaffDashboard: React.FC = () => {
       <div style={{ margin: '2rem 0', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px' }}>
         <p><strong>Xin chào:</strong> {user?.hoTen}</p>
         <p><strong>Vai trò:</strong> {user?.vaiTro}</p>
+        
+
       </div>
-
-      {user?.vaiTro === 'THU_NGAN' && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem' }}>Chức năng thu ngân</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            <Button onClick={() => navigate('/staff/hoadon/tra-cuu')}>
-              Tra cứu hóa đơn
-            </Button>
-            <Button variant="secondary" onClick={() => navigate('/staff/hoadon/tong-doanh-thu')}>
-              Xem tổng doanh thu
-            </Button>
-          </div>
-        </div>
-      )}
-
       <Button onClick={handleLogout} variant="secondary">
         Đăng xuất
       </Button>

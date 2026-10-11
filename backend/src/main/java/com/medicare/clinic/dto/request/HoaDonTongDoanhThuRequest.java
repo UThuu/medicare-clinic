@@ -1,6 +1,7 @@
 package com.medicare.clinic.dto.request;
 
 import lombok.Data;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
@@ -8,6 +9,8 @@ import java.time.LocalDate;
 @Data
 public class HoaDonTongDoanhThuRequest {
 
+    @NotNull(message = "Vui lòng chọn ngày thống kê")
     private LocalDate tuNgay;
+    @NotNull(message = "Vui lòng chọn ngày thống kê")
     private LocalDate denNgay;
 }

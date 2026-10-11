@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert } from '../components/common/Alert';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Input } from '../components/common/Input';
-import { MainLayout } from '../components/layout/MainLayout';
+import { CashierLayout } from '../components/layout/CashierLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../services/authService';
 import { hoaDonTongDoanhThuService } from '../services/hoaDonTongDoanhThuService';
@@ -43,10 +43,8 @@ const formatInteger = (value: number | null | undefined): string =>
   new Intl.NumberFormat('vi-VN').format(value ?? 0);
 
 export const HoaDonTongDoanhThu: React.FC = () => {
-  const { user, checkSession } = useAuth();
+  const { checkSession } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const isPreviewMode = location.pathname === '/dev/uc23';
 
   const [tuNgay, setTuNgay] = useState(toInputDate(firstDayOfMonth));
   const [denNgay, setDenNgay] = useState(toInputDate(today));
@@ -55,8 +53,10 @@ export const HoaDonTongDoanhThu: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const busy = useRef(false);
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (busy.current) return;
     setError(null);
 
     if (!tuNgay || !denNgay) {
@@ -71,18 +71,7 @@ export const HoaDonTongDoanhThu: React.FC = () => {
     const request: HoaDonTongDoanhThuRequest = { tuNgay, denNgay };
     setHasSearched(true);
 
-    // Route /dev/uc23 chỉ phục vụ xem thử bố cục UI, không gọi API và không dùng dữ liệu thật.
-    if (isPreviewMode) {
-      setResult({
-        tuNgay,
-        denNgay,
-        tongDoanhThu: 4850000,
-        soHoaDonDaThanhToan: 17,
-        thongBao: 'Dữ liệu minh họa cho chế độ xem thử giao diện.',
-      });
-      return;
-    }
-
+    busy.current = true;
     setLoading(true);
     try {
       const response = await hoaDonTongDoanhThuService.xemTongDoanhThu(request);
@@ -101,6 +90,7 @@ export const HoaDonTongDoanhThu: React.FC = () => {
         setError('Không thể xem tổng doanh thu. Vui lòng thử lại.');
       }
     } finally {
+      busy.current = false;
       setLoading(false);
     }
   };
@@ -114,28 +104,13 @@ export const HoaDonTongDoanhThu: React.FC = () => {
   };
 
   return (
-    <MainLayout
-      doctorName={user?.hoTen || (isPreviewMode ? 'Xem thử giao diện' : 'Thu ngân')}
-      roleLabel={user?.vaiTro === 'THU_NGAN' ? 'Thu ngân' : isPreviewMode ? 'Chế độ xem thử' : 'Nhân viên'}
-      sidebarItems={[
-        { label: 'Dashboard', href: '/staff' },
-        { label: 'Tra cứu hóa đơn', href: '/staff/hoadon/tra-cuu' },
-        { label: 'Xem tổng doanh thu', href: '/staff/hoadon/tong-doanh-thu', active: !isPreviewMode },
-      ]}
-    >
+    <CashierLayout active="revenue">
       <div className="mc-revenue-page">
-        {isPreviewMode && (
-          <div className="mc-revenue-preview-banner">
-            <span className="mc-revenue-preview-banner__dot" aria-hidden="true" />
-            Chế độ xem thử giao diện — kết quả là dữ liệu minh họa, không lấy từ backend.
-          </div>
-        )}
-
         <header className="mc-revenue-heading">
           <div>
             <span className="mc-revenue-eyebrow">BÁO CÁO TÀI CHÍNH</span>
             <h1>Xem tổng doanh thu</h1>
-            <p>Thống kê doanh thu từ các hóa đơn đã thanh toán trong khoảng thời gian đối soát.</p>
+            <p>Thống kê doanh thu từ các hóa đơn đã thanh toán trong khoảng thời gian thanh toán thành công.</p>
           </div>
           <div className="mc-revenue-heading__icon" aria-hidden="true">₫</div>
         </header>
@@ -145,6 +120,7 @@ export const HoaDonTongDoanhThu: React.FC = () => {
             <Input
               label="Từ ngày"
               type="date"
+              disabled={loading}
               value={tuNgay}
               onChange={(event) => setTuNgay(event.target.value)}
               max={denNgay || undefined}
@@ -154,6 +130,7 @@ export const HoaDonTongDoanhThu: React.FC = () => {
             <Input
               label="Đến ngày"
               type="date"
+              disabled={loading}
               value={denNgay}
               onChange={(event) => setDenNgay(event.target.value)}
               min={tuNgay || undefined}
@@ -170,7 +147,7 @@ export const HoaDonTongDoanhThu: React.FC = () => {
           </form>
           <div className="mc-revenue-filter-note">
             <span aria-hidden="true">ⓘ</span>
-            Chỉ tính hóa đơn đã thanh toán. Ngày bắt đầu và ngày kết thúc đều được tính vào kỳ thống kê.
+            Tính theo ngày thanh toán thành công, mỗi hóa đơn được tính một lần. Ngày bắt đầu và ngày kết thúc đều được tính vào kỳ thống kê.
           </div>
         </Card>
 
@@ -221,13 +198,12 @@ export const HoaDonTongDoanhThu: React.FC = () => {
             <div className="mc-revenue-result-message">
               <span className="mc-revenue-result-message__check" aria-hidden="true">✓</span>
               <div>
-                <strong>{isPreviewMode ? 'Dữ liệu xem thử' : result.thongBao || 'Thống kê doanh thu thành công.'}</strong>
-                {isPreviewMode && <p>Đây là số liệu mẫu để kiểm tra giao diện. Hãy dùng route chính để kiểm thử API với dữ liệu thật.</p>}
+                <strong>{result.thongBao || 'Thống kê doanh thu thành công.'}</strong>
               </div>
             </div>
           )}
         </section>
       </div>
-    </MainLayout>
+    </CashierLayout>
   );
 };

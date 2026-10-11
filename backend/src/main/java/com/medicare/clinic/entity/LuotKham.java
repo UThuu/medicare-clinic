@@ -12,6 +12,8 @@ public class LuotKham {
     
     @OneToOne
     @JoinColumn(name = "id_lich_kham", nullable = false, unique = true)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
     private LichKham lichKham;
     
     @Enumerated(EnumType.STRING)
@@ -29,4 +31,9 @@ public class LuotKham {
     
     @Column(name = "chan_doan")
     private String chanDoan;
+
+    @OneToOne(mappedBy = "luotKham", fetch = FetchType.LAZY)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
+    private SinhHieu sinhHieu;
 }

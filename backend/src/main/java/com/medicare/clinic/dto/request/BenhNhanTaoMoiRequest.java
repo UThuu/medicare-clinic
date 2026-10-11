@@ -14,4 +14,5 @@ public class BenhNhanTaoMoiRequest {
     private GioiTinh gioiTinh;
     private String soDienThoai;
     private String diaChi;
+    private Boolean xacNhanTaoMoi;
 }

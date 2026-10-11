@@ -15,6 +15,8 @@ public class ThanhToan {
     
     @OneToOne
     @JoinColumn(name = "id_hoa_don", nullable = false, unique = true)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
     private HoaDon hoaDon;
     
     @Column(name = "so_tien", nullable = false)
@@ -28,5 +30,7 @@ public class ThanhToan {
     private LocalDateTime ngayTao;
     
     @OneToMany(mappedBy = "thanhToan")
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
     private List<GiaoDichThanhToan> giaoDichThanhToans;
 }
