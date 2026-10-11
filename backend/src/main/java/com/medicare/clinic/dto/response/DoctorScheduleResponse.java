@@ -9,7 +9,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
@@ -18,21 +20,30 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class DoctorScheduleResponse {
     
-    // Thông tin lịch hẹn
+    // ThA'ng tin l<ch h1n
     private String idLichKham;
     private LocalDate ngayKham;
     private LocalTime gioKham;
     private TrangThaiLichKham trangThaiLichKham;
     private PhuongThucDatLich phuongThucDatLich;
 
-    // Thông tin bệnh nhân
+    // ThA'ng tin bnh nhAn
     private String idBenhNhan;
     private String tenBenhNhan;
     private GioiTinh gioiTinh;
     private LocalDate ngaySinh;
     private String soDienThoai;
 
-    // Thông tin lượt khám (có thể null nếu chưa đến)
+    // ThA'ng tin lt khAm (cA3 th null nu cha `n)
     private String idLuotKham;
     private TrangThaiLuotKham trangThaiLuotKham;
+    
+    // Bổ sung các trường cần thiết cho UC06
+    private String lyDoKham;
+    
+    private Integer huyetApTamThu;
+    private Integer huyetApTamTruong;
+    private BigDecimal nhietDo;
+    private BigDecimal canNang;
+    private LocalDateTime thoiDiemDoSinhHieu;
 }

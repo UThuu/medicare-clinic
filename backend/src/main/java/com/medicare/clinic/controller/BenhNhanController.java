@@ -1,9 +1,9 @@
 package com.medicare.clinic.controller;
 
 import com.medicare.clinic.dto.auth.LoginResponse;
-import com.medicare.clinic.dto.request.BenhNhanTaoMoiRequest;
-import com.medicare.clinic.dto.request.BenhNhanTimKiemRequest;
 import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
+import com.medicare.clinic.dto.request.BenhNhanTimKiemRequest;
+import com.medicare.clinic.dto.request.BenhNhanTaoMoiRequest;
 import com.medicare.clinic.service.interfaces.IBenhNhanService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -35,6 +35,14 @@ public class BenhNhanController {
         ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
         if (denied != null) return denied;
         return execute(() -> benhnhanService.taoHoSoBenhNhanMoi(request));
+    }
+
+    @PostMapping("/kiem-tra-so-dien-thoai")
+    public ResponseEntity<?> kiemTraSoDienThoai(@RequestBody BenhNhanTimKiemRequest request,
+                                               HttpServletRequest httpRequest) {
+        ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
+        if (denied != null) return denied;
+        return execute(() -> benhnhanService.kiemTraSoDienThoai(request));
     }
 
     @PostMapping("/thong-bao-lich-kham")

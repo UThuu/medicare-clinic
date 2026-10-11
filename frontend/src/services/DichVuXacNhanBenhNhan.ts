@@ -3,7 +3,7 @@ import type {
     PhanHoiXacNhanBenhNhan,
 } from "../types/XacNhanBenhNhan";
 
-const DIA_CHI_API = "http://localhost:8080/api";
+const DIA_CHI_API = "/api";
 
 export async function xacNhanBenhNhan(
     idLuotKham: string,

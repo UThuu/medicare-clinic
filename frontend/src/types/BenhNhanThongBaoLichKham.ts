@@ -1,4 +1,5 @@
 export type LoaiThongBaoLichKham =
+  | 'HUY_LICH'
   | 'XAC_NHAN_DAT_LICH'
   | 'NHAC_LICH_1_NGAY'
   | 'NHAC_LICH_2_GIO';

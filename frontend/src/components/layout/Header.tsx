@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import '../common/shared-ui.css';
 
 export interface HeaderProps {
@@ -6,9 +6,10 @@ export interface HeaderProps {
   roleLabel?: string;
   hotline?: string;
   onLogout?: () => void;
+  headerActions?: ReactNode;
 }
 
-export function Header({ doctorName = 'Tên bác sĩ', roleLabel = 'Bác sĩ', hotline = 'Hotline', onLogout }: HeaderProps) {
+export function Header({ doctorName = 'Tên bác sĩ', roleLabel = 'Bác sĩ', hotline = 'Hotline', onLogout, headerActions }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +47,7 @@ export function Header({ doctorName = 'Tên bác sĩ', roleLabel = 'Bác sĩ', h
         </div>
       </div>
       <div className="mc-user" ref={menuRef} style={{ position: 'relative' }}>
+        {headerActions}
         <button 
           className="mc-user-btn" 
           onClick={() => setMenuOpen(!menuOpen)}

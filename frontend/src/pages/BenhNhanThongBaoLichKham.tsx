@@ -1,75 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
-import {
-  benhNhanThongBaoLichKhamService,
-  BenhNhanThongBaoApiError,
-} from '../services/benhNhanThongBaoLichKhamService';
 import type {
-  BenhNhanThongBaoLichKhamResponse,
   LoaiThongBaoLichKham,
   ThongBaoLichKhamItem,
 } from '../types/BenhNhanThongBaoLichKham';
 import './benhNhanThongBaoLichKham.css';
+import { PatientLayout } from '../components/layout/PatientLayout';
+import { useAppointmentNotifications } from '../hooks/useAppointmentNotifications';
 
-interface Props {
-  /** Route /dev/uc25 dùng dữ liệu minh họa và không gọi API. */
-  isDemo?: boolean;
-}
 
 type BoLoc = 'TAT_CA' | LoaiThongBaoLichKham;
-
-const taoDuLieuMinhHoa = (): BenhNhanThongBaoLichKhamResponse => ({
-  thoiDiemTruyVan: new Date().toISOString(),
-  tongSoThongBao: 3,
-  danhSachThongBao: [
-    {
-      idLichKham: 'LK-DEMO-001',
-      loaiThongBao: 'NHAC_LICH_1_NGAY',
-      tieuDe: 'Nhắc lịch khám ngày mai',
-      noiDung: 'Bạn có lịch khám vào ngày mai. Vui lòng đến sớm 10–15 phút để làm thủ tục tiếp nhận.',
-      maBacSi: 'BS001',
-      hoTenBacSi: 'Nguyễn Minh Anh',
-      ngayKham: ngayCong(1),
-      gioKham: '08:30:00',
-      trangThaiLichKham: 'DA_DAT',
-      thoiDiemNhac: `${ngayCong(0)}T08:30:00`,
-    },
-    {
-      idLichKham: 'LK-DEMO-002',
-      loaiThongBao: 'XAC_NHAN_DAT_LICH',
-      tieuDe: 'Xác nhận lịch khám',
-      noiDung: 'Lịch khám của bạn đã được ghi nhận. Vui lòng kiểm tra lại thời gian khám.',
-      maBacSi: 'BS002',
-      hoTenBacSi: 'Trần Hoàng Nam',
-      ngayKham: ngayCong(3),
-      gioKham: '14:00:00',
-      trangThaiLichKham: 'DA_DAT',
-      thoiDiemNhac: null,
-    },
-    {
-      idLichKham: 'LK-DEMO-003',
-      loaiThongBao: 'NHAC_LICH_2_GIO',
-      tieuDe: 'Nhắc lịch khám trong 2 giờ tới',
-      noiDung: 'Lịch khám của bạn sắp bắt đầu. Hãy chuẩn bị và đến phòng khám đúng giờ.',
-      maBacSi: 'BS003',
-      hoTenBacSi: 'Lê Thu Hà',
-      ngayKham: ngayCong(0),
-      gioKham: '16:00:00',
-      trangThaiLichKham: 'DA_TIEP_NHAN',
-      thoiDiemNhac: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    },
-  ],
-});
-
-function ngayCong(soNgay: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + soNgay);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 function dinhDangNgay(value?: string | null): string {
   if (!value) return 'Chưa có thông tin';
@@ -85,17 +26,18 @@ function dinhDangGio(value?: string | null): string {
 
 function dinhDangThoiDiem(value?: string | null): string {
   if (!value) return '—';
-  const date = new Date(value);
+  const date = new Date(/(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? value : `${value}+07:00`);
   if (Number.isNaN(date.getTime())) return value.replace('T', ' ');
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Ho_Chi_Minh',
   }).format(date);
 }
 
 function nhanLoaiThongBao(type: string): string {
   switch (type) {
     case 'XAC_NHAN_DAT_LICH': return 'Xác nhận đặt lịch';
+    case 'HUY_LICH': return 'Hủy lịch';
     case 'NHAC_LICH_1_NGAY': return 'Nhắc trước 1 ngày';
     case 'NHAC_LICH_2_GIO': return 'Nhắc trước 2 giờ';
     default: return 'Thông báo lịch khám';
@@ -117,51 +59,20 @@ function bieuTuongLoai(type: string): string {
   return '✓';
 }
 
-export const BenhNhanThongBaoLichKham: React.FC<Props> = ({ isDemo = false }) => {
+export const BenhNhanThongBaoLichKham: React.FC = () => {
   const navigate = useNavigate();
-  const [data, setData] = React.useState<BenhNhanThongBaoLichKhamResponse | null>(
-    isDemo ? taoDuLieuMinhHoa() : null,
-  );
-  const [loading, setLoading] = React.useState<boolean>(!isDemo);
-  const [error, setError] = React.useState<string | null>(null);
+  const notifications = useAppointmentNotifications();
+  const { data, loading, error, refresh: taiThongBao } = notifications;
   const [boLoc, setBoLoc] = React.useState<BoLoc>('TAT_CA');
-
-  const taiThongBao = React.useCallback(async () => {
-    if (isDemo) {
-      setData(taoDuLieuMinhHoa());
-      setError(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await benhNhanThongBaoLichKhamService.layThongBaoLichKham();
-      setData(result);
-    } catch (err: unknown) {
-      const message = err instanceof BenhNhanThongBaoApiError
-        ? err.message
-        : err instanceof Error ? err.message : 'Không thể tải thông báo lịch khám.';
-      setError(message);
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [isDemo]);
-
-  React.useEffect(() => {
-    void taiThongBao();
-  }, [taiThongBao]);
 
   const danhSach = (data?.danhSachThongBao ?? []).filter((item) =>
     boLoc === 'TAT_CA' || item.loaiThongBao === boLoc,
   );
 
-  const handleBack = () => navigate(isDemo ? '/' : '/patient');
+  const handleBack = () => navigate('/patient');
 
   return (
-    <main className="uc25-page">
+    <PatientLayout active="notifications" notifications={notifications}><div className="uc25-page">
       <header className="uc25-header">
         <div className="uc25-heading">
           <button className="uc25-back" type="button" onClick={handleBack} aria-label="Quay lại trang trước">
@@ -175,13 +86,6 @@ export const BenhNhanThongBaoLichKham: React.FC<Props> = ({ isDemo = false }) =>
           ↻ Làm mới
         </Button>
       </header>
-
-      {isDemo && (
-        <div className="uc25-demo-note" role="note">
-          <strong>Chế độ xem thử</strong>
-          <span>Đang hiển thị dữ liệu minh họa. Trang này không gọi API và không thay đổi dữ liệu backend.</span>
-        </div>
-      )}
 
       <section className="uc25-summary" aria-label="Tổng quan thông báo">
         <div className="uc25-summary-icon" aria-hidden="true">✉</div>
@@ -221,6 +125,7 @@ export const BenhNhanThongBaoLichKham: React.FC<Props> = ({ isDemo = false }) =>
           {([
             ['TAT_CA', 'Tất cả'],
             ['XAC_NHAN_DAT_LICH', 'Xác nhận đặt lịch'],
+            ['HUY_LICH', 'Hủy lịch'],
             ['NHAC_LICH_1_NGAY', 'Trước 1 ngày'],
             ['NHAC_LICH_2_GIO', 'Trước 2 giờ'],
           ] as Array<[BoLoc, string]>).map(([value, label]) => (
@@ -255,10 +160,8 @@ export const BenhNhanThongBaoLichKham: React.FC<Props> = ({ isDemo = false }) =>
         )}
       </section>
 
-      <footer className="uc25-footer">
-        Thông báo được dựng từ lịch khám đang có trong hệ thống. Đây không phải lịch sử gửi thông báo đã lưu.
-      </footer>
-    </main>
+
+    </div></PatientLayout>
   );
 };
 
