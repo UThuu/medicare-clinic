@@ -1,0 +1,32 @@
+.git
+.gitignore
+.vscode/
+
+# Node/Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+
+# Maven/Backend
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# Bí mật/Cấu hình local
+.env
+cookie.txt
+database/
+docs/
+tests/
+*.log
+
+# Secrets and local review artifacts, including nested copies
+.env.*
+**/.env
+**/.env.*
+cookies.txt
+**/cookie.txt
+**/cookies.txt
+*.patch
+**/*.patch

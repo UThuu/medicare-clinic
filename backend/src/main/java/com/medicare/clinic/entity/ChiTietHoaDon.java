@@ -16,6 +16,8 @@ public class ChiTietHoaDon {
 
     @ManyToOne
     @JoinColumn(name = "id_hoa_don", nullable = false)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
     private HoaDon hoaDon;
 
     @Column(name = "loai_chi_phi", nullable = false)

@@ -119,3 +119,5 @@
     align-items: stretch;
   }
 }
+
+.mc-invoice-pagination { display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; }

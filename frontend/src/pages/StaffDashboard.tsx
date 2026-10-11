@@ -1,17 +1,23 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 
 import { DoctorDashboard } from './DoctorDashboard';
+import { CashierBillingPage } from './cashier/CashierBillingPage';
+import { ReceptionDashboard } from './ReceptionDashboard';
 
 export const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
 
   if (user?.vaiTro === 'BAC_SI') {
     return <DoctorDashboard />;
+  }
+
+  if (user?.vaiTro === 'THU_NGAN') return <CashierBillingPage />;
+
+  if (user?.vaiTro === 'LE_TAN') {
+    return <ReceptionDashboard />;
   }
 
   const handleLogout = async () => {
@@ -32,14 +38,6 @@ export const StaffDashboard: React.FC = () => {
         
 
       </div>
-      {user?.vaiTro === 'THU_NGAN' && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.1rem' }}>Chức năng thu ngân</h2>
-          <Button onClick={() => navigate('/staff/hoadon/tra-cuu')}>
-            Tra cứu hóa đơn
-          </Button>
-        </div>
-      )}
       <Button onClick={handleLogout} variant="secondary">
         Đăng xuất
       </Button>

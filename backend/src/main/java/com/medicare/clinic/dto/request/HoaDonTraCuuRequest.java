@@ -19,5 +19,6 @@ public class HoaDonTraCuuRequest {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate denNgay;
     private TrangThaiHoaDon trangThai;
+    private int page = 0;
+    private int size = 20;
 }
-

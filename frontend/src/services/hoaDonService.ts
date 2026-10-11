@@ -1,44 +1,60 @@
-import axios, { AxiosError } from 'axios';
-import type { HoaDonTraCuuRequest, HoaDonTraCuuResponse } from '../types/HoaDon';
+import axios from 'axios';
 import { ApiError } from './authService';
-
-// withCredentials cho phép gửi cookie session đăng nhập tới backend.
-const apiClient = axios.create({
-  withCredentials: true,
-});
-
-type ApiErrorBody = {
-  message?: string;
-  thongBao?: string;
-};
+import type { HoaDonTraCuuRequest, HoaDonTraCuuResponse } from '../types/HoaDon';
+import api from './api';
+import {
+  ChiPhiKhamPreviewResponse,
+  HoaDonResponse,
+  InHoaDonResponse,
+  LuotKhamChoHoaDonResponse,
+  TaoHoaDonRequest,
+} from '../types/billing';
 
 export const hoaDonService = {
   traCuuHoaDon: async (request: HoaDonTraCuuRequest): Promise<HoaDonTraCuuResponse> => {
     try {
-      const response = await apiClient.get<HoaDonTraCuuResponse>('/api/hoadon/tra-cuu', {
-        params: request,
-      });
-      return response.data;
-    } catch (error: unknown) {
+      return (await api.get<HoaDonTraCuuResponse>('/hoadon/tra-cuu', { params: request })).data;
+    } catch (error) {
       if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<ApiErrorBody>;
-        if (axiosError.response) {
-          const message =
-            axiosError.response.data?.message ||
-            axiosError.response.data?.thongBao ||
-            'Không thể tra cứu hóa đơn. Vui lòng thử lại.';
-          throw new ApiError(message, axiosError.response.status);
-        }
-
-        if (axiosError.request) {
-          throw new ApiError('Không thể kết nối tới máy chủ. Kiểm tra backend và kết nối mạng.');
-        }
+        throw new ApiError(error.response?.data?.error || error.response?.data?.message ||
+          'Không thể tra cứu hóa đơn. Vui lòng thử lại.', error.response?.status);
       }
-
-      if (error instanceof Error) {
-        throw new ApiError(error.message);
-      }
-      throw new ApiError('Đã xảy ra lỗi không xác định khi tra cứu hóa đơn.');
+      throw error;
     }
+  },
+  // Lấy danh sách lượt khám chờ lập hóa đơn
+  getDanhSachChoLapHoaDon: async (): Promise<LuotKhamChoHoaDonResponse[]> => {
+    const response = await api.get<LuotKhamChoHoaDonResponse[]>('/hoadon/cho-lap');
+    return response.data;
+  },
+
+  // UC-16: Xem trước chi phí và tính tổng tiền
+  getChiPhiDuKien: async (idLuotKham: string): Promise<ChiPhiKhamPreviewResponse> => {
+    const response = await api.get<ChiPhiKhamPreviewResponse>(`/hoadon/chi-phi-du-kien/${idLuotKham}`);
+    return response.data;
+  },
+
+  // UC-15: Lập hóa đơn
+  taoHoaDon: async (request: TaoHoaDonRequest): Promise<HoaDonResponse> => {
+    const response = await api.post<HoaDonResponse>('/hoadon/tao', request);
+    return response.data;
+  },
+
+  // Lấy chi tiết hóa đơn theo ID
+  getHoaDonById: async (id: string): Promise<HoaDonResponse> => {
+    const response = await api.get<HoaDonResponse>(`/hoadon/${id}`);
+    return response.data;
+  },
+
+  // Lấy tất cả hóa đơn đã tạo
+  getDanhSachTatCaHoaDon: async (): Promise<HoaDonResponse[]> => {
+    const response = await api.get<HoaDonResponse[]>('/hoadon');
+    return response.data;
+  },
+
+  // UC-21: Lấy thông tin bản in hóa đơn chi tiết (chỉ cho phép khi đã thanh toán)
+  getThongTinInHoaDon: async (idHoaDon: string): Promise<InHoaDonResponse> => {
+    const response = await api.get<InHoaDonResponse>(`/hoadon/${idHoaDon}/in`);
+    return response.data;
   },
 };

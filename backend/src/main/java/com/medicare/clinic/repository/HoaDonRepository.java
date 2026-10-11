@@ -1,42 +1,46 @@
 package com.medicare.clinic.repository;
-
 import com.medicare.clinic.entity.HoaDon;
-import com.medicare.clinic.entity.enums.TrangThaiHoaDon;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-@Repository
+import java.util.*;
 public interface HoaDonRepository extends JpaRepository<HoaDon, String> {
+    Optional<HoaDon> findByLuotKham_IdLuotKham(String id);
+    boolean existsByLuotKham_IdLuotKham(String id);
+    List<HoaDon> findAllByOrderByNgayTaoDesc();
+    java.util.Optional<HoaDon> findByIdAndLuotKham_LichKham_BenhNhan_IdBenhNhan(String id, String patientId);
+    java.util.List<HoaDon> findByLuotKham_LichKham_BenhNhan_IdBenhNhanOrderByNgayTaoDesc(String patientId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select h from HoaDon h where h.id = :id")
+    java.util.Optional<HoaDon> findForPayment(@org.springframework.data.repository.query.Param("id") String id);
 
-    @Query("""
-            SELECT DISTINCT hd
-            FROM HoaDon hd
-            LEFT JOIN FETCH hd.luotKham lk
-            LEFT JOIN FETCH lk.lichKham lich
-            LEFT JOIN FETCH lich.benhNhan bn
-            LEFT JOIN FETCH lich.bacSi bs
-            LEFT JOIN FETCH bs.nhanVien bsNv
-            LEFT JOIN FETCH hd.thuNgan tn
-            LEFT JOIN FETCH tn.nhanVien tnNv
-            LEFT JOIN FETCH hd.chiTietHoaDons cthd
-            WHERE (:idHoaDon IS NULL OR LOWER(hd.id) LIKE LOWER(CONCAT('%', :idHoaDon, '%')))
-            AND (:soDienThoai IS NULL OR LOWER(bn.soDienThoai) LIKE LOWER(CONCAT('%', :soDienThoai, '%'))) 
-            AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-            AND (:denNgayExclusive IS NULL OR hd.ngayTao < :denNgayExclusive)
-            AND (:trangThai IS NULL OR hd.trangThai = :trangThai)
-            ORDER BY hd.ngayTao DESC
-            """)
-
-    List<HoaDon> traCuuHoaDon(
-            @Param("idHoaDon") String idHoaDon,
-            @Param("soDienThoai") String soDienThoai,
-            @Param("tuNgay") LocalDateTime tuNgay,
-            @Param("denNgayExclusive") LocalDateTime denNgayExclusive,
-            @Param("trangThai") TrangThaiHoaDon trangThai
-    );
+    @org.springframework.data.jpa.repository.Query(value = """
+        select hd from HoaDon hd
+        left join fetch hd.luotKham lk
+        left join fetch lk.lichKham lich
+        left join fetch lich.benhNhan bn
+        left join fetch lich.bacSi bs
+        left join fetch bs.nhanVien
+        left join fetch hd.thuNgan tn
+        left join fetch tn.nhanVien
+        where (:idHoaDon is null or lower(hd.id) like lower(concat('%', :idHoaDon, '%')))
+          and (:soDienThoai is null or bn.soDienThoai like concat('%', :soDienThoai, '%'))
+          and (:tuNgay is null or hd.ngayTao >= :tuNgay)
+          and (:denNgayExclusive is null or hd.ngayTao < :denNgayExclusive)
+          and (:trangThai is null or hd.trangThai = :trangThai)
+        order by hd.ngayTao desc, hd.id desc
+        """, countQuery = """
+        select count(hd) from HoaDon hd
+        left join hd.luotKham lk left join lk.lichKham lich left join lich.benhNhan bn
+        where (:idHoaDon is null or lower(hd.id) like lower(concat('%', :idHoaDon, '%')))
+          and (:soDienThoai is null or bn.soDienThoai like concat('%', :soDienThoai, '%'))
+          and (:tuNgay is null or hd.ngayTao >= :tuNgay)
+          and (:denNgayExclusive is null or hd.ngayTao < :denNgayExclusive)
+          and (:trangThai is null or hd.trangThai = :trangThai)
+        """)
+    org.springframework.data.domain.Page<HoaDon> traCuuHoaDon(
+        @org.springframework.data.repository.query.Param("idHoaDon") String idHoaDon,
+        @org.springframework.data.repository.query.Param("soDienThoai") String soDienThoai,
+        @org.springframework.data.repository.query.Param("tuNgay") java.time.LocalDateTime tuNgay,
+        @org.springframework.data.repository.query.Param("denNgayExclusive") java.time.LocalDateTime denNgayExclusive,
+        @org.springframework.data.repository.query.Param("trangThai") com.medicare.clinic.entity.enums.TrangThaiHoaDon trangThai,
+        org.springframework.data.domain.Pageable pageable);
 }

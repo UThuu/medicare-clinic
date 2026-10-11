@@ -37,7 +37,14 @@
 .mc-avatar { border-radius: 50%; display: inline-grid; place-items: center; background: var(--mc-neutral-100); color: var(--mc-neutral-500); }
 .mc-avatar--sm { width: 36px; height: 36px; }
 .mc-shell { display: flex; min-height: calc(100vh - 64px); }
-.mc-sidebar { width: 160px; flex: 0 0 160px; background: var(--mc-neutral-0); border-right: 1px solid var(--mc-neutral-200); padding: 24px 10px; }
+.mc-sidebar { display: flex; flex-direction: column; width: 160px; flex: 0 0 160px; background: var(--mc-neutral-0); border-right: 1px solid var(--mc-neutral-200); padding: 24px 10px; }
+/* Shared sidebar footer for staff and customer layouts. */
+.mc-sidebar nav { flex: 1; }
+.mc-sidebar__logout { display: flex; align-items: center; gap: 14px; padding: 16px 14px; margin-top: 24px; border: 0; border-radius: 8px; background: transparent; font: inherit; color: var(--mc-neutral-800); text-align: left; cursor: pointer; }
+.mc-sidebar__logout:hover { background: var(--mc-primary-50); color: var(--mc-primary-700); }
+.mc-sidebar__logout:focus-visible { outline: 2px solid var(--mc-primary-500); outline-offset: 2px; }
+.mc-sidebar__logout:disabled { opacity: .6; cursor: wait; }
+.mc-sidebar__logout svg { flex-shrink: 0; width: 26px; height: 26px; }
 .mc-sidebar__item { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; margin-bottom: 4px; border-left: 3px solid transparent; border-radius: 0 8px 8px 0; color: var(--mc-neutral-800); text-decoration: none; }
 .mc-sidebar__item:hover { background: var(--mc-neutral-50); }
 .mc-sidebar__item.is-active { border-left-color: var(--mc-primary-500); background: var(--mc-primary-50); color: var(--mc-primary-700); font-weight: 700; }
@@ -313,6 +320,8 @@
 .mc-dialog-message { margin: 0; color: var(--mc-neutral-800); }
 
 @media (max-width: 768px) {
+  .mc-sidebar__logout { justify-content: center; padding: 10px 6px; gap: 0; }
+  .mc-sidebar__logout span { display: none; }
   .mc-sidebar { width: 72px; flex-basis: 72px; padding-inline: 6px; }
   .mc-sidebar__item { justify-content: center; padding-inline: 6px; font-size: 0; }
   .mc-main { padding: 16px; }

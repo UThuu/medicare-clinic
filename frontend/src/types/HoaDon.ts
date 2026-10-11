@@ -1,6 +1,8 @@
 export type TrangThaiHoaDon = 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN';
 
 export interface HoaDonTraCuuRequest {
+  page?: number;
+  size?: number;
   idHoaDon?: string;
   soDienThoaiBenhNhan?: string;
   tuNgay?: string;
@@ -32,6 +34,9 @@ export interface HoaDonItem {
 }
 
 export interface HoaDonTraCuuResponse {
+  page: number;
+  size: number;
+  totalPages: number;
   thongBao: string;
   tongSoKetQua: number;
   danhSachHoaDon: HoaDonItem[];

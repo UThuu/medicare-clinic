@@ -15,6 +15,8 @@ public class GiaoDichThanhToan {
     
     @ManyToOne
     @JoinColumn(name = "id_thanh_toan", nullable = false)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
     private ThanhToan thanhToan;
     
     @Column(name = "ma_giao_dich")

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert } from '../components/common/Alert';
 import { Button } from '../components/common/Button';
@@ -8,7 +8,7 @@ import { Modal } from '../components/common/Modal';
 import { Select } from '../components/common/Select';
 import { StatusBadge, type StatusTone } from '../components/common/StatusBadge';
 import { Table, type TableColumn } from '../components/common/Table';
-import { MainLayout } from '../components/layout/MainLayout';
+import { CashierLayout } from '../components/layout/CashierLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../services/authService';
 import { hoaDonService } from '../services/hoaDonService';
@@ -49,7 +49,7 @@ const getInvoiceStatus = (status: TrangThaiHoaDon): { label: string; tone: Statu
 };
 
 export const HoaDonTraCuu: React.FC = () => {
-  const { user, checkSession } = useAuth();
+  const { checkSession } = useAuth();
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState<InvoiceFilters>(initialFilters);
@@ -58,6 +58,8 @@ export const HoaDonTraCuu: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const busy = useRef(false);
+  const submitted = useRef<HoaDonTraCuuRequest | null>(null);
 
   const updateFilter = (key: keyof InvoiceFilters, value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -80,6 +82,14 @@ export const HoaDonTraCuu: React.FC = () => {
       trangThai: (filters.trangThai || undefined) as TrangThaiHoaDon | undefined,
     };
 
+    await search({ ...request, page: 0, size: 20 });
+  };
+
+  const search = async (request: HoaDonTraCuuRequest) => {
+    if (busy.current) return;
+    busy.current = true;
+    setError(null);
+    submitted.current = request;
     setLoading(true);
     try {
       const response = await hoaDonService.traCuuHoaDon(request);
@@ -101,10 +111,12 @@ export const HoaDonTraCuu: React.FC = () => {
       setHasSearched(true);
     } finally {
       setLoading(false);
+      busy.current = false;
     }
   };
 
   const handleReset = () => {
+    submitted.current = null;
     setFilters(initialFilters);
     setResult(null);
     setError(null);
@@ -175,14 +187,7 @@ export const HoaDonTraCuu: React.FC = () => {
   ];
 
   return (
-    <MainLayout
-      doctorName={user?.hoTen || ''}
-      roleLabel="Thu ngân"
-      sidebarItems={[
-        { label: 'Dashboard', href: '/staff' },
-        { label: 'Tra cứu hóa đơn', href: '/staff/hoadon/tra-cuu', active: true },
-      ]}
-    >
+    <CashierLayout active="search">
       <div className="mc-invoice-page">
         <div className="mc-invoice-page__heading">
           <div>
@@ -253,7 +258,7 @@ export const HoaDonTraCuu: React.FC = () => {
             {result && <span className="mc-invoice-muted">Tổng số kết quả: {result.tongSoKetQua}</span>}
           </div>
           {!hasSearched ? (
-            <p className="mc-invoice-muted">Nhập một hoặc nhiều điều kiện, sau đó chọn “Tra cứu hóa đơn”. Nếu để trống bộ lọc, hệ thống sẽ tìm tất cả hóa đơn theo quy tắc của backend.</p>
+            <p className="mc-invoice-muted">Nhập một hoặc nhiều điều kiện, sau đó chọn “Tra cứu hóa đơn”. Để trống bộ lọc để xem tất cả hóa đơn, sắp xếp mới nhất trước; mỗi trang hiển thị tối đa 20 hóa đơn.</p>
           ) : result && result.danhSachHoaDon.length > 0 ? (
             <>
               <p className="mc-invoice-muted" style={{ marginTop: 0 }}>{result.thongBao}</p>
@@ -263,6 +268,11 @@ export const HoaDonTraCuu: React.FC = () => {
                 rowKey={(invoice) => invoice.idHoaDon}
                 emptyText="Không tìm thấy hóa đơn phù hợp."
               />
+              <div className="mc-invoice-pagination">
+                <span>Trang {result.page + 1} / {Math.max(1, result.totalPages)}</span>
+                <Button variant="secondary" size="sm" disabled={loading || result.page === 0} onClick={() => { if (submitted.current) void search({...submitted.current, page: result.page - 1}); }}>Trước</Button>
+                <Button variant="secondary" size="sm" disabled={loading || result.page + 1 >= result.totalPages} onClick={() => { if (submitted.current) void search({...submitted.current, page: result.page + 1}); }}>Tiếp</Button>
+              </div>
             </>
           ) : (
             <p className="mc-invoice-muted">{result?.thongBao || 'Không có dữ liệu để hiển thị.'}</p>
@@ -309,6 +319,6 @@ export const HoaDonTraCuu: React.FC = () => {
           </>
         )}
       </Modal>
-    </MainLayout>
+    </CashierLayout>
   );
 };

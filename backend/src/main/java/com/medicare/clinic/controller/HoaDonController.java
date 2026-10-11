@@ -1,63 +1,102 @@
 package com.medicare.clinic.controller;
-
 import com.medicare.clinic.dto.auth.LoginResponse;
-import com.medicare.clinic.dto.request.HoaDonTraCuuRequest;
-import com.medicare.clinic.dto.response.HoaDonTraCuuResponse;
+import com.medicare.clinic.dto.request.TaoHoaDonRequest;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Collections;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
+import java.util.Map;
 @RestController
 @RequestMapping("/api/hoadon")
 @RequiredArgsConstructor
+@Slf4j
 public class HoaDonController {
-
-    private final IHoaDonService hoadonService;
-
+    private final IHoaDonService service;
+    private final com.medicare.clinic.service.PaymentAccess access;
+    private LoginResponse cashier(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null || !(session.getAttribute("AUTH_USER") instanceof LoginResponse user))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
+        if (!"THU_NGAN".equals(user.getVaiTro()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ thu ngân được truy cập hóa đơn");
+        if (user.getMaNv() == null || user.getMaNv().isBlank())
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa liên kết thu ngân");
+        return user;
+    }
+    private ResponseEntity<?> ok(Object data) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(data);
+    }
     @GetMapping("/tra-cuu")
-    public ResponseEntity<?> traCuuHoaDon(
-            @ModelAttribute HoaDonTraCuuRequest request,
-            HttpServletRequest httpRequest
-    ) {
-        // SessionAuthFilter da kiem tra dang nhap cho /api/**.
-        // Kiem tra lai tai day de endpoint UC22 chi danh cho thu ngan.
-        HttpSession session = httpRequest.getSession(false);
-        Object authObject = session == null ? null : session.getAttribute("AUTH_USER");
+    public ResponseEntity<?> search(@ModelAttribute com.medicare.clinic.dto.request.HoaDonTraCuuRequest filters,
+                                    HttpServletRequest request) {
+        cashier(request);
+        return ok(service.traCuuHoaDon(filters));
+    }
+    @ExceptionHandler({org.springframework.validation.BindException.class,
+                       org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<?> invalidFilters(Exception ex) {
+        return error(HttpStatus.BAD_REQUEST, "Điều kiện tra cứu không hợp lệ. Kiểm tra ngày, trạng thái và số trang.");
+    }
+    @GetMapping("/cho-lap")
+    public ResponseEntity<?> pending(HttpServletRequest request) {
+        cashier(request); return ok(service.layDanhSachLuotKhamChoLapHoaDon());
+    }
+    @GetMapping("/chi-phi-du-kien/{id}")
+    public ResponseEntity<?> preview(@PathVariable String id, HttpServletRequest request) {
+        cashier(request); return ok(service.layChiPhiDuKien(id));
+    }
+    @PostMapping("/tao")
+    public ResponseEntity<?> create(@Valid @RequestBody TaoHoaDonRequest body, HttpServletRequest request) {
+        String cashierId = cashier(request).getMaNv();
+        return ResponseEntity.status(HttpStatus.CREATED).cacheControl(CacheControl.noStore())
+            .body(service.taoHoaDon(body, cashierId));
+    }
+    @GetMapping("/luot-kham/{id}")
+    public ResponseEntity<?> byVisit(@PathVariable String id, HttpServletRequest request) {
+        cashier(request); return ok(service.layHoaDonTheoLuotKham(id));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> byId(@PathVariable String id, HttpServletRequest request) {
+        cashier(request); return ok(service.layHoaDonTheoId(id));
+    }
+    @GetMapping
+    public ResponseEntity<?> all(HttpServletRequest request) {
+        cashier(request); return ok(service.layDanhSachTatCaHoaDon());
+    }
+    private ResponseEntity<?> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).cacheControl(CacheControl.noStore()).body(Map.of("error", message));
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<?> statusError(ResponseStatusException ex) {
+        return error(HttpStatus.valueOf(ex.getStatusCode().value()), ex.getReason());
+    }
+    @ExceptionHandler({IllegalStateException.class, DataIntegrityViolationException.class, PessimisticLockingFailureException.class, org.hibernate.exception.ConstraintViolationException.class, jakarta.persistence.PessimisticLockException.class, jakarta.persistence.LockTimeoutException.class})
+    public ResponseEntity<?> conflict(Exception ex) {
+        log.warn("Billing conflict: {}", ex.getClass().getSimpleName());
+        return error(HttpStatus.CONFLICT, ex instanceof IllegalStateException ? ex.getMessage() : "Dữ liệu vừa thay đổi. Vui lòng tải lại và kiểm tra hóa đơn.");
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> invalid(IllegalArgumentException ex) { return error(HttpStatus.BAD_REQUEST, ex.getMessage()); }
+    @ExceptionHandler({MethodArgumentNotValidException.class, org.springframework.http.converter.HttpMessageNotReadableException.class})
+    public ResponseEntity<?> validation(Exception ex) {
+        return error(HttpStatus.BAD_REQUEST, "Dữ liệu hóa đơn hoặc điều kiện tra cứu không hợp lệ");
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> unexpected(Exception ex) {
+        log.error("Billing request failed", ex);
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý hóa đơn. Vui lòng thử lại.");
+    }
 
-        if (!(authObject instanceof LoginResponse)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap(
-                            "message",
-                            "Ban chua dang nhap hoac phien dang nhap da het han."
-                    ));
-        }
-
-        LoginResponse authUser = (LoginResponse) authObject;
-        if (!"THU_NGAN".equals(authUser.getVaiTro())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Collections.singletonMap(
-                            "message",
-                            "Ban khong co quyen tra cuu hoa don."
-                    ));
-        }
-
-        try {
-            HoaDonTraCuuResponse response = hoadonService.traCuuHoaDon(request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException ex) {
-            HoaDonTraCuuResponse response = new HoaDonTraCuuResponse();
-            response.setThongBao(ex.getMessage());
-            response.setTongSoKetQua(0);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
+    @GetMapping("/{id}/in")
+    public ResponseEntity<?> print(@PathVariable String id, HttpServletRequest request) {
+        access.view(request,id); return ok(service.layThongTinInHoaDon(id));
     }
 }

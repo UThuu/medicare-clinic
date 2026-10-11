@@ -1,4 +1,4 @@
-﻿package com.medicare.clinic.repository;
+package com.medicare.clinic.repository;
 
 import com.medicare.clinic.entity.LichKham;
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;
@@ -12,6 +12,14 @@ import java.util.List;
 
 @Repository
 public interface LichKhamRepository extends JpaRepository<LichKham, String> {
+    boolean existsByBacSi_MaNvAndNgayKhamAndGioKhamAndTrangThaiNot(
+            String maBacSi, java.time.LocalDate ngayKham, java.time.LocalTime gioKham,
+            com.medicare.clinic.entity.enums.TrangThaiLichKham trangThai);
+
+
+    @Query("select l.gioKham from LichKham l where l.bacSi.maNv = :doctor and l.ngayKham = :date and l.trangThai <> :cancelled")
+    List<java.time.LocalTime> findOccupiedTimes(@Param("doctor") String doctor, @Param("date") LocalDate date,
+                                               @Param("cancelled") TrangThaiLichKham cancelled);
 
     List<LichKham> findByBenhNhan_IdBenhNhanAndNgayKhamOrderByGioKhamAsc(
             String idBenhNhan,
@@ -31,4 +39,15 @@ public interface LichKhamRepository extends JpaRepository<LichKham, String> {
            "ORDER BY lk.gioKham ASC, lk.idLichKham ASC")
     List<LichKham> findScheduleByDoctorAndDate(@Param("maNv") String maNv, @Param("ngayKham") LocalDate ngayKham);
 
+    @Query("SELECT lk FROM LichKham lk " +
+           "JOIN FETCH lk.benhNhan " +
+           "JOIN FETCH lk.bacSi " +
+           "LEFT JOIN FETCH lk.luotKham " +
+           "WHERE lk.idLichKham = :idLichKham")
+    java.util.Optional<LichKham> findByIdWithDetails(@Param("idLichKham") String idLichKham);
+
+    @Query("SELECT lk FROM LichKham lk JOIN FETCH lk.bacSi bs JOIN FETCH bs.nhanVien WHERE lk.benhNhan.idBenhNhan = :idBenhNhan AND lk.trangThai <> :trangThai ORDER BY lk.ngayKham ASC, lk.gioKham ASC")
+    List<LichKham> findByBenhNhan_IdBenhNhanAndTrangThaiNotOrderByNgayKhamAscGioKhamAsc(@Param("idBenhNhan") String idBenhNhan, @Param("trangThai") TrangThaiLichKham trangThai);
+    @Query("SELECT lk FROM LichKham lk JOIN FETCH lk.bacSi bs JOIN FETCH bs.nhanVien WHERE lk.benhNhan.idBenhNhan = :idBenhNhan ORDER BY lk.ngayKham ASC, lk.gioKham ASC")
+    List<LichKham> findNotificationAppointments(@Param("idBenhNhan") String idBenhNhan);
 }
