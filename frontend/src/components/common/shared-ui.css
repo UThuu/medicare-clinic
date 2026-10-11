@@ -285,8 +285,41 @@
 .mc-table tbody tr:hover { background: var(--mc-neutral-50); }
 .mc-table__empty { height: 160px; text-align: center !important; color: var(--mc-neutral-600); }
 
-.mc-status { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 10px; border-radius: var(--mc-radius-pill); font-size: 13px; line-height: 20px; font-weight: 700; white-space: nowrap; }
-.mc-status__dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.mc-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+
+  width: fit-content;
+  min-height: 32px;
+
+  padding: 7px 14px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  line-height: 1;
+
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.mc-status__dot {
+  display: inline-block;
+
+  width: 7px;
+  height: 7px;
+
+  min-width: 7px;
+  min-height: 7px;
+
+  flex: 0 0 7px;
+
+  border-radius: 50%;
+}
 .mc-status--success { color: var(--mc-success); background: #E8F7F0; }
 .mc-status--warning { color: #9A6A00; background: #FFF4D9; }
 .mc-status--error { color: var(--mc-error); background: #FDEAEA; }

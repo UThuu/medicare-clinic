@@ -35,6 +35,7 @@ public class SinhHieuService implements ISinhHieuService {
     @Transactional
     public PhanHoiSinhHieu ghiNhanSinhHieu(
             String idLuotKham,
+            String maDieuDuong,
             GhiNhanSinhHieuRequest request
     ) {
 
@@ -79,11 +80,10 @@ public class SinhHieuService implements ISinhHieuService {
         // ==============================
 
         DieuDuong dieuDuong = dieuDuongRepository
-                .findById(request.getMaDieuDuong())
+                .findById(maDieuDuong)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
-                                "Không tìm thấy điều dưỡng: "
-                                        + request.getMaDieuDuong()
+                                "Không tìm thấy điều dưỡng: " + maDieuDuong
                         )
                 );
 

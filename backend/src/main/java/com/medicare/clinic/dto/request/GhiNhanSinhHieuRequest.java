@@ -1,15 +1,11 @@
 package com.medicare.clinic.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
 public class GhiNhanSinhHieuRequest {
-
-    @NotBlank(message = "Mã điều dưỡng không được để trống")
-    private String maDieuDuong;
 
     @NotNull(message = "Huyết áp tâm thu không được để trống")
     private Integer huyetApTamThu;
@@ -30,14 +26,6 @@ public class GhiNhanSinhHieuRequest {
             message = "Nhiệt độ phải lớn hơn 0"
     )
     private BigDecimal nhietDo;
-
-    public String getMaDieuDuong() {
-        return maDieuDuong;
-    }
-
-    public void setMaDieuDuong(String maDieuDuong) {
-        this.maDieuDuong = maDieuDuong;
-    }
 
     public Integer getHuyetApTamThu() {
         return huyetApTamThu;

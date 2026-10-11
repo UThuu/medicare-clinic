@@ -2,6 +2,7 @@ package com.medicare.clinic.service.impl;
 
 import com.medicare.clinic.dto.response.DoctorScheduleResponse;
 import com.medicare.clinic.entity.LichKham;
+import com.medicare.clinic.entity.enums.TrangThaiLuotKham;
 import com.medicare.clinic.repository.LichKhamRepository;
 import com.medicare.clinic.service.interfaces.IScheduleService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,20 @@ public class ScheduleServiceImpl implements IScheduleService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<DoctorScheduleResponse> getWaitingPatients(LocalDate ngayKham) {
+        if (ngayKham == null) {
+            throw new IllegalArgumentException("Ngày khám không được để trống");
+        }
+
+        List<LichKham> lichKhams = lichKhamRepository.findWaitingSchedulesByDate(
+                ngayKham,
+                TrangThaiLuotKham.CHO_KHAM
+        );
+        return chuyenDanhSach(lichKhams);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<DoctorScheduleResponse> getDoctorSchedule(String maNv, LocalDate ngayKham) {
         if (maNv == null || maNv.trim().isEmpty()) {
             throw new IllegalArgumentException("Mã nhân viên (bác sĩ) không được để trống");
@@ -30,6 +45,10 @@ public class ScheduleServiceImpl implements IScheduleService {
 
         List<LichKham> lichKhams = lichKhamRepository.findScheduleByDoctorAndDate(maNv, ngayKham);
 
+        return chuyenDanhSach(lichKhams);
+    }
+
+    private List<DoctorScheduleResponse> chuyenDanhSach(List<LichKham> lichKhams) {
         return lichKhams.stream().map(lk -> {
             return DoctorScheduleResponse.builder()
                     .idLichKham(lk.getIdLichKham())
@@ -44,6 +63,7 @@ public class ScheduleServiceImpl implements IScheduleService {
                     .soDienThoai(lk.getBenhNhan() != null ? lk.getBenhNhan().getSoDienThoai() : null)
                     .idLuotKham(lk.getLuotKham() != null ? lk.getLuotKham().getIdLuotKham() : null)
                     .trangThaiLuotKham(lk.getLuotKham() != null ? lk.getLuotKham().getTrangThai() : null)
+                    .lyDoKham(lk.getLuotKham() != null ? lk.getLuotKham().getLyDoKham() : null)
                     .build();
         }).collect(Collectors.toList());
     }

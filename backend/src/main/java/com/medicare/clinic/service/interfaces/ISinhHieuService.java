@@ -8,6 +8,7 @@ public interface ISinhHieuService {
 
     PhanHoiSinhHieu ghiNhanSinhHieu(
             String idLuotKham,
+            String maDieuDuong,
             GhiNhanSinhHieuRequest request
     );
 

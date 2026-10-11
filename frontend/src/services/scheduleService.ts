@@ -31,6 +31,17 @@ const handleApiError = (error: unknown) => {
 };
 
 export const scheduleService = {
+  getWaitingPatients: async (date?: string): Promise<DoctorScheduleResponse[]> => {
+    try {
+      const params = date ? { date } : {};
+      const response = await apiClient.get<DoctorScheduleResponse[]>('/api/doctor/schedules/waiting', { params });
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
+  },
+
   getDoctorSchedule: async (date?: string): Promise<DoctorScheduleResponse[]> => {
     try {
       const params = date ? { date } : {};

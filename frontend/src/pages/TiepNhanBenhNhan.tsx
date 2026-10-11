@@ -340,27 +340,20 @@ export default function TiepNhanBenhNhan({
             doctorName="Nguyễn Thùy Trang"
             roleLabel="Lễ tân"
             hotline="1900 0000"
+
             sidebarItems={[
                 {
-                    label: "Dashboard",
-                    href: "#",
+                    label: 'Dashboard',
+                    href: '/staff',
                 },
                 {
-                    label: "Lịch khám",
-                    href: "#",
-                },
-                {
-                    label: "Tiếp nhận",
-                    href: "#",
+                    label: 'Tiếp nhận',
+                    href: '/staff/tiep-nhan',
                     active: true,
                 },
                 {
-                    label: "Bệnh nhân chờ",
-                    href: "#",
-                },
-                {
-                    label: "Bệnh nhân",
-                    href: "#",
+                    label: 'Bệnh nhân chờ',
+                    href: '/staff/benh-nhan-cho',
                 },
             ]}
         >

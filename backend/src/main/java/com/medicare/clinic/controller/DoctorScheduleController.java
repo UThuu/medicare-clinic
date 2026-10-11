@@ -73,4 +73,51 @@ public class DoctorScheduleController {
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .body(schedules != null ? schedules : Collections.emptyList());
     }
+
+    // Danh sách chờ khám dùng chung với điều dưỡng; không lọc theo bác sĩ phụ trách.
+    @GetMapping("/waiting")
+    public ResponseEntity<?> getWaitingPatients(
+            @RequestParam(value = "date", required = false) String dateStr,
+            HttpServletRequest request) {
+
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("AUTH_USER") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực."));
+        }
+
+        Object authObj = session.getAttribute("AUTH_USER");
+        if (!(authObj instanceof LoginResponse)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực."));
+        }
+
+        LoginResponse user = (LoginResponse) authObj;
+        if (!"BAC_SI".equals(user.getVaiTro())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .body(Map.of("message", "Bạn không có quyền truy cập tính năng này."));
+        }
+
+        LocalDate ngayKham;
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            ngayKham = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        } else {
+            try {
+                ngayKham = LocalDate.parse(dateStr);
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .body(Map.of("message", "Ngày khám không đúng định dạng yyyy-MM-dd."));
+            }
+        }
+
+        List<DoctorScheduleResponse> waiting = scheduleService.getWaitingPatients(ngayKham);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(waiting != null ? waiting : Collections.emptyList());
+    }
+
 }

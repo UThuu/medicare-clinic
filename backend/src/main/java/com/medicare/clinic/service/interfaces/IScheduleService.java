@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface IScheduleService {
     List<DoctorScheduleResponse> getDoctorSchedule(String maNv, LocalDate ngayKham);
+
+    List<DoctorScheduleResponse> getWaitingPatients(LocalDate ngayKham);
 }

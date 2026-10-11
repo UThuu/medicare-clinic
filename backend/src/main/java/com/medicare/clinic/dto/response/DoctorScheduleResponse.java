@@ -17,7 +17,7 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DoctorScheduleResponse {
-    
+
     // Thông tin lịch hẹn
     private String idLichKham;
     private LocalDate ngayKham;
@@ -35,4 +35,7 @@ public class DoctorScheduleResponse {
     // Thông tin lượt khám (có thể null nếu chưa đến)
     private String idLuotKham;
     private TrangThaiLuotKham trangThaiLuotKham;
+
+    // Lý do khám lấy từ lượt khám
+    private String lyDoKham;
 }
