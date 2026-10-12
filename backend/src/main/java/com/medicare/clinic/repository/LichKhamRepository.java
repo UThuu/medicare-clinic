@@ -64,4 +64,14 @@ public interface LichKhamRepository extends JpaRepository<LichKham, String> {
             @Param("ngayKham") LocalDate ngayKham,
             @Param("trangThai") TrangThaiLuotKham trangThai
     );
+
+    // Danh sách toàn bộ lịch khám trong ngày cho lễ tân (kèm thông tin bệnh nhân, bác sĩ, lượt khám)
+    @Query("SELECT lk FROM LichKham lk " +
+            "JOIN FETCH lk.benhNhan bn " +
+            "JOIN FETCH lk.bacSi bs " +
+            "JOIN FETCH bs.nhanVien nv " +
+            "LEFT JOIN FETCH lk.luotKham luot " +
+            "WHERE lk.ngayKham = :ngayKham " +
+            "ORDER BY lk.gioKham ASC, lk.idLichKham ASC")
+    List<LichKham> findSchedulesByDate(@Param("ngayKham") LocalDate ngayKham);
 }

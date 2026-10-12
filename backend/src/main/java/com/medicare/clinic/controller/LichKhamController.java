@@ -24,6 +24,18 @@ import org.springframework.dao.ConcurrencyFailureException;
 public class LichKhamController {
     private final ILichKhamService lichkhamService;
 
+    @GetMapping("/trong-ngay")
+    public ResponseEntity<?> lichHenTrongNgay(
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate ngayKham,
+            HttpServletRequest request
+    ) {
+        ResponseEntity<?> denied = requireRole(request, "LE_TAN");
+        if (denied != null) return denied;
+        return execute(() -> lichkhamService.layDanhSachLichHenTrongNgay(ngayKham));
+    }
+
     @GetMapping("/bac-si")
     public ResponseEntity<?> counterDoctors(HttpServletRequest request) {
         ResponseEntity<?> denied = requireRole(request, "LE_TAN");

@@ -145,7 +145,7 @@ export function BenhNhanTaoMoi({ initialValues, onBack, onSaved, onSelectExistin
   return (
     <div className="uc29-page">
       <div className="uc28-page-heading">
-        <div><div className="uc28-eyebrow">TIẾP NHẬN BỆNH NHÂN · BƯỚC 2</div>
+        <div><div className="uc28-eyebrow">TIẾP NHẬN BỆNH NHÂN</div>
           <h1>Tạo hồ sơ bệnh nhân</h1>
           <p>Đăng ký hồ sơ mới; bệnh nhân có thể dùng số điện thoại của người giám hộ.</p>
         </div>
@@ -154,7 +154,7 @@ export function BenhNhanTaoMoi({ initialValues, onBack, onSaved, onSelectExistin
       <div className="mc-reception-steps" aria-label="Các bước tiếp nhận">
         <button type="button" onClick={onBack} disabled={isSubmitting}>1. Tìm hồ sơ<small>Đối chiếu thông tin</small></button>
         <span aria-current="step">2. Tạo hồ sơ bệnh nhân<small>{result ? 'Đã lưu hồ sơ' : 'Đang thực hiện'}</small></span>
-        <button type="button" disabled>3. Xác nhận tiếp nhận<small>Chưa khả dụng</small></button>
+        <button type="button" disabled>3. Tiếp nhận khám<small>Sau khi có lịch hẹn</small></button>
       </div>
       {result ? (
         <Card className="uc29-card">
@@ -167,7 +167,6 @@ export function BenhNhanTaoMoi({ initialValues, onBack, onSaved, onSelectExistin
             <div><dt>Địa chỉ</dt><dd>{result.diaChi || 'Chưa cung cấp'}</dd></div>
           </dl>
           <div className="uc29-actions"><Button onClick={onBack}>Xem hồ sơ trong kết quả tìm kiếm</Button></div>
-          <p className="uc29-note">Hồ sơ đã được lưu. Bước xác nhận tiếp nhận chưa khả dụng.</p>
         </Card>
       ) : (
         <Card className="uc29-card">

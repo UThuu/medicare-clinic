@@ -355,7 +355,7 @@ export default function DanhSachBenhNhanCho() {
     const sidebarItems = laLeTan
         ? [
             { label: 'Tổng quan', href: '/staff', active: false },
-            { label: 'Tiếp nhận bệnh nhân', href: '/staff/patient-search', active: false },
+            { label: 'Tiếp nhận bệnh nhân', href: '/staff/tiep-nhan', active: false },
             { label: 'Đặt lịch', href: '/staff/lich-kham/dat-tai-quay', active: false },
             { label: 'Danh sách chờ', href: '/staff/benh-nhan-cho', active: true },
         ]

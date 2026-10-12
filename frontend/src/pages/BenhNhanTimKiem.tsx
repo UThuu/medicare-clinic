@@ -165,7 +165,7 @@ export function BenhNhanTimKiem({ embedded = false, onSelectPatient }: { embedde
     <div className="uc28-page">
       <div className="uc28-page-heading">
         <div>
-          <div className="uc28-eyebrow">{onSelectPatient ? 'ĐẶT LỊCH KHÁM TẠI QUẦY · BƯỚC 1' : 'TIẾP NHẬN BỆNH NHÂN · BƯỚC 1'}</div>
+          <div className="uc28-eyebrow">{onSelectPatient ? 'ĐẶT LỊCH KHÁM TẠI QUẦY' : 'TIẾP NHẬN BỆNH NHÂN'}</div>
           <h1>Tìm kiếm hồ sơ bệnh nhân</h1>
           <p>{onSelectPatient ? 'Tìm hoặc tạo hồ sơ, rồi chọn bệnh nhân để đặt lịch khám.' : 'Tìm hồ sơ hiện có để bắt đầu quy trình tiếp nhận.'}</p>
         </div>
@@ -176,7 +176,7 @@ export function BenhNhanTimKiem({ embedded = false, onSelectPatient }: { embedde
         <span aria-current="step">1. Tìm hồ sơ<small>Đang khả dụng</small></span>
         <button type="button" disabled={dangTim} onClick={openCreate}>2. Tạo hồ sơ bệnh nhân<small>Đang khả dụng</small></button>
         {onSelectPatient ? <span>3. Chọn bác sĩ và giờ khám<small>Sau khi chọn bệnh nhân</small></span>
-          : <button type="button" disabled>3. Xác nhận tiếp nhận<small>Chưa khả dụng</small></button>}
+          : <button type="button" disabled>3. Tiếp nhận khám<small>Sau khi có lịch hẹn</small></button>}
       </div>
       <Card className="uc28-search-card">
         <div className="uc28-section-heading">

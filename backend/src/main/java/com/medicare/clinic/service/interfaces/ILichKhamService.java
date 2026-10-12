@@ -33,4 +33,6 @@ public interface ILichKhamService {
     );
 
     LichKhamDatTaiQuayResponse datLichKhamTaiQuay(LichKhamDatTaiQuayRequest request);
+
+    java.util.List<com.medicare.clinic.dto.response.PhanHoiLichHenTrongNgay> layDanhSachLichHenTrongNgay(java.time.LocalDate ngayKham);
 }

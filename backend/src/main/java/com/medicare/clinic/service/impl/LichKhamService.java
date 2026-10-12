@@ -318,4 +318,35 @@ public class LichKhamService implements ILichKhamService {
         r.setTrangThai(lk.getTrangThai()); r.setPhuongThucDatLich(lk.getPhuongThucDatLich());
         return r;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.medicare.clinic.dto.response.PhanHoiLichHenTrongNgay> layDanhSachLichHenTrongNgay(LocalDate ngayKham) {
+        if (ngayKham == null) {
+            ngayKham = LocalDate.now(ZONE_VIETNAM);
+        }
+
+        List<LichKham> danhSach = lichKhamRepository.findSchedulesByDate(ngayKham);
+
+        return danhSach.stream().map(lk -> {
+            boolean daCoLuotKham = lk.getLuotKham() != null ||
+                    luotKhamRepository.existsByLichKham_IdLichKham(lk.getIdLichKham());
+            String idLuotKham = lk.getLuotKham() != null ? lk.getLuotKham().getIdLuotKham() : null;
+
+            return com.medicare.clinic.dto.response.PhanHoiLichHenTrongNgay.builder()
+                    .idLichKham(lk.getIdLichKham())
+                    .idBenhNhan(lk.getBenhNhan().getIdBenhNhan())
+                    .tenBenhNhan(lk.getBenhNhan().getHoTen())
+                    .soDienThoaiBenhNhan(lk.getBenhNhan().getSoDienThoai())
+                    .maBacSi(lk.getBacSi().getMaNv())
+                    .tenBacSi(lk.getBacSi().getNhanVien() != null ? lk.getBacSi().getNhanVien().getHoTen() : lk.getBacSi().getMaNv())
+                    .chuyenKhoa(lk.getBacSi().getChuyenKhoa())
+                    .ngayKham(lk.getNgayKham())
+                    .gioKham(lk.getGioKham())
+                    .trangThai(lk.getTrangThai())
+                    .daTiepNhan(daCoLuotKham || lk.getTrangThai() == TrangThaiLichKham.DA_TIEP_NHAN)
+                    .idLuotKham(idLuotKham)
+                    .build();
+        }).toList();
+    }
 }

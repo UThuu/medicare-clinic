@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { MainLayout } from "../components/layout/MainLayout";
+import { ReceptionLayout } from "../components/layout/ReceptionLayout";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 
@@ -85,6 +86,13 @@ export default function TiepNhanBenhNhan({
                                              onChuyenUC30,
                                              onTiepNhanThanhCong,
                                          }: TiepNhanBenhNhanProps) {
+    const navigate = useNavigate();
+
+    const chuyenSangTaoHoSo = onChuyenUC29 || (() => navigate("/staff/patient-search"));
+    const chuyenSangDatLich = onChuyenUC30 || ((_benhNhan?: BenhNhanTiepNhan) => {
+        navigate("/staff/lich-kham/dat-tai-quay");
+    });
+
     // =========================
     // TÌM BỆNH NHÂN
     // =========================
@@ -336,27 +344,7 @@ export default function TiepNhanBenhNhan({
     // =========================
 
     return (
-        <MainLayout
-            doctorName="Nguyễn Thùy Trang"
-            roleLabel="Lễ tân"
-            hotline="1900 0000"
-
-            sidebarItems={[
-                {
-                    label: 'Dashboard',
-                    href: '/staff',
-                },
-                {
-                    label: 'Tiếp nhận',
-                    href: '/staff/tiep-nhan',
-                    active: true,
-                },
-                {
-                    label: 'Bệnh nhân chờ',
-                    href: '/staff/benh-nhan-cho',
-                },
-            ]}
-        >
+        <ReceptionLayout section="reception">
             <div className="tiep-nhan">
 
                 {/* ================= HEADER ================= */}
@@ -700,15 +688,13 @@ export default function TiepNhanBenhNhan({
                                 hoặc tạo hồ sơ bệnh nhân mới.
                             </p>
 
-                            {onChuyenUC29 && (
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={onChuyenUC29}
-                                >
-                                    Tạo hồ sơ bệnh nhân
-                                </Button>
-                            )}
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={chuyenSangTaoHoSo}
+                            >
+                                Tạo hồ sơ bệnh nhân
+                            </Button>
 
                         </div>
                     )}
@@ -763,19 +749,17 @@ export default function TiepNhanBenhNhan({
                                     trong ngày hôm nay.
                                 </p>
 
-                                {onChuyenUC30 && (
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={() =>
-                                            onChuyenUC30(
-                                                benhNhanDangChon
-                                            )
-                                        }
-                                    >
-                                        Đặt lịch khám tại quầy
-                                    </Button>
-                                )}
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() =>
+                                        chuyenSangDatLich(
+                                            benhNhanDangChon
+                                        )
+                                    }
+                                >
+                                    Đặt lịch khám tại quầy
+                                </Button>
 
                             </div>
 
@@ -957,6 +941,6 @@ export default function TiepNhanBenhNhan({
                 )}
 
             </div>
-        </MainLayout>
+        </ReceptionLayout>
     );
 }
