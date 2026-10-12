@@ -82,6 +82,9 @@ public class LuotKhamController {
             );
         }
 
+        return null;
+    }
+
     private ResponseEntity<?> kiemTraQuyenXemHangCho(
             HttpServletRequest request
     ) {
