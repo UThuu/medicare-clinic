@@ -146,8 +146,14 @@ export const ThanhToanPage: React.FC = () => {
           ghiChu: ghiChu.trim() || undefined,
         });
 
+        const tienThoiLaiResponse = res.tienThoiLai;
+        const thongBaoTienThoiLai =
+          typeof tienThoiLaiResponse === 'number' && Number.isFinite(tienThoiLaiResponse) && tienThoiLaiResponse >= 0
+            ? `Tiền thối lại: ${formatVND(tienThoiLaiResponse)}`
+            : 'Chưa có dữ liệu tiền thối lại hợp lệ. Vui lòng kiểm tra hóa đơn.';
+
         showToast(
-          `✓ Thanh toán tiền mặt thành công! HĐ: ${res.idHoaDon} | Tiền thối lại: ${formatVND(res.tienThoiLai)}`,
+          `✓ Thanh toán tiền mặt thành công! HĐ: ${res.idHoaDon} | ${thongBaoTienThoiLai}`,
           'success'
         );
         setIsModalOpen(false);
