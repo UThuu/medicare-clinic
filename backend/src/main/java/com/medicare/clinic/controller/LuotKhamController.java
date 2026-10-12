@@ -1,112 +1,200 @@
 package com.medicare.clinic.controller;
 
+import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.request.TiepNhanBenhNhanRequest;
 import com.medicare.clinic.dto.request.XacNhanBenhNhanRequest;
 import com.medicare.clinic.dto.response.PhanHoiBenhNhanCho;
+import com.medicare.clinic.dto.response.PhanHoiLichKhamTiepNhan;
+import com.medicare.clinic.dto.response.PhanHoiTimBenhNhan;
+import com.medicare.clinic.dto.response.PhanHoiTiepNhanBenhNhan;
 import com.medicare.clinic.dto.response.PhanHoiXacNhanBenhNhan;
 import com.medicare.clinic.service.interfaces.ILuotKhamService;
-import com.medicare.clinic.dto.request.TiepNhanBenhNhanRequest;
-import com.medicare.clinic.dto.response.PhanHoiTimBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiLichKhamTiepNhan;
-import com.medicare.clinic.dto.response.PhanHoiTiepNhanBenhNhan;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+
 import org.springframework.format.annotation.DateTimeFormat;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
-
-import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/luotkham")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(
+        origins = "http://localhost:5173",
+        allowCredentials = "true"
+)
 public class LuotKhamController {
 
     private final ILuotKhamService luotKhamService;
 
-    // =========================
+    private LoginResponse layNguoiDungDangNhap(
+            HttpServletRequest request
+    ) {
+        HttpSession session = request.getSession(false);
+
+        if (session == null) {
+            return null;
+        }
+
+        Object authUser = session.getAttribute("AUTH_USER");
+
+        if (!(authUser instanceof LoginResponse)) {
+            return null;
+        }
+
+        return (LoginResponse) authUser;
+    }
+
+    private ResponseEntity<?> loi(
+            HttpStatus status,
+            String message
+    ) {
+        return ResponseEntity
+                .status(status)
+                .body(Collections.singletonMap("message", message));
+    }
+
+    private ResponseEntity<?> kiemTraQuyenLeTan(
+            HttpServletRequest request
+    ) {
+        LoginResponse user = layNguoiDungDangNhap(request);
+
+        if (user == null) {
+            return loi(
+                    HttpStatus.UNAUTHORIZED,
+                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
+            );
+        }
+
+        if (!"LE_TAN".equals(user.getVaiTro())) {
+            return loi(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ lễ tân mới được sử dụng chức năng tiếp nhận bệnh nhân."
+            );
+        }
+
+        return null;
+    }
+
+    // =====================================================
     // UC02 - Xem danh sách bệnh nhân chờ
-    // =========================
+    // =====================================================
 
     @GetMapping("/cho-kham")
     public List<PhanHoiBenhNhanCho> xemDanhSachBenhNhanCho(
-            @RequestParam(required = false) LocalDate ngayKham
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate ngayKham
     ) {
-
         if (ngayKham == null) {
-            ngayKham = LocalDate.now();
+            ngayKham = LocalDate.now(
+                    ZoneId.of("Asia/Ho_Chi_Minh")
+            );
         }
 
-        return luotKhamService.xemDanhSachBenhNhanCho(
-                ngayKham
-        );
+        return luotKhamService.xemDanhSachBenhNhanCho(ngayKham);
     }
 
-
-    // =========================
+    // =====================================================
     // UC04 - Xác nhận bệnh nhân
-    // =========================
+    // =====================================================
 
     @PostMapping("/{idLuotKham}/xac-nhan")
     public PhanHoiXacNhanBenhNhan xacNhanBenhNhan(
             @PathVariable String idLuotKham,
             @RequestBody XacNhanBenhNhanRequest request
     ) {
-
         return luotKhamService.xacNhanBenhNhan(
                 idLuotKham,
                 request
         );
     }
 
+    // =====================================================
+    // UC27 - Tìm kiếm hồ sơ bệnh nhân
+    // =====================================================
+
     @GetMapping("/tiep-nhan/tim-benh-nhan")
-    public List<PhanHoiTimBenhNhan> timKiemBenhNhan(
+    public ResponseEntity<?> timKiemBenhNhan(
             @RequestParam(required = false) String soDienThoai,
             @RequestParam(required = false) String hoTen,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate ngaySinh
+            LocalDate ngaySinh,
+            HttpServletRequest httpRequest
     ) {
+        ResponseEntity<?> loiQuyen =
+                kiemTraQuyenLeTan(httpRequest);
 
-        return luotKhamService.timKiemBenhNhan(
-                soDienThoai,
-                hoTen,
-                ngaySinh
-        );
+        if (loiQuyen != null) {
+            return loiQuyen;
+        }
+
+        List<PhanHoiTimBenhNhan> ketQua =
+                luotKhamService.timKiemBenhNhan(
+                        soDienThoai,
+                        hoTen,
+                        ngaySinh
+                );
+
+        return ResponseEntity.ok(ketQua);
     }
+
+    // =====================================================
+    // UC27 - Xem lịch khám trong ngày
+    // =====================================================
 
     @GetMapping("/tiep-nhan/benh-nhan/{idBenhNhan}/lich-hom-nay")
-    public List<PhanHoiLichKhamTiepNhan> xemLichKhamTrongNgay(
-            @PathVariable String idBenhNhan
+    public ResponseEntity<?> xemLichKhamTrongNgay(
+            @PathVariable String idBenhNhan,
+            HttpServletRequest httpRequest
     ) {
+        ResponseEntity<?> loiQuyen =
+                kiemTraQuyenLeTan(httpRequest);
 
-        return luotKhamService.xemLichKhamTrongNgay(
-                idBenhNhan,
-                LocalDate.now()
-        );
+        if (loiQuyen != null) {
+            return loiQuyen;
+        }
+
+        List<PhanHoiLichKhamTiepNhan> ketQua =
+                luotKhamService.xemLichKhamTrongNgay(
+                        idBenhNhan,
+                        LocalDate.now(
+                                ZoneId.of("Asia/Ho_Chi_Minh")
+                        )
+                );
+
+        return ResponseEntity.ok(ketQua);
     }
 
-    @PostMapping("/tiep-nhan")
-    public PhanHoiTiepNhanBenhNhan tiepNhanBenhNhan(
-            @RequestBody TiepNhanBenhNhanRequest request
-    ) {
+    // =====================================================
+    // UC27 - Tiếp nhận bệnh nhân
+    // =====================================================
 
-        return luotKhamService.tiepNhanBenhNhan(
-                request
-        );
+    @PostMapping("/tiep-nhan")
+    public ResponseEntity<?> tiepNhanBenhNhan(
+            @RequestBody TiepNhanBenhNhanRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        ResponseEntity<?> loiQuyen =
+                kiemTraQuyenLeTan(httpRequest);
+
+        if (loiQuyen != null) {
+            return loiQuyen;
+        }
+
+        PhanHoiTiepNhanBenhNhan ketQua =
+                luotKhamService.tiepNhanBenhNhan(request);
+
+        return ResponseEntity.ok(ketQua);
     }
 }

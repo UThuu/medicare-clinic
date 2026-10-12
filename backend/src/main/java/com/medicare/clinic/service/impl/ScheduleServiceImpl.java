@@ -4,6 +4,7 @@ import com.medicare.clinic.dto.response.DoctorScheduleResponse;
 import com.medicare.clinic.entity.LichKham;
 import com.medicare.clinic.entity.LuotKham;
 import com.medicare.clinic.entity.SinhHieu;
+import com.medicare.clinic.entity.enums.TrangThaiLuotKham;
 import com.medicare.clinic.repository.LichKhamRepository;
 import com.medicare.clinic.service.interfaces.IScheduleService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,20 @@ public class ScheduleServiceImpl implements IScheduleService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<DoctorScheduleResponse> getWaitingPatients(LocalDate ngayKham) {
+        if (ngayKham == null) {
+            throw new IllegalArgumentException("Ngày khám không được để trống");
+        }
+
+        List<LichKham> lichKhams = lichKhamRepository.findWaitingSchedulesByDate(
+                ngayKham,
+                TrangThaiLuotKham.CHO_KHAM
+        );
+        return chuyenDanhSach(lichKhams);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<DoctorScheduleResponse> getDoctorSchedule(String maNv, LocalDate ngayKham) {
         if (maNv == null || maNv.trim().isEmpty()) {
             throw new IllegalArgumentException("MA nhAn viAn (bAc s) khA'ng `c ` tr`ng");
@@ -32,6 +47,10 @@ public class ScheduleServiceImpl implements IScheduleService {
 
         List<LichKham> lichKhams = lichKhamRepository.findScheduleByDoctorAndDate(maNv, ngayKham);
 
+        return chuyenDanhSach(lichKhams);
+    }
+
+    private List<DoctorScheduleResponse> chuyenDanhSach(List<LichKham> lichKhams) {
         return lichKhams.stream().map(lk -> {
             LuotKham luotKham = lk.getLuotKham();
             SinhHieu sinhHieu = luotKham != null ? luotKham.getSinhHieu() : null;

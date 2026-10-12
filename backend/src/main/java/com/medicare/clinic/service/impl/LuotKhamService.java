@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-
+import java.time.ZoneId;
 @Service
 @RequiredArgsConstructor
 public class LuotKhamService implements ILuotKhamService {
@@ -440,8 +440,9 @@ public class LuotKhamService implements ILuotKhamService {
         // 5. Chỉ tiếp nhận lịch khám trong ngày
         // -----------------------------------------------------
 
-        LocalDate homNay =
-                LocalDate.now();
+        LocalDate homNay = LocalDate.now(
+                ZoneId.of("Asia/Ho_Chi_Minh")
+        );
 
         if (!homNay.equals(
                 lichKham.getNgayKham()

@@ -9,16 +9,15 @@ export interface DoctorScheduleResponse {
   gioKham: string;
   trangThaiLichKham: TrangThaiLichKham;
   phuongThucDatLich: PhuongThucDatLich;
-  
+
   idBenhNhan: string;
   tenBenhNhan: string;
   gioiTinh: GioiTinh;
   ngaySinh: string;
   soDienThoai: string;
-  
+
   idLuotKham: string | null;
   trangThaiLuotKham: TrangThaiLuotKham | null;
-  
   lyDoKham: string | null;
   huyetApTamThu: number | null;
   huyetApTamTruong: number | null;

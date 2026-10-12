@@ -4,6 +4,7 @@ import {
     useMemo,
     useState,
 } from "react";
+import { Link } from "react-router-dom";
 
 import {
     Button,
@@ -15,6 +16,7 @@ import {
 } from "../components";
 
 import { MainLayout } from "../components/layout/MainLayout";
+import { useAuth } from "../contexts/AuthContext";
 
 import type { BenhNhanCho } from "../types/LuotKham";
 
@@ -24,6 +26,8 @@ import {
 
 import { XacNhanBenhNhan } from "./XacNhanBenhNhan";
 import GhiNhanSinhHieu from "./GhiNhanSinhHieu";
+import CapNhatSinhHieu from "./CapNhatSinhHieu";
+import { laySinhHieu } from "../services/DichVuSinhHieu";
 import "./danhSachBenhNhanCho.css";
 
 function dinhDangNgay(ngay: string) {
@@ -53,84 +57,70 @@ function hienThiGioiTinh(gioiTinh: string) {
             return "Nữ";
 
         default:
-            return gioiTinh;
+            return gioiTinh || "—";
     }
 }
 
 export default function DanhSachBenhNhanCho() {
+    const { user } = useAuth();
 
-    // =========================
-    // BỆNH NHÂN CẦN XÁC NHẬN
-    // UC04
-    // =========================
-
+    // UC04: Bệnh nhân cần xác nhận
     const [
         benhNhanCanXacNhan,
         setBenhNhanCanXacNhan,
     ] = useState<BenhNhanCho | null>(null);
 
-    // =========================
-    // DANH SÁCH BỆNH NHÂN
-    // UC02
-    // =========================
-
+    // UC02: Danh sách bệnh nhân
     const [
         danhSachBenhNhan,
         setDanhSachBenhNhan,
     ] = useState<BenhNhanCho[]>([]);
 
-    // =========================
-    // TÌM KIẾM
-    // =========================
+    // Tìm kiếm
+    const [tuKhoa, setTuKhoa] = useState("");
 
-    const [
-        tuKhoa,
-        setTuKhoa,
-    ] = useState("");
-
-    // =========================
-    // NGÀY KHÁM
-    // =========================
-
+    // Ngày khám
     const [
         ngayKham,
         setNgayKham,
     ] = useState(
-        () => new Date().toISOString().slice(0, 10)
+        () => {
+            const homNay = new Date();
+            const nam = homNay.getFullYear();
+            const thang = String(
+                homNay.getMonth() + 1
+            ).padStart(2, "0");
+            const ngay = String(
+                homNay.getDate()
+            ).padStart(2, "0");
+
+            return `${nam}-${thang}-${ngay}`;
+        }
     );
 
-    // =========================
-    // TRẠNG THÁI
-    // =========================
+    // Trạng thái tải dữ liệu
+    const [dangTai, setDangTai] = useState(false);
+    const [loi, setLoi] = useState("");
 
-    const [
-        dangTai,
-        setDangTai,
-    ] = useState(false);
-
-    const [
-        loi,
-        setLoi,
-    ] = useState("");
-
-    // =========================
-    // BỆNH NHÂN ĐANG ĐƯỢC CHỌN
-    //
-    // null = đang ở UC02
-    // có dữ liệu = đang ở UC03
-    // =========================
-
+    // Bệnh nhân đang được chọn để ghi nhận sinh hiệu (mới)
     const [
         benhNhanDangChon,
         setBenhNhanDangChon,
     ] = useState<BenhNhanCho | null>(null);
 
-    // =========================
-    // TẢI DANH SÁCH
-    // =========================
+    // Bệnh nhân đang được chọn để cập nhật sinh hiệu (đã có)
+    const [
+        benhNhanCanCapNhat,
+        setBenhNhanCanCapNhat,
+    ] = useState<BenhNhanCho | null>(null);
 
+    // Tập hợp ID lượt khám đã có sinh hiệu
+    const [daCoSinhHieuIds, setDaCoSinhHieuIds] = useState<Set<string>>(
+        new Set()
+    );
+
+    // Tải danh sách bệnh nhân và kiểm tra trạng thái sinh hiệu
     const taiDanhSach = useCallback(async () => {
-
         try {
             setDangTai(true);
             setLoi("");
@@ -140,31 +130,44 @@ export default function DanhSachBenhNhanCho() {
 
             setDanhSachBenhNhan(duLieu);
 
-        } catch (error) {
+            try {
+                const ketQua = await Promise.allSettled(
+                    duLieu.map(async (bn) => {
+                        const sh = await laySinhHieu(bn.idLuotKham);
+                        return { idLuotKham: bn.idLuotKham, daCo: Boolean(sh) };
+                    })
+                );
 
+                const tapDaCo = new Set<string>();
+                ketQua.forEach((item) => {
+                    if (item.status === "fulfilled" && item.value.daCo) {
+                        tapDaCo.add(item.value.idLuotKham);
+                    }
+                });
+
+                setDaCoSinhHieuIds(tapDaCo);
+            } catch {
+                // Tiếp tục nếu kiểm tra sinh hiệu thất bại
+            }
+        } catch (error) {
             console.error(error);
 
             setLoi(
-                "Không thể tải danh sách bệnh nhân chờ."
+                error instanceof Error
+                    ? error.message
+                    : "Không thể tải danh sách bệnh nhân chờ."
             );
-
         } finally {
-
             setDangTai(false);
         }
-
     }, [ngayKham]);
 
     useEffect(() => {
         void taiDanhSach();
     }, [taiDanhSach]);
 
-    // =========================
-    // LỌC TÌM KIẾM
-    // =========================
-
+    // Lọc tìm kiếm theo mã, tên, số điện thoại và lý do khám
     const danhSachLoc = useMemo(() => {
-
         const tuKhoaTimKiem =
             tuKhoa.trim().toLowerCase();
 
@@ -172,55 +175,38 @@ export default function DanhSachBenhNhanCho() {
             return danhSachBenhNhan;
         }
 
-        return danhSachBenhNhan.filter(
-            (benhNhan) => {
+        return danhSachBenhNhan.filter((benhNhan) => {
+            const thongTin = [
+                benhNhan.idBenhNhan,
+                benhNhan.idLuotKham,
+                benhNhan.hoTen,
+                benhNhan.soDienThoai,
+                benhNhan.lyDoKham,
+            ];
 
-                const thongTin = [
-                    benhNhan.idBenhNhan,
-                    benhNhan.idLuotKham,
-                    benhNhan.hoTen,
-                    benhNhan.soDienThoai,
-                    benhNhan.lyDoKham,
-                ];
-
-                return thongTin
-                    .filter(Boolean)
-                    .some((giaTri) =>
-                        String(giaTri)
-                            .toLowerCase()
-                            .includes(tuKhoaTimKiem)
-                    );
-            }
-        );
-
+            return thongTin
+                .filter(Boolean)
+                .some((giaTri) =>
+                    String(giaTri)
+                        .toLowerCase()
+                        .includes(tuKhoaTimKiem)
+                );
+        });
     }, [danhSachBenhNhan, tuKhoa]);
 
-    // =========================
-    // TIÊU ĐỀ DANH SÁCH
-    // =========================
+    const tieuDeDanhSach = tuKhoa.trim()
+        ? `Kết quả tìm kiếm (${danhSachLoc.length}/${danhSachBenhNhan.length})`
+        : `Danh sách chờ (${danhSachBenhNhan.length})`;
 
-    const tieuDeDanhSach =
-        tuKhoa.trim()
-            ? `Kết quả tìm kiếm (${danhSachLoc.length}/${danhSachBenhNhan.length})`
-            : `Danh sách chờ (${danhSachBenhNhan.length})`;
-
-    // =========================
-    // UC04
-    // XÁC NHẬN BỆNH NHÂN
-    // =========================
-
+    // UC04: Xác nhận bệnh nhân trước khi ghi nhận sinh hiệu
     if (benhNhanCanXacNhan) {
-
         return (
             <XacNhanBenhNhan
                 benhNhan={benhNhanCanXacNhan}
-
                 onQuayLai={() => {
                     setBenhNhanCanXacNhan(null);
                 }}
-
                 onXacNhan={() => {
-
                     setBenhNhanDangChon(
                         benhNhanCanXacNhan
                     );
@@ -231,178 +217,162 @@ export default function DanhSachBenhNhanCho() {
         );
     }
 
-    // =========================
-    // UC03
-    // GHI NHẬN SINH HIỆU
-    // =========================
-
+    // UC03: Ghi nhận sinh hiệu cho bệnh nhân được chọn
     if (benhNhanDangChon) {
-
         return (
             <GhiNhanSinhHieu
                 benhNhan={benhNhanDangChon}
-
                 onQuayLai={() => {
                     setBenhNhanDangChon(null);
                 }}
-
                 onLuuThanhCong={() => {
-
                     setBenhNhanDangChon(null);
-
                     void taiDanhSach();
                 }}
             />
         );
     }
 
-    // =========================
-    // CỘT BẢNG
-    // =========================
+    // UC05: Cập nhật sinh hiệu trực tiếp (không cần xác nhận thông tin lại)
+    if (benhNhanCanCapNhat) {
+        return (
+            <CapNhatSinhHieu
+                benhNhan={benhNhanCanCapNhat}
+                onQuayLai={() => {
+                    setBenhNhanCanCapNhat(null);
+                }}
+                onCapNhatThanhCong={() => {
+                    setBenhNhanCanCapNhat(null);
+                    void taiDanhSach();
+                }}
+            />
+        );
+    }
 
+    // Các cột của bảng bệnh nhân chờ
     const cot = [
-
         {
             key: "gioKham",
             header: "Giờ khám",
             width: "90px",
-
             render: (row: BenhNhanCho) =>
                 dinhDangGio(row.gioKham),
         },
-
         {
             key: "idBenhNhan",
             header: "Mã bệnh nhân",
             width: "120px",
-
             render: (row: BenhNhanCho) =>
                 row.idBenhNhan,
         },
-
         {
             key: "hoTen",
             header: "Họ và tên",
-
             render: (row: BenhNhanCho) =>
                 row.hoTen,
         },
-
         {
             key: "ngaySinh",
             header: "Ngày sinh",
             width: "120px",
-
             render: (row: BenhNhanCho) =>
                 dinhDangNgay(row.ngaySinh),
         },
-
         {
             key: "gioiTinh",
             header: "Giới tính",
             width: "90px",
-
             render: (row: BenhNhanCho) =>
                 hienThiGioiTinh(row.gioiTinh),
         },
-
         {
             key: "lyDoKham",
             header: "Lý do khám",
-
             render: (row: BenhNhanCho) =>
                 row.lyDoKham || "—",
         },
-
         {
             key: "trangThai",
             header: "Trạng thái",
-            width: "120px",
-
-            render: () => (
-                <StatusBadge tone="warning">
-                    Đang chờ
-                </StatusBadge>
-            ),
+            width: "140px",
+            render: (row: BenhNhanCho) => {
+                const daCo = daCoSinhHieuIds.has(row.idLuotKham);
+                return daCo ? (
+                    <StatusBadge tone="success">
+                        Đã có sinh hiệu
+                    </StatusBadge>
+                ) : (
+                    <StatusBadge tone="warning">
+                        Chờ sinh hiệu
+                    </StatusBadge>
+                );
+            },
         },
-
-        // =========================
-        // UC04 → UC03
-        // =========================
-
         {
             key: "thaoTac",
             header: "Thao tác",
-            width: "170px",
-
-            render: (row: BenhNhanCho) => (
-
-                <Button
-                    onClick={() => {
-                        setBenhNhanCanXacNhan(row);
-                    }}
-                >
-                    Ghi nhận sinh hiệu
-                </Button>
-
-            ),
+            width: "180px",
+            render: (row: BenhNhanCho) => {
+                const daCo = daCoSinhHieuIds.has(row.idLuotKham);
+                return daCo ? (
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setBenhNhanCanCapNhat(row);
+                        }}
+                    >
+                        Cập nhật sinh hiệu
+                    </Button>
+                ) : (
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            setBenhNhanCanXacNhan(row);
+                        }}
+                    >
+                        Ghi nhận sinh hiệu
+                    </Button>
+                );
+            },
         },
     ];
 
-    // =========================
-    // GIAO DIỆN UC02
-    // =========================
+    const tenHienThi =
+        user?.hoTen || user?.tenDangNhap || "Nhân viên";
+
+    const vaiTroHienThi =
+        user?.vaiTro || "Nhân viên";
+
 
     return (
-
         <MainLayout
-            doctorName="Nguyễn Minh"
-            roleLabel="Bác sĩ"
-            hotline="Hotline: 1800 6868"
-
+            doctorName={tenHienThi}
+            roleLabel={vaiTroHienThi}
             sidebarItems={[
                 {
-                    label: "Dashboard",
-                    href: "#",
+                    label: 'Tổng quan',
+                    href: '/staff',
                 },
-
                 {
-                    label: "Lịch khám",
-                    href: "#",
-                },
-
-                {
-                    label: "Bệnh nhân chờ",
-                    href: "#",
+                    label: 'Hàng chờ',
+                    href: '/staff/benh-nhan-cho',
                     active: true,
                 },
             ]}
         >
-
             <div className="danh-sach-benh-nhan-cho">
-
-                {/* =========================
-                    BREADCRUMB
-                   ========================= */}
-
                 <div className="danh-sach-benh-nhan-cho__breadcrumb">
-
-                    <span>Lịch khám</span>
+                    <Link to="/staff">
+                        Dashboard
+                    </Link>
 
                     <span>/</span>
 
                     <span>Bệnh nhân chờ</span>
-
                 </div>
 
-                {/* =========================
-                    HEADER
-                   ========================= */}
-
                 <div className="danh-sach-benh-nhan-cho__header">
-
                     <div>
-
                         <h1>
                             Danh sách bệnh nhân chờ
                         </h1>
@@ -410,36 +380,24 @@ export default function DanhSachBenhNhanCho() {
                         <p>
                             Theo dõi bệnh nhân đang chờ khám trong ngày
                         </p>
-
                     </div>
 
                     <div className="danh-sach-benh-nhan-cho__toolbar">
-
                         <Button
                             variant="secondary"
-                            onClick={taiDanhSach}
+                            onClick={() => void taiDanhSach()}
                             loading={dangTai}
                             loadingText="Đang tải..."
                         >
                             ↻ Làm mới
                         </Button>
-
                     </div>
-
                 </div>
 
-                {/* =========================
-                    TỔNG SỐ BỆNH NHÂN
-                   ========================= */}
-
                 <div className="danh-sach-benh-nhan-cho__summary">
-
                     <Card>
-
                         <div className="summary-card">
-
                             <div>
-
                                 <div className="summary-card__label">
                                     Bệnh nhân đang chờ
                                 </div>
@@ -447,90 +405,60 @@ export default function DanhSachBenhNhanCho() {
                                 <div className="summary-card__number">
                                     {danhSachBenhNhan.length}
                                 </div>
-
                             </div>
 
                             <div className="summary-card__icon">
                                 👥
                             </div>
-
                         </div>
-
                     </Card>
-
                 </div>
 
-                {/* =========================
-                    BỘ LỌC
-                   ========================= */}
-
                 <Card>
-
                     <div className="danh-sach-benh-nhan-cho__filters">
-
                         <div className="filter-search">
-
                             <SearchBox
                                 label="Tìm bệnh nhân"
                                 placeholder="Nhập mã hoặc tên bệnh nhân..."
                                 value={tuKhoa}
-
-                                onChange={(event) =>
+                                onChange={(event) => {
                                     setTuKhoa(
                                         event.target.value
-                                    )
-                                }
+                                    );
+                                }}
                             />
-
                         </div>
 
                         <div className="filter-date">
-
                             <Input
                                 id="ngay-kham"
                                 type="date"
                                 label="Ngày khám"
                                 value={ngayKham}
-
-                                onChange={(event) =>
+                                onChange={(event) => {
                                     setNgayKham(
                                         event.target.value
-                                    )
-                                }
+                                    );
+                                }}
                             />
-
                         </div>
-
                     </div>
-
                 </Card>
 
-                {/* =========================
-                    THÔNG BÁO LỖI
-                   ========================= */}
-
                 {loi && (
-
-                    <div className="danh-sach-benh-nhan-cho__error">
+                    <div
+                        className="danh-sach-benh-nhan-cho__error"
+                        role="alert"
+                    >
                         {loi}
                     </div>
-
                 )}
 
-                {/* =========================
-                    BẢNG
-                   ========================= */}
-
                 <Card title={tieuDeDanhSach}>
-
                     <Table
                         columns={cot}
                         data={danhSachLoc}
-
-                        rowKey={(row) =>
-                            row.idLuotKham
-                        }
-
+                        rowKey={(row) => row.idLuotKham}
                         emptyText={
                             dangTai
                                 ? "Đang tải danh sách..."
@@ -539,11 +467,8 @@ export default function DanhSachBenhNhanCho() {
                                     : "Không có bệnh nhân đang chờ."
                         }
                     />
-
                 </Card>
-
             </div>
-
         </MainLayout>
     );
 }

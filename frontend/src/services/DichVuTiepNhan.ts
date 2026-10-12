@@ -7,97 +7,75 @@ import type {
 
 const DIA_CHI_API = "/api";
 
-export async function timBenhNhanTheoSoDienThoai(
-    soDienThoai: string
-): Promise<BenhNhanTiepNhan[]> {
+async function goiApi<T>(duongDan: string, options: RequestInit = {}): Promise<T> {
+    let phanHoi: Response;
 
-    const phanHoi = await fetch(
-        `${DIA_CHI_API}/luotkham/tiep-nhan/tim-benh-nhan?soDienThoai=${encodeURIComponent(
-            soDienThoai
-        )}`
-    );
+    try {
+        phanHoi = await fetch(`${DIA_CHI_API}${duongDan}`, {
+            ...options,
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                ...options.headers,
+            },
+        });
+    } catch {
+        throw new Error(
+            "Không thể kết nối backend. Hãy kiểm tra backend đang chạy tại cổng 8080 và cấu hình CORS."
+        );
+    }
 
     if (!phanHoi.ok) {
         const noiDung = await phanHoi.text();
 
         throw new Error(
-            noiDung || "Không thể tìm kiếm bệnh nhân."
+            noiDung || `Yêu cầu thất bại (HTTP ${phanHoi.status}).`
         );
     }
 
-    return phanHoi.json();
+    return phanHoi.json() as Promise<T>;
 }
 
+export function timBenhNhanTheoSoDienThoai(
+    soDienThoai: string
+): Promise<BenhNhanTiepNhan[]> {
+    const query = new URLSearchParams({ soDienThoai });
 
-export async function timBenhNhanTheoHoTenVaNgaySinh(
+    return goiApi<BenhNhanTiepNhan[]>(
+        `/luotkham/tiep-nhan/tim-benh-nhan?${query.toString()}`
+    );
+}
+
+export function timBenhNhanTheoHoTenVaNgaySinh(
     hoTen: string,
     ngaySinh: string
 ): Promise<BenhNhanTiepNhan[]> {
+    const query = new URLSearchParams({ hoTen, ngaySinh });
 
-    const phanHoi = await fetch(
-        `${DIA_CHI_API}/luotkham/tiep-nhan/tim-benh-nhan?hoTen=${encodeURIComponent(
-            hoTen
-        )}&ngaySinh=${encodeURIComponent(ngaySinh)}`
+    return goiApi<BenhNhanTiepNhan[]>(
+        `/luotkham/tiep-nhan/tim-benh-nhan?${query.toString()}`
     );
-
-    if (!phanHoi.ok) {
-        const noiDung = await phanHoi.text();
-
-        throw new Error(
-            noiDung || "Không thể tìm kiếm bệnh nhân."
-        );
-    }
-
-    return phanHoi.json();
 }
 
-
-export async function layLichKhamHomNay(
+export function layLichKhamHomNay(
     idBenhNhan: string
 ): Promise<LichKhamTiepNhan[]> {
-
-    const phanHoi = await fetch(
-        `${DIA_CHI_API}/luotkham/tiep-nhan/benh-nhan/${encodeURIComponent(
-            idBenhNhan
-        )}/lich-hom-nay`
+    return goiApi<LichKhamTiepNhan[]>(
+        `/luotkham/tiep-nhan/benh-nhan/${encodeURIComponent(idBenhNhan)}/lich-hom-nay`
     );
-
-    if (!phanHoi.ok) {
-        const noiDung = await phanHoi.text();
-
-        throw new Error(
-            noiDung || "Không thể kiểm tra lịch khám."
-        );
-    }
-
-    return phanHoi.json();
 }
 
-
-export async function tiepNhanBenhNhan(
+export function tiepNhanBenhNhan(
     duLieu: TiepNhanBenhNhanRequest
 ): Promise<PhanHoiTiepNhanBenhNhan> {
-
-    const phanHoi = await fetch(
-        `${DIA_CHI_API}/luotkham/tiep-nhan`,
+    return goiApi<PhanHoiTiepNhanBenhNhan>(
+        "/luotkham/tiep-nhan",
         {
             method: "POST",
-
             headers: {
                 "Content-Type": "application/json",
             },
-
             body: JSON.stringify(duLieu),
         }
     );
-
-    if (!phanHoi.ok) {
-        const noiDung = await phanHoi.text();
-
-        throw new Error(
-            noiDung || "Không thể tiếp nhận bệnh nhân."
-        );
-    }
-
-    return phanHoi.json();
 }

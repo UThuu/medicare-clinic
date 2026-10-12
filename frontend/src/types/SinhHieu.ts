@@ -1,5 +1,4 @@
 export interface GhiNhanSinhHieuRequest {
-    maDieuDuong: string;
     huyetApTamThu: number;
     huyetApTamTruong: number;
     canNang: number;
@@ -10,13 +9,10 @@ export interface PhanHoiSinhHieu {
     idSinhHieu: string;
     idLuotKham: string;
     maDieuDuong: string;
-
     huyetApTamThu: number;
     huyetApTamTruong: number;
-
     canNang: number;
     nhietDo: number;
-
     thoiDiemDo: string;
 }
 

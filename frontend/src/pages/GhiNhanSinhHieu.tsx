@@ -1,4 +1,5 @@
 import {
+    useEffect,
     useMemo,
     useState,
     type FormEvent,
@@ -18,7 +19,10 @@ import type { BenhNhanCho } from "../types/LuotKham";
 
 import {
     ghiNhanSinhHieu,
+    laySinhHieu,
 } from "../services/DichVuSinhHieu";
+
+import type { PhanHoiSinhHieu } from "../types/SinhHieu";
 
 import "./ghiNhanSinhHieu.css";
 
@@ -123,11 +127,56 @@ export default function GhiNhanSinhHieu({
         setThanhCong,
     ] = useState("");
 
-    // =========================
-    // MÃ ĐIỀU DƯỠNG TEST
-    // =========================
+    const [daCoSinhHieu, setDaCoSinhHieu] = useState(false);
+    const [dangKiemTraSinhHieu, setDangKiemTraSinhHieu] = useState(true);
 
-    const maDieuDuong = "NV004";
+    // Kiểm tra sinh hiệu đã tồn tại cho đúng lượt khám hay chưa.
+    useEffect(() => {
+        let daHuy = false;
+
+        async function kiemTraSinhHieu() {
+            setDangKiemTraSinhHieu(true);
+            setLoi("");
+
+            try {
+                const duLieu: PhanHoiSinhHieu | null =
+                    await laySinhHieu(benhNhan.idLuotKham);
+
+                if (daHuy) return;
+
+                if (duLieu) {
+                    setDaCoSinhHieu(true);
+                    setHuyetApTamThu(String(duLieu.huyetApTamThu));
+                    setHuyetApTamTruong(String(duLieu.huyetApTamTruong));
+                    setCanNang(String(duLieu.canNang));
+                    setNhietDo(String(duLieu.nhietDo));
+                } else {
+                    setDaCoSinhHieu(false);
+                    setHuyetApTamThu("");
+                    setHuyetApTamTruong("");
+                    setCanNang("");
+                    setNhietDo("");
+                }
+            } catch (error) {
+                if (!daHuy) {
+                    setLoi(
+                        error instanceof Error
+                            ? error.message
+                            : "Không thể kiểm tra sinh hiệu."
+                    );
+                }
+            } finally {
+                if (!daHuy) setDangKiemTraSinhHieu(false);
+            }
+        }
+
+        void kiemTraSinhHieu();
+
+        return () => {
+            daHuy = true;
+        };
+    }, [benhNhan.idLuotKham]);
+
 
     // =========================
     // KIỂM TRA FORM
@@ -203,6 +252,16 @@ export default function GhiNhanSinhHieu({
         setLoi("");
         setThanhCong("");
 
+        if (dangKiemTraSinhHieu) {
+            setLoi("Vui lòng chờ kiểm tra sinh hiệu.");
+            return;
+        }
+
+        if (daCoSinhHieu) {
+            setLoi("Lượt khám này đã có sinh hiệu. Vui lòng sử dụng UC05 để chỉnh sửa.");
+            return;
+        }
+
         if (!bieuMauHopLe) {
 
             setLoi(
@@ -219,19 +278,10 @@ export default function GhiNhanSinhHieu({
             await ghiNhanSinhHieu(
                 benhNhan.idLuotKham,
                 {
-                    maDieuDuong,
-
-                    huyetApTamThu:
-                        Number(huyetApTamThu),
-
-                    huyetApTamTruong:
-                        Number(huyetApTamTruong),
-
-                    canNang:
-                        Number(canNang),
-
-                    nhietDo:
-                        Number(nhietDo),
+                    huyetApTamThu: Number(huyetApTamThu),
+                    huyetApTamTruong: Number(huyetApTamTruong),
+                    canNang: Number(canNang),
+                    nhietDo: Number(nhietDo),
                 }
             );
 
@@ -493,7 +543,7 @@ export default function GhiNhanSinhHieu({
                                 onClick={() => {
                                     setDangChinhSua(true);
                                 }}
-                                disabled={dangLuu}
+                                disabled={dangLuu || dangKiemTraSinhHieu || !daCoSinhHieu}
                             >
                                 Chỉnh sửa sinh hiệu
                             </Button>
@@ -519,6 +569,7 @@ export default function GhiNhanSinhHieu({
                                         placeholder="120"
                                         value={huyetApTamThu}
                                         min="1"
+                                        disabled={dangKiemTraSinhHieu || daCoSinhHieu || dangLuu}
                                         onChange={(event) =>
                                             setHuyetApTamThu(
                                                 event.target.value
@@ -533,6 +584,7 @@ export default function GhiNhanSinhHieu({
                                         placeholder="80"
                                         value={huyetApTamTruong}
                                         min="1"
+                                        disabled={dangKiemTraSinhHieu || daCoSinhHieu || dangLuu}
                                         onChange={(event) =>
                                             setHuyetApTamTruong(
                                                 event.target.value
@@ -562,6 +614,7 @@ export default function GhiNhanSinhHieu({
                                         value={canNang}
                                         min="0.1"
                                         step="0.1"
+                                        disabled={dangKiemTraSinhHieu || daCoSinhHieu || dangLuu}
                                         onChange={(event) =>
                                             setCanNang(
                                                 event.target.value
@@ -585,6 +638,7 @@ export default function GhiNhanSinhHieu({
                                         value={nhietDo}
                                         min="0.1"
                                         step="0.1"
+                                        disabled={dangKiemTraSinhHieu || daCoSinhHieu || dangLuu}
                                         onChange={(event) =>
                                             setNhietDo(
                                                 event.target.value
@@ -605,6 +659,19 @@ export default function GhiNhanSinhHieu({
                         {/* =========================
                             LỖI
                            ========================= */}
+
+                        {dangKiemTraSinhHieu && (
+                            <div className="ghi-nhan-sinh-hieu__success">
+                                Đang kiểm tra sinh hiệu đã ghi nhận...
+                            </div>
+                        )}
+
+                        {daCoSinhHieu && (
+                            <div className="ghi-nhan-sinh-hieu__success">
+                                Bệnh nhân đã được ghi nhận sinh hiệu. Vui lòng chọn
+                                “Chỉnh sửa sinh hiệu” để cập nhật dữ liệu.
+                            </div>
+                        )}
 
                         {loi && (
 
