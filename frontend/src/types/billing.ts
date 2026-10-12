@@ -1,4 +1,4 @@
-export interface ChiTietKhoanThuDTO {
+export interface ChiTietKhoanThuResponse {
   loaiKhoanThu: 'TIEN_KHAM' | 'TIEN_THUOC';
   tenKhoanThu: string;
   donViTinh?: string;
@@ -23,7 +23,7 @@ export interface ChiPhiKhamPreviewResponse {
   phiKham: number;
   tienThuoc: number;
   tongTien: number;
-  danhSachKhoanThu: ChiTietKhoanThuDTO[];
+  danhSachKhoanThu: ChiTietKhoanThuResponse[];
   daCoHoaDon: boolean;
   idHoaDonHienTai?: string;
 }
@@ -47,7 +47,7 @@ export interface HoaDonResponse {
   tienThuoc: number;
   tongTien: number;
   trangThai: 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN';
-  danhSachChiTiet: ChiTietKhoanThuDTO[];
+  danhSachChiTiet: ChiTietKhoanThuResponse[];
 }
 
 export interface LuotKhamChoHoaDonResponse {
@@ -92,7 +92,7 @@ export interface ThongTinThanhToanResponse {
   tongTien: number;
   trangThaiHoaDon: 'CHUA_THANH_TOAN' | 'DA_THANH_TOAN' | 'HUY';
   trangThaiThanhToan: string;
-  danhSachChiTiet: ChiTietKhoanThuDTO[];
+  danhSachChiTiet: ChiTietKhoanThuResponse[];
   lichSuGiaoDich: GiaoDichResponse[];
 }
 
@@ -124,9 +124,6 @@ export interface ThanhToanTienMatRequest {
   tienKhachDua: number;
   ghiChu?: string;
 }
-
-/** @deprecated Đã hợp nhất vào KetQuaThanhToanResponse */
-// ThanhToanTienMatResponse đã bị xóa — dùng KetQuaThanhToanResponse thay thế.
 
 export interface ThongTinQrResponse {
   idHoaDon: string;
@@ -190,7 +187,7 @@ export interface InHoaDonResponse {
   chuyenKhoa?: string;
   lyDoKham?: string;
   chanDoan?: string;
-  danhSachKhoanThu: ChiTietKhoanThuDTO[];
+  danhSachKhoanThu: ChiTietKhoanThuResponse[];
   phiKham: number;
   tienThuoc: number;
   tongTien: number;

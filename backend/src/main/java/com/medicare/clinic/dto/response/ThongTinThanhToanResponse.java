@@ -30,6 +30,6 @@ public class ThongTinThanhToanResponse {
     private BigDecimal tongTien;
     private String trangThaiHoaDon; // CHUA_THANH_TOAN, DA_THANH_TOAN, HUY
     private String trangThaiThanhToan; // CHUA_THANH_TOAN, DANG_XU_LY, THANH_CONG, THAT_BAI
-    private List<ChiTietKhoanThuDTO> danhSachChiTiet;
+    private List<ChiTietKhoanThuResponse> danhSachChiTiet;
     private List<GiaoDichResponse> lichSuGiaoDich;
 }

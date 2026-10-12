@@ -16,13 +16,13 @@ import type {
 } from "../types/LuotKham";
 
 import type {
-    PhanHoiSinhHieu,
+    SinhHieuResponse,
 } from "../types/SinhHieu";
 
 import {
     capNhatSinhHieu,
     laySinhHieu,
-} from "../services/DichVuSinhHieu";
+} from "../services/sinhHieuService";
 
 import "./capNhatSinhHieu.css";
 
@@ -80,7 +80,7 @@ export default function CapNhatSinhHieu({
     const [
         sinhHieu,
         setSinhHieu,
-    ] = useState<PhanHoiSinhHieu | null>(null);
+    ] = useState<SinhHieuResponse | null>(null);
 
     // =========================
     // FORM

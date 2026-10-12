@@ -5,8 +5,8 @@ import { MainLayout } from '../components/layout/MainLayout';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
 import type { BenhNhanCho } from '../types/LuotKham';
-import { layDanhSachBenhNhanCho } from '../services/DichVuLuotKham';
-import { laySinhHieu } from '../services/DichVuSinhHieu';
+import { layDanhSachBenhNhanCho } from '../services/luotKhamService';
+import { laySinhHieu } from '../services/sinhHieuService';
 import './nurseDashboard.css';
 
 export const NurseDashboard: React.FC = () => {

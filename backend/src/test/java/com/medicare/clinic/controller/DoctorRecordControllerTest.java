@@ -1,7 +1,7 @@
 package com.medicare.clinic.controller;
 
 import com.medicare.clinic.dto.response.LoginResponse;
-import com.medicare.clinic.service.DoctorRecordService;
+import com.medicare.clinic.service.interfaces.IDoctorRecordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class DoctorRecordControllerTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private DoctorRecordService doctorRecordService;
+    private IDoctorRecordService doctorRecordService;
 
     private MockHttpSession session;
 

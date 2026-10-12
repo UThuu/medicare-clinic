@@ -10,7 +10,7 @@ import {
     timBenhNhanTheoHoTenVaNgaySinh,
     layLichKhamHomNay,
     tiepNhanBenhNhan,
-} from "../services/DichVuTiepNhan";
+} from "../services/tiepNhanService";
 
 import type {
     BenhNhanTiepNhan,

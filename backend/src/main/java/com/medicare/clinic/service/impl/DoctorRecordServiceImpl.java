@@ -3,7 +3,7 @@ package com.medicare.clinic.service.impl;
 import com.medicare.clinic.dto.response.MedicalRecordResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.*;
-import com.medicare.clinic.service.DoctorRecordService;
+import com.medicare.clinic.service.interfaces.IDoctorRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class DoctorRecordServiceImpl implements DoctorRecordService {
+public class DoctorRecordServiceImpl implements IDoctorRecordService {
 
     private final LichKhamRepository lichKhamRepository;
     private final SinhHieuRepository sinhHieuRepository;

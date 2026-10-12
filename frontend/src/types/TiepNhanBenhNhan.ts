@@ -23,7 +23,7 @@ export interface TiepNhanBenhNhanRequest {
     idLichKham: string;
 }
 
-export interface PhanHoiTiepNhanBenhNhan {
+export interface TiepNhanBenhNhanResponse {
     thanhCong: boolean;
     thongBao: string;
 

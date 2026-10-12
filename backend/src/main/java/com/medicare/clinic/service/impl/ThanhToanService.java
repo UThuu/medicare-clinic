@@ -76,7 +76,7 @@ public class ThanhToanService implements IThanhToanService {
         List<GiaoDichResponse> lichSuGiaoDich = layLichSuGiaoDich(idHoaDon);
 
         // Lấy bảng chi tiết khoản thu
-        List<ChiTietKhoanThuDTO> danhSachChiTiet = hoaDon.getChiTietHoaDons().stream().map(d -> ChiTietKhoanThuDTO.builder()
+        List<ChiTietKhoanThuResponse> danhSachChiTiet = hoaDon.getChiTietHoaDons().stream().map(d -> ChiTietKhoanThuResponse.builder()
             .loaiKhoanThu(d.getLoaiChiPhi()).tenKhoanThu(d.getMoTa()).soLuong(d.getSoLuong()).donGia(d.getDonGia()).thanhTien(d.getThanhTien()).build()).toList();
         List<GiaoDichResponse> lichSu = layLichSuGiaoDich(idHoaDon);
 

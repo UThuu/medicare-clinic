@@ -45,7 +45,7 @@ public class InHoaDonResponse {
     private String chanDoan;
 
     // Bảng kê chi tiết chi phí
-    private List<ChiTietKhoanThuDTO> danhSachKhoanThu;
+    private List<ChiTietKhoanThuResponse> danhSachKhoanThu;
     private BigDecimal phiKham;
     private BigDecimal tienThuoc;
     private BigDecimal tongTien;

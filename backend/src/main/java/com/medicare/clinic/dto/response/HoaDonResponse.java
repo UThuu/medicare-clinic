@@ -26,5 +26,5 @@ public class HoaDonResponse {
     private BigDecimal tienThuoc;
     private BigDecimal tongTien;
     private String trangThai; // CHUA_THANH_TOAN, DA_THANH_TOAN
-    private List<ChiTietKhoanThuDTO> danhSachChiTiet;
+    private List<ChiTietKhoanThuResponse> danhSachChiTiet;
 }

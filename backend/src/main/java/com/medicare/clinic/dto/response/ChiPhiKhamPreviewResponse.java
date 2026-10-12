@@ -29,7 +29,7 @@ public class ChiPhiKhamPreviewResponse {
     private BigDecimal tienThuoc;
     private BigDecimal tongTien; // UC-16
 
-    private List<ChiTietKhoanThuDTO> danhSachKhoanThu;
+    private List<ChiTietKhoanThuResponse> danhSachKhoanThu;
     private boolean daCoHoaDon;
     private String idHoaDonHienTai;
 }

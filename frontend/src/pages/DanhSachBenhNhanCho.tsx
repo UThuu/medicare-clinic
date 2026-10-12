@@ -22,12 +22,12 @@ import type { BenhNhanCho } from "../types/LuotKham";
 
 import {
     layDanhSachBenhNhanCho,
-} from "../services/DichVuLuotKham";
+} from "../services/luotKhamService";
 
 import { XacNhanBenhNhan } from "./XacNhanBenhNhan";
 import GhiNhanSinhHieu from "./GhiNhanSinhHieu";
 import CapNhatSinhHieu from "./CapNhatSinhHieu";
-import { laySinhHieu } from "../services/DichVuSinhHieu";
+import { laySinhHieu } from "../services/sinhHieuService";
 import "./danhSachBenhNhanCho.css";
 
 function dinhDangNgay(ngay: string) {

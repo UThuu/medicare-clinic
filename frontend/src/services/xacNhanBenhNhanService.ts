@@ -1,6 +1,6 @@
 import type {
     XacNhanBenhNhanRequest,
-    PhanHoiXacNhanBenhNhan,
+    XacNhanBenhNhanResponse,
 } from "../types/XacNhanBenhNhan";
 
 const DIA_CHI_API = "/api";
@@ -8,7 +8,7 @@ const DIA_CHI_API = "/api";
 export async function xacNhanBenhNhan(
     idLuotKham: string,
     duLieu: XacNhanBenhNhanRequest
-): Promise<PhanHoiXacNhanBenhNhan> {
+): Promise<XacNhanBenhNhanResponse> {
     let phanHoi: Response;
 
     try {

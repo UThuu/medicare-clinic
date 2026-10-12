@@ -1,7 +1,7 @@
 import type {
     BenhNhanTiepNhan,
     LichKhamTiepNhan,
-    PhanHoiTiepNhanBenhNhan,
+    TiepNhanBenhNhanResponse,
     TiepNhanBenhNhanRequest,
 } from "../types/TiepNhanBenhNhan";
 
@@ -67,8 +67,8 @@ export function layLichKhamHomNay(
 
 export function tiepNhanBenhNhan(
     duLieu: TiepNhanBenhNhanRequest
-): Promise<PhanHoiTiepNhanBenhNhan> {
-    return goiApi<PhanHoiTiepNhanBenhNhan>(
+): Promise<TiepNhanBenhNhanResponse> {
+    return goiApi<TiepNhanBenhNhanResponse>(
         "/luotkham/tiep-nhan",
         {
             method: "POST",

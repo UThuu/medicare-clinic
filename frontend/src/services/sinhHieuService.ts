@@ -1,8 +1,7 @@
 
 import type {
-    GhiNhanSinhHieuRequest,
-    CapNhatSinhHieuRequest,
-    PhanHoiSinhHieu,
+    SinhHieuRequest,
+    SinhHieuResponse,
 } from "../types/SinhHieu";
 
 const DIA_CHI_API = "/api";
@@ -27,8 +26,8 @@ async function xuLyLoi(phanHoi: Response, loiMacDinh: string): Promise<never> {
 // UC03 - GHI NHẬN SINH HIỆU
 export async function ghiNhanSinhHieu(
     idLuotKham: string,
-    duLieu: GhiNhanSinhHieuRequest
-): Promise<PhanHoiSinhHieu> {
+    duLieu: SinhHieuRequest
+): Promise<SinhHieuResponse> {
     let phanHoi: Response;
 
     try {
@@ -54,13 +53,13 @@ export async function ghiNhanSinhHieu(
         return xuLyLoi(phanHoi, "Không thể lưu sinh hiệu");
     }
 
-    return (await phanHoi.json()) as PhanHoiSinhHieu;
+    return (await phanHoi.json()) as SinhHieuResponse;
 }
 
 // LẤY SINH HIỆU
 export async function laySinhHieu(
     idLuotKham: string
-): Promise<PhanHoiSinhHieu | null> {
+): Promise<SinhHieuResponse | null> {
     let phanHoi: Response;
 
     try {
@@ -88,14 +87,14 @@ export async function laySinhHieu(
         return xuLyLoi(phanHoi, "Không thể tải thông tin sinh hiệu");
     }
 
-    return (await phanHoi.json()) as PhanHoiSinhHieu;
+    return (await phanHoi.json()) as SinhHieuResponse;
 }
 
 // UC05 - CẬP NHẬT SINH HIỆU
 export async function capNhatSinhHieu(
     idLuotKham: string,
-    duLieu: CapNhatSinhHieuRequest
-): Promise<PhanHoiSinhHieu> {
+    duLieu: SinhHieuRequest
+): Promise<SinhHieuResponse> {
     let phanHoi: Response;
 
     try {
@@ -121,5 +120,5 @@ export async function capNhatSinhHieu(
         return xuLyLoi(phanHoi, "Không thể cập nhật sinh hiệu");
     }
 
-    return (await phanHoi.json()) as PhanHoiSinhHieu;
+    return (await phanHoi.json()) as SinhHieuResponse;
 }

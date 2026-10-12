@@ -13,8 +13,8 @@ import { Input } from '../components/common/Input';
 import { SearchBox } from '../components/common/SearchBox';
 import { StatusBadge, StatusTone } from '../components/common/StatusBadge';
 import { Button } from '../components/common/Button';
-import { laySinhHieu } from '../services/DichVuSinhHieu';
-import type { PhanHoiSinhHieu } from '../types/SinhHieu';
+import { laySinhHieu } from '../services/sinhHieuService';
+import type { SinhHieuResponse } from '../types/SinhHieu';
 
 // Lấy ngày hiện tại tại Việt Nam theo định dạng yyyy-MM-dd
 const getVnDateString = () => {
@@ -44,7 +44,7 @@ export const DoctorSchedule: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [sinhHieuTheoLuotKham, setSinhHieuTheoLuotKham] =
-      useState<Record<string, PhanHoiSinhHieu | null>>({});
+      useState<Record<string, SinhHieuResponse | null>>({});
 
   const [loiTaiSinhHieu, setLoiTaiSinhHieu] =
       useState<Record<string, boolean>>({});
@@ -139,7 +139,7 @@ export const DoctorSchedule: React.FC = () => {
       );
 
       if (!daHuy) {
-        const duLieuSinhHieu: Record<string, PhanHoiSinhHieu | null> = {};
+        const duLieuSinhHieu: Record<string, SinhHieuResponse | null> = {};
         const loi: Record<string, boolean> = {};
 
         ketQua.forEach((item) => {

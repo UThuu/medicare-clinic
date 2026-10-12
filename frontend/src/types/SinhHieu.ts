@@ -1,11 +1,12 @@
-export interface GhiNhanSinhHieuRequest {
+/** Request cho cả ghi nhận và cập nhật sinh hiệu. */
+export interface SinhHieuRequest {
     huyetApTamThu: number;
     huyetApTamTruong: number;
     canNang: number;
     nhietDo: number;
 }
 
-export interface PhanHoiSinhHieu {
+export interface SinhHieuResponse {
     idSinhHieu: string;
     idLuotKham: string;
     maDieuDuong: string;
@@ -14,11 +15,4 @@ export interface PhanHoiSinhHieu {
     canNang: number;
     nhietDo: number;
     thoiDiemDo: string;
-}
-
-export interface CapNhatSinhHieuRequest {
-    huyetApTamThu: number;
-    huyetApTamTruong: number;
-    canNang: number;
-    nhietDo: number;
 }

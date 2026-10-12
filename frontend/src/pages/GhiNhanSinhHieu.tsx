@@ -20,9 +20,9 @@ import type { BenhNhanCho } from "../types/LuotKham";
 import {
     ghiNhanSinhHieu,
     laySinhHieu,
-} from "../services/DichVuSinhHieu";
+} from "../services/sinhHieuService";
 
-import type { PhanHoiSinhHieu } from "../types/SinhHieu";
+import type { SinhHieuResponse } from "../types/SinhHieu";
 
 import "./ghiNhanSinhHieu.css";
 
@@ -139,7 +139,7 @@ export default function GhiNhanSinhHieu({
             setLoi("");
 
             try {
-                const duLieu: PhanHoiSinhHieu | null =
+                const duLieu: SinhHieuResponse | null =
                     await laySinhHieu(benhNhan.idLuotKham);
 
                 if (daHuy) return;

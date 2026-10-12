@@ -6,7 +6,7 @@ import { StatusBadge } from "../components/common/StatusBadge";
 
 import type { BenhNhanCho } from "../types/LuotKham";
 
-import { xacNhanBenhNhan } from "../services/DichVuXacNhanBenhNhan";
+import { xacNhanBenhNhan } from "../services/xacNhanBenhNhanService";
 
 import "./xacNhanBenhNhan.css";
 

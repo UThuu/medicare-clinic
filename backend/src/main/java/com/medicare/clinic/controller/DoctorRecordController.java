@@ -2,7 +2,7 @@ package com.medicare.clinic.controller;
 
 import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.dto.response.MedicalRecordResponse;
-import com.medicare.clinic.service.DoctorRecordService;
+import com.medicare.clinic.service.interfaces.IDoctorRecordService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -17,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class DoctorRecordController {
 
-    private final DoctorRecordService doctorRecordService;
+    private final IDoctorRecordService doctorRecordService;
 
     @GetMapping("/medical-record/{idLichKham}")
     public ResponseEntity<MedicalRecordResponse> getMedicalRecord(

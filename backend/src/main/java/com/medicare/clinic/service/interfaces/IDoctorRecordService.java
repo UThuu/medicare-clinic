@@ -1,7 +1,7 @@
-package com.medicare.clinic.service;
+package com.medicare.clinic.service.interfaces;
 
 import com.medicare.clinic.dto.response.MedicalRecordResponse;
 
-public interface DoctorRecordService {
+public interface IDoctorRecordService {
     MedicalRecordResponse getMedicalRecord(String maNv, String idLichKham);
 }

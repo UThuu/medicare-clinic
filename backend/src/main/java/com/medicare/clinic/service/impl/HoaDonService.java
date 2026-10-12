@@ -76,8 +76,8 @@ public class HoaDonService implements IHoaDonService {
         detail.setThanhTien(money(price.multiply(BigDecimal.valueOf(quantity))));
         return detail;
     }
-    private List<ChiTietKhoanThuDTO> lines(List<ChiTietHoaDon> details) {
-        return details.stream().map(d -> ChiTietKhoanThuDTO.builder().loaiKhoanThu(d.getLoaiChiPhi())
+    private List<ChiTietKhoanThuResponse> lines(List<ChiTietHoaDon> details) {
+        return details.stream().map(d -> ChiTietKhoanThuResponse.builder().loaiKhoanThu(d.getLoaiChiPhi())
             .tenKhoanThu(d.getMoTa()).soLuong(d.getSoLuong()).donGia(d.getDonGia()).thanhTien(d.getThanhTien()).build()).toList();
     }
     private BigDecimal sum(List<ChiTietHoaDon> details, String kind) {

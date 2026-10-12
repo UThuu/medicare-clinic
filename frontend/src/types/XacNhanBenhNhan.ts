@@ -5,7 +5,7 @@ export interface XacNhanBenhNhanRequest {
     idLichKham: string;
 }
 
-export interface PhanHoiXacNhanBenhNhan {
+export interface XacNhanBenhNhanResponse {
     xacNhan: boolean;
     idLuotKham: string;
     idLichKham: string;
