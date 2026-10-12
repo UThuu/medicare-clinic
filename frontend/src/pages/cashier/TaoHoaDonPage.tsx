@@ -67,7 +67,7 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
       setDanhSachHoaDon(hoaDonRes);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg('Không thể kết nối đến máy chủ backend (http://localhost:8080). Vui lòng đảm bảo backend đang chạy.');
+      setErrorMsg('Không thể kết nối đến máy chủ backend. Vui lòng đảm bảo backend đang chạy.');
     } finally {
       setLoading(false);
     }
