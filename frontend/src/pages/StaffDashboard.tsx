@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
 import { DoctorDashboard } from './DoctorDashboard';
+import { NurseDashboard } from './NurseDashboard';
 
 export const StaffDashboard: React.FC = () => {
     const { user, logout } = useAuth();
@@ -13,8 +14,11 @@ export const StaffDashboard: React.FC = () => {
         return <DoctorDashboard />;
     }
 
+    if (user?.vaiTro === 'DIEU_DUONG') {
+        return <NurseDashboard />;
+    }
+
     const vaiTro = user?.vaiTro;
-    const laDieuDuong = vaiTro === 'DIEU_DUONG';
     const laLeTan = vaiTro === 'LE_TAN';
 
     const handleLogout = async () => {
@@ -91,30 +95,6 @@ export const StaffDashboard: React.FC = () => {
 
             <h2>Chức năng làm việc</h2>
 
-            {laDieuDuong && (
-                <nav aria-label="Chức năng điều dưỡng">
-                    <Link
-                        to="/staff/benh-nhan-cho"
-                        style={linkStyle}
-                    >
-                        Danh sách bệnh nhân chờ khám
-                    </Link>
-
-                    <Link
-                        to="/staff/ghi-nhan-sinh-hieu"
-                        style={linkStyle}
-                    >
-                        Ghi nhận sinh hiệu
-                    </Link>
-
-                    <Link
-                        to="/staff/cap-nhat-sinh-hieu"
-                        style={linkStyle}
-                    >
-                        Cập nhật sinh hiệu
-                    </Link>
-                </nav>
-            )}
 
             {laLeTan && (
                 <nav aria-label="Chức năng lễ tân">
@@ -134,7 +114,7 @@ export const StaffDashboard: React.FC = () => {
                 </nav>
             )}
 
-            {!laDieuDuong && !laLeTan && (
+            {!laLeTan && (
                 <p>
                     Vai trò hiện tại chưa có danh sách chức năng
                     được cấu hình tại trang này.

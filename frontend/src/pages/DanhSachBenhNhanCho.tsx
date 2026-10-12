@@ -26,6 +26,8 @@ import {
 
 import { XacNhanBenhNhan } from "./XacNhanBenhNhan";
 import GhiNhanSinhHieu from "./GhiNhanSinhHieu";
+import CapNhatSinhHieu from "./CapNhatSinhHieu";
+import { laySinhHieu } from "../services/DichVuSinhHieu";
 import "./danhSachBenhNhanCho.css";
 
 function dinhDangNgay(ngay: string) {
@@ -100,13 +102,24 @@ export default function DanhSachBenhNhanCho() {
     const [dangTai, setDangTai] = useState(false);
     const [loi, setLoi] = useState("");
 
-    // Bệnh nhân đang được chọn để ghi nhận sinh hiệu
+    // Bệnh nhân đang được chọn để ghi nhận sinh hiệu (mới)
     const [
         benhNhanDangChon,
         setBenhNhanDangChon,
     ] = useState<BenhNhanCho | null>(null);
 
-    // Tải danh sách bệnh nhân
+    // Bệnh nhân đang được chọn để cập nhật sinh hiệu (đã có)
+    const [
+        benhNhanCanCapNhat,
+        setBenhNhanCanCapNhat,
+    ] = useState<BenhNhanCho | null>(null);
+
+    // Tập hợp ID lượt khám đã có sinh hiệu
+    const [daCoSinhHieuIds, setDaCoSinhHieuIds] = useState<Set<string>>(
+        new Set()
+    );
+
+    // Tải danh sách bệnh nhân và kiểm tra trạng thái sinh hiệu
     const taiDanhSach = useCallback(async () => {
         try {
             setDangTai(true);
@@ -116,6 +129,26 @@ export default function DanhSachBenhNhanCho() {
                 await layDanhSachBenhNhanCho(ngayKham);
 
             setDanhSachBenhNhan(duLieu);
+
+            try {
+                const ketQua = await Promise.allSettled(
+                    duLieu.map(async (bn) => {
+                        const sh = await laySinhHieu(bn.idLuotKham);
+                        return { idLuotKham: bn.idLuotKham, daCo: Boolean(sh) };
+                    })
+                );
+
+                const tapDaCo = new Set<string>();
+                ketQua.forEach((item) => {
+                    if (item.status === "fulfilled" && item.value.daCo) {
+                        tapDaCo.add(item.value.idLuotKham);
+                    }
+                });
+
+                setDaCoSinhHieuIds(tapDaCo);
+            } catch {
+                // Tiếp tục nếu kiểm tra sinh hiệu thất bại
+            }
         } catch (error) {
             console.error(error);
 
@@ -200,6 +233,22 @@ export default function DanhSachBenhNhanCho() {
         );
     }
 
+    // UC05: Cập nhật sinh hiệu trực tiếp (không cần xác nhận thông tin lại)
+    if (benhNhanCanCapNhat) {
+        return (
+            <CapNhatSinhHieu
+                benhNhan={benhNhanCanCapNhat}
+                onQuayLai={() => {
+                    setBenhNhanCanCapNhat(null);
+                }}
+                onCapNhatThanhCong={() => {
+                    setBenhNhanCanCapNhat(null);
+                    void taiDanhSach();
+                }}
+            />
+        );
+    }
+
     // Các cột của bảng bệnh nhân chờ
     const cot = [
         {
@@ -245,26 +294,46 @@ export default function DanhSachBenhNhanCho() {
         {
             key: "trangThai",
             header: "Trạng thái",
-            width: "120px",
-            render: () => (
-                <StatusBadge tone="warning">
-                    Đang chờ
-                </StatusBadge>
-            ),
+            width: "140px",
+            render: (row: BenhNhanCho) => {
+                const daCo = daCoSinhHieuIds.has(row.idLuotKham);
+                return daCo ? (
+                    <StatusBadge tone="success">
+                        Đã có sinh hiệu
+                    </StatusBadge>
+                ) : (
+                    <StatusBadge tone="warning">
+                        Chờ sinh hiệu
+                    </StatusBadge>
+                );
+            },
         },
         {
             key: "thaoTac",
             header: "Thao tác",
-            width: "170px",
-            render: (row: BenhNhanCho) => (
-                <Button
-                    onClick={() => {
-                        setBenhNhanCanXacNhan(row);
-                    }}
-                >
-                    Ghi nhận sinh hiệu
-                </Button>
-            ),
+            width: "180px",
+            render: (row: BenhNhanCho) => {
+                const daCo = daCoSinhHieuIds.has(row.idLuotKham);
+                return daCo ? (
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setBenhNhanCanCapNhat(row);
+                        }}
+                    >
+                        Cập nhật sinh hiệu
+                    </Button>
+                ) : (
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            setBenhNhanCanXacNhan(row);
+                        }}
+                    >
+                        Ghi nhận sinh hiệu
+                    </Button>
+                );
+            },
         },
     ];
 
@@ -279,25 +348,15 @@ export default function DanhSachBenhNhanCho() {
         <MainLayout
             doctorName={tenHienThi}
             roleLabel={vaiTroHienThi}
-            hotline="Hotline: 1800 6868"
-
             sidebarItems={[
                 {
-                    label: 'Dashboard',
+                    label: 'Tổng quan',
                     href: '/staff',
                 },
                 {
-                    label: 'Bệnh nhân chờ',
+                    label: 'Hàng chờ',
                     href: '/staff/benh-nhan-cho',
                     active: true,
-                },
-                {
-                    label: 'Tiếp nhận',
-                    href: '/staff/tiep-nhan',
-                },
-                {
-                    label: 'Lịch khám',
-                    href: '/staff/schedules',
                 },
             ]}
         >
