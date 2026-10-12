@@ -2,14 +2,20 @@ package com.medicare.clinic.dto.response;
 
 import com.medicare.clinic.entity.enums.PhuongThucDatLich;
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/** Response for UC24 - online appointment booking result. */
+/** Response DTO cho kết quả đặt lịch khám (áp dụng cho cả đặt trực tuyến và đặt tại quầy). */
 @Data
-public class LichKhamDatTrucTuyenResponse {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class DatLichKhamResponse {
 
     private String thongBao;
     private String idLichKham;

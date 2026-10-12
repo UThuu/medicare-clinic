@@ -1,6 +1,6 @@
 package com.medicare.clinic.service.interfaces;
 
-import com.medicare.clinic.dto.khambenh.SaveKhamBenhRequest;
+import com.medicare.clinic.dto.request.SaveKhamBenhRequest;
 
 public interface IKhamBenhService {
     void startKhamBenh(String maNv, String idLichKham);

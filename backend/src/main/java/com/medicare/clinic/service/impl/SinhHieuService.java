@@ -1,8 +1,7 @@
 package com.medicare.clinic.service.impl;
 
-import com.medicare.clinic.dto.request.CapNhatSinhHieuRequest;
-import com.medicare.clinic.dto.request.GhiNhanSinhHieuRequest;
-import com.medicare.clinic.dto.response.PhanHoiSinhHieu;
+import com.medicare.clinic.dto.request.SinhHieuRequest;
+import com.medicare.clinic.dto.response.SinhHieuResponse;
 import com.medicare.clinic.entity.DieuDuong;
 import com.medicare.clinic.entity.LuotKham;
 import com.medicare.clinic.entity.SinhHieu;
@@ -33,10 +32,10 @@ public class SinhHieuService implements ISinhHieuService {
 
     @Override
     @Transactional
-    public PhanHoiSinhHieu ghiNhanSinhHieu(
+    public SinhHieuResponse ghiNhanSinhHieu(
             String idLuotKham,
             String maDieuDuong,
-            GhiNhanSinhHieuRequest request
+            SinhHieuRequest request
     ) {
 
         // ==============================
@@ -177,7 +176,7 @@ public class SinhHieuService implements ISinhHieuService {
 
     @Override
     @Transactional(readOnly = true)
-    public PhanHoiSinhHieu xemSinhHieuMoiNhat(
+    public SinhHieuResponse xemSinhHieuMoiNhat(
             String idLuotKham
     ) {
 
@@ -199,9 +198,9 @@ public class SinhHieuService implements ISinhHieuService {
 
     @Override
     @Transactional
-    public PhanHoiSinhHieu capNhatSinhHieu(
+    public SinhHieuResponse capNhatSinhHieu(
             String idLuotKham,
-            CapNhatSinhHieuRequest request
+            SinhHieuRequest request
     ) {
 
         // ==============================
@@ -308,11 +307,11 @@ public class SinhHieuService implements ISinhHieuService {
     // CHUYỂN ENTITY → RESPONSE
     // =========================================================
 
-    private PhanHoiSinhHieu chuyenSangPhanHoi(
+    private SinhHieuResponse chuyenSangPhanHoi(
             SinhHieu sinhHieu
     ) {
 
-        return new PhanHoiSinhHieu(
+        return new SinhHieuResponse(
 
                 sinhHieu.getIdSinhHieu(),
 

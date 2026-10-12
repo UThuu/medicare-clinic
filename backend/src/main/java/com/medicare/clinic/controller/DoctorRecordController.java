@@ -1,7 +1,7 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
-import com.medicare.clinic.dto.record.MedicalRecordResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
+import com.medicare.clinic.dto.response.MedicalRecordResponse;
 import com.medicare.clinic.service.DoctorRecordService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

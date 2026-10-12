@@ -1,39 +1,38 @@
 package com.medicare.clinic.service.interfaces;
 
 import com.medicare.clinic.dto.request.TiepNhanBenhNhanRequest;
-import com.medicare.clinic.dto.request.XacNhanBenhNhanRequest;
-import com.medicare.clinic.dto.response.PhanHoiBenhNhanCho;
-import com.medicare.clinic.dto.response.PhanHoiLichKhamTiepNhan;
-import com.medicare.clinic.dto.response.PhanHoiTiepNhanBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiTimBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiXacNhanBenhNhan;
+import com.medicare.clinic.dto.response.BenhNhanChoResponse;
+import com.medicare.clinic.dto.response.LichKhamTiepNhanResponse;
+import com.medicare.clinic.dto.response.TiepNhanBenhNhanResponse;
+import com.medicare.clinic.dto.response.TimBenhNhanResponse;
+import com.medicare.clinic.dto.response.XacNhanBenhNhanResponse;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface ILuotKhamService {
 
-    List<PhanHoiBenhNhanCho> xemDanhSachBenhNhanCho(
+    List<BenhNhanChoResponse> xemDanhSachBenhNhanCho(
             LocalDate ngayKham
     );
 
-    PhanHoiXacNhanBenhNhan xacNhanBenhNhan(
+    XacNhanBenhNhanResponse xacNhanBenhNhan(
             String idLuotKham,
-            XacNhanBenhNhanRequest request
+            TiepNhanBenhNhanRequest request
     );
 
-    List<PhanHoiTimBenhNhan> timKiemBenhNhan(
+    List<TimBenhNhanResponse> timKiemBenhNhan(
             String soDienThoai,
             String hoTen,
             LocalDate ngaySinh
     );
 
-    List<PhanHoiLichKhamTiepNhan> xemLichKhamTrongNgay(
+    List<LichKhamTiepNhanResponse> xemLichKhamTrongNgay(
             String idBenhNhan,
             LocalDate ngayKham
     );
 
-    PhanHoiTiepNhanBenhNhan tiepNhanBenhNhan(
+    TiepNhanBenhNhanResponse tiepNhanBenhNhan(
             TiepNhanBenhNhanRequest request
     );
 }

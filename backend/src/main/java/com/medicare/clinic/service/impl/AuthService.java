@@ -4,7 +4,7 @@ import com.medicare.clinic.service.interfaces.IAuthService;
 import com.medicare.clinic.entity.TaiKhoan;
 import com.medicare.clinic.entity.enums.TrangThaiTaiKhoan;
 import com.medicare.clinic.repository.TaiKhoanRepository;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

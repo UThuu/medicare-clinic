@@ -111,6 +111,9 @@ export interface KetQuaThanhToanResponse {
   idHoaDon: string;
   phuongThuc: string;
   soTien: number;
+  tongTien?: number;
+  tienKhachDua?: number;
+  tienThoiLai?: number;
   trangThai: string;
   thoiGian: string;
   thongBao: string;
@@ -122,19 +125,8 @@ export interface ThanhToanTienMatRequest {
   ghiChu?: string;
 }
 
-export interface ThanhToanTienMatResponse {
-  idThanhToan: string;
-  idGiaoDich: string;
-  maGiaoDich: string;
-  idHoaDon: string;
-  tongTien: number;
-  tienKhachDua: number;
-  tienThoiLai: number;
-  phuongThuc: string;
-  trangThai: string;
-  thoiGian: string;
-  thongBao: string;
-}
+/** @deprecated Đã hợp nhất vào KetQuaThanhToanResponse */
+// ThanhToanTienMatResponse đã bị xóa — dùng KetQuaThanhToanResponse thay thế.
 
 export interface ThongTinQrResponse {
   idHoaDon: string;

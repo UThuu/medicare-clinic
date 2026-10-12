@@ -3,7 +3,7 @@ package com.medicare.clinic.dto.response;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class PhanHoiSinhHieu {
+public class SinhHieuResponse {
 
     private String idSinhHieu;
     private String idLuotKham;
@@ -17,7 +17,7 @@ public class PhanHoiSinhHieu {
 
     private LocalDateTime thoiDiemDo;
 
-    public PhanHoiSinhHieu(
+    public SinhHieuResponse(
             String idSinhHieu,
             String idLuotKham,
             String maDieuDuong,

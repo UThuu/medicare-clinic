@@ -7,8 +7,7 @@ import com.medicare.clinic.dto.request.LichKhamGoiYKhungGioThayTheRequest;
 import com.medicare.clinic.dto.request.LichKhamKiemTraTrongRequest;
 import com.medicare.clinic.dto.response.BacSiGoiYDaTungKhamResponse;
 import com.medicare.clinic.dto.response.BacSiDatLichResponse;
-import com.medicare.clinic.dto.response.LichKhamDatTaiQuayResponse;
-import com.medicare.clinic.dto.response.LichKhamDatTrucTuyenResponse;
+import com.medicare.clinic.dto.response.DatLichKhamResponse;
 import com.medicare.clinic.dto.response.LichKhamGoiYKhungGioThayTheResponse;
 import com.medicare.clinic.dto.response.LichKhamKiemTraTrongResponse;
 import com.medicare.clinic.entity.BacSi;
@@ -143,7 +142,7 @@ public class LichKhamService implements ILichKhamService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LichKhamDatTrucTuyenResponse datLichKhamTrucTuyen(
+    public DatLichKhamResponse datLichKhamTrucTuyen(
             String idBenhNhan, LichKhamDatTrucTuyenRequest request) {
         requirePatientId(idBenhNhan);
         if (request == null) throw new IllegalArgumentException("Dữ liệu đặt lịch không được để trống.");
@@ -163,11 +162,11 @@ public class LichKhamService implements ILichKhamService {
         lichKham.setGioKham(request.getGioKham());
         lichKham.setTrangThai(TrangThaiLichKham.DA_DAT);
         lichKham.setPhuongThucDatLich(PhuongThucDatLich.TRUC_TUYEN);
-        return toOnlineResponse(lichKhamRepository.save(lichKham), "Đặt lịch khám trực tuyến thành công.");
+        return toBookingResponse(lichKhamRepository.save(lichKham), "Đặt lịch khám trực tuyến thành công.");
     }
 
     @Override @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LichKhamDatTaiQuayResponse datLichKhamTaiQuay(LichKhamDatTaiQuayRequest request) {
+    public DatLichKhamResponse datLichKhamTaiQuay(LichKhamDatTaiQuayRequest request) {
         if (request == null) throw new IllegalArgumentException("Dữ liệu đặt lịch không được để trống.");
         validateDate(request.getNgayKham());
         LocalTime time = request.getGioKham();
@@ -194,13 +193,7 @@ public class LichKhamService implements ILichKhamService {
         booking.setNgayKham(request.getNgayKham()); booking.setGioKham(time);
         booking.setTrangThai(TrangThaiLichKham.DA_DAT); booking.setPhuongThucDatLich(PhuongThucDatLich.TRUC_TIEP);
         LichKham saved = lichKhamRepository.saveAndFlush(booking);
-        LichKhamDatTaiQuayResponse response = new LichKhamDatTaiQuayResponse();
-        response.setThongBao("Đặt lịch khám tại quầy thành công."); response.setIdLichKham(saved.getIdLichKham());
-        response.setIdBenhNhan(patient.getIdBenhNhan()); response.setHoTenBenhNhan(patient.getHoTen());
-        response.setMaBacSi(saved.getBacSi().getMaNv()); response.setHoTenBacSi(saved.getBacSi().getNhanVien().getHoTen());
-        response.setNgayKham(saved.getNgayKham()); response.setGioKham(saved.getGioKham());
-        response.setTrangThai(saved.getTrangThai()); response.setPhuongThucDatLich(saved.getPhuongThucDatLich());
-        return response;
+        return toBookingResponse(saved, "Đặt lịch khám tại quầy thành công.");
     }
     @Override @Transactional(readOnly = true)
     public List<BacSiDatLichResponse> danhSachBacSi() {
@@ -297,19 +290,8 @@ public class LichKhamService implements ILichKhamService {
             throw new IllegalArgumentException(label + " phải nằm trong khoảng 1 đến " + MAX_RESULT_LIMIT + ".");
     }
 
-    private LichKhamDatTrucTuyenResponse toOnlineResponse(LichKham lk, String message) {
-        LichKhamDatTrucTuyenResponse r = new LichKhamDatTrucTuyenResponse();
-        r.setThongBao(message); r.setIdLichKham(lk.getIdLichKham());
-        r.setIdBenhNhan(lk.getBenhNhan().getIdBenhNhan()); r.setHoTenBenhNhan(lk.getBenhNhan().getHoTen());
-        r.setMaBacSi(lk.getBacSi().getMaNv());
-        r.setHoTenBacSi(lk.getBacSi().getNhanVien() == null ? null : lk.getBacSi().getNhanVien().getHoTen());
-        r.setNgayKham(lk.getNgayKham()); r.setGioKham(lk.getGioKham());
-        r.setTrangThai(lk.getTrangThai()); r.setPhuongThucDatLich(lk.getPhuongThucDatLich());
-        return r;
-    }
-
-    private LichKhamDatTaiQuayResponse toDeskResponse(LichKham lk, String message) {
-        LichKhamDatTaiQuayResponse r = new LichKhamDatTaiQuayResponse();
+    private DatLichKhamResponse toBookingResponse(LichKham lk, String message) {
+        DatLichKhamResponse r = new DatLichKhamResponse();
         r.setThongBao(message); r.setIdLichKham(lk.getIdLichKham());
         r.setIdBenhNhan(lk.getBenhNhan().getIdBenhNhan()); r.setHoTenBenhNhan(lk.getBenhNhan().getHoTen());
         r.setMaBacSi(lk.getBacSi().getMaNv());
@@ -321,7 +303,7 @@ public class LichKhamService implements ILichKhamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.medicare.clinic.dto.response.PhanHoiLichHenTrongNgay> layDanhSachLichHenTrongNgay(LocalDate ngayKham) {
+    public List<com.medicare.clinic.dto.response.LichHenTrongNgayResponse> layDanhSachLichHenTrongNgay(LocalDate ngayKham) {
         if (ngayKham == null) {
             ngayKham = LocalDate.now(ZONE_VIETNAM);
         }
@@ -333,7 +315,7 @@ public class LichKhamService implements ILichKhamService {
                     luotKhamRepository.existsByLichKham_IdLichKham(lk.getIdLichKham());
             String idLuotKham = lk.getLuotKham() != null ? lk.getLuotKham().getIdLuotKham() : null;
 
-            return com.medicare.clinic.dto.response.PhanHoiLichHenTrongNgay.builder()
+            return com.medicare.clinic.dto.response.LichHenTrongNgayResponse.builder()
                     .idLichKham(lk.getIdLichKham())
                     .idBenhNhan(lk.getBenhNhan().getIdBenhNhan())
                     .tenBenhNhan(lk.getBenhNhan().getHoTen())

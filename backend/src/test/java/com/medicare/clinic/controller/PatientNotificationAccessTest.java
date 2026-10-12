@@ -1,5 +1,5 @@
 package com.medicare.clinic.controller;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
 import com.medicare.clinic.dto.response.BenhNhanThongBaoLichKhamResponse;
 import com.medicare.clinic.service.interfaces.IBenhNhanService;

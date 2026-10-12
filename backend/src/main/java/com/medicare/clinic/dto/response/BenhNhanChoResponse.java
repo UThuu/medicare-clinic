@@ -6,7 +6,7 @@ import com.medicare.clinic.entity.enums.TrangThaiLuotKham;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-public class PhanHoiBenhNhanCho {
+public class BenhNhanChoResponse {
 
     private String idLuotKham;
     private String idLichKham;
@@ -25,7 +25,7 @@ public class PhanHoiBenhNhanCho {
 
     private TrangThaiLuotKham trangThai;
 
-    public PhanHoiBenhNhanCho(
+    public BenhNhanChoResponse(
             String idLuotKham,
             String idLichKham,
             String idBenhNhan,

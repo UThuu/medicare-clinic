@@ -1,9 +1,8 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
-import com.medicare.clinic.dto.request.CapNhatSinhHieuRequest;
-import com.medicare.clinic.dto.request.GhiNhanSinhHieuRequest;
-import com.medicare.clinic.dto.response.PhanHoiSinhHieu;
+import com.medicare.clinic.dto.response.LoginResponse;
+import com.medicare.clinic.dto.request.SinhHieuRequest;
+import com.medicare.clinic.dto.response.SinhHieuResponse;
 import com.medicare.clinic.service.interfaces.ISinhHieuService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -75,7 +74,7 @@ public class SinhHieuController {
     @PostMapping("/luot-kham/{idLuotKham}")
     public ResponseEntity<?> ghiNhanSinhHieu(
             @PathVariable String idLuotKham,
-            @Valid @RequestBody GhiNhanSinhHieuRequest requestBody,
+            @Valid @RequestBody SinhHieuRequest requestBody,
             HttpServletRequest httpRequest
     ) {
         LoginResponse user = layNguoiDungDangNhap(httpRequest);
@@ -110,7 +109,7 @@ public class SinhHieuController {
             );
         }
 
-        PhanHoiSinhHieu ketQua =
+        SinhHieuResponse ketQua =
                 sinhHieuService.ghiNhanSinhHieu(
                         idLuotKham,
                         maNhanVien.trim(),
@@ -152,7 +151,7 @@ public class SinhHieuController {
             );
         }
 
-        PhanHoiSinhHieu ketQua =
+        SinhHieuResponse ketQua =
                 sinhHieuService.xemSinhHieuMoiNhat(idLuotKham);
 
         if (ketQua == null) {
@@ -168,7 +167,7 @@ public class SinhHieuController {
     @PutMapping("/luot-kham/{idLuotKham}")
     public ResponseEntity<?> capNhatSinhHieu(
             @PathVariable String idLuotKham,
-            @Valid @RequestBody CapNhatSinhHieuRequest requestBody,
+            @Valid @RequestBody SinhHieuRequest requestBody,
             HttpServletRequest httpRequest
     ) {
         LoginResponse user = layNguoiDungDangNhap(httpRequest);
@@ -201,7 +200,7 @@ public class SinhHieuController {
             );
         }
 
-        PhanHoiSinhHieu ketQua =
+        SinhHieuResponse ketQua =
                 sinhHieuService.capNhatSinhHieu(
                         idLuotKham,
                         requestBody

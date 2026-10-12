@@ -1,23 +1,22 @@
 package com.medicare.clinic.service.interfaces;
 
-import com.medicare.clinic.dto.request.CapNhatSinhHieuRequest;
-import com.medicare.clinic.dto.request.GhiNhanSinhHieuRequest;
-import com.medicare.clinic.dto.response.PhanHoiSinhHieu;
+import com.medicare.clinic.dto.request.SinhHieuRequest;
+import com.medicare.clinic.dto.response.SinhHieuResponse;
 
 public interface ISinhHieuService {
 
-    PhanHoiSinhHieu ghiNhanSinhHieu(
+    SinhHieuResponse ghiNhanSinhHieu(
             String idLuotKham,
             String maDieuDuong,
-            GhiNhanSinhHieuRequest request
+            SinhHieuRequest request
     );
 
-    PhanHoiSinhHieu xemSinhHieuMoiNhat(
+    SinhHieuResponse xemSinhHieuMoiNhat(
             String idLuotKham
     );
 
-    PhanHoiSinhHieu capNhatSinhHieu(
+    SinhHieuResponse capNhatSinhHieu(
             String idLuotKham,
-            CapNhatSinhHieuRequest request
+            SinhHieuRequest request
     );
 }

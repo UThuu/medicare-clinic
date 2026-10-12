@@ -1,6 +1,6 @@
 package com.medicare.clinic.service;
 
-import com.medicare.clinic.dto.record.MedicalRecordResponse;
+import com.medicare.clinic.dto.response.MedicalRecordResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;
 import com.medicare.clinic.repository.*;

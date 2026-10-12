@@ -6,8 +6,7 @@ import com.medicare.clinic.dto.request.LichKhamDatTrucTuyenRequest;
 import com.medicare.clinic.dto.request.LichKhamGoiYKhungGioThayTheRequest;
 import com.medicare.clinic.dto.request.LichKhamKiemTraTrongRequest;
 import com.medicare.clinic.dto.response.BacSiGoiYDaTungKhamResponse;
-import com.medicare.clinic.dto.response.LichKhamDatTaiQuayResponse;
-import com.medicare.clinic.dto.response.LichKhamDatTrucTuyenResponse;
+import com.medicare.clinic.dto.response.DatLichKhamResponse;
 import com.medicare.clinic.dto.response.LichKhamGoiYKhungGioThayTheResponse;
 import com.medicare.clinic.dto.response.LichKhamKiemTraTrongResponse;
 
@@ -27,12 +26,12 @@ public interface ILichKhamService {
             LichKhamGoiYKhungGioThayTheRequest request
     );
 
-    LichKhamDatTrucTuyenResponse datLichKhamTrucTuyen(
+    DatLichKhamResponse datLichKhamTrucTuyen(
             String idBenhNhan,
             LichKhamDatTrucTuyenRequest request
     );
 
-    LichKhamDatTaiQuayResponse datLichKhamTaiQuay(LichKhamDatTaiQuayRequest request);
+    DatLichKhamResponse datLichKhamTaiQuay(LichKhamDatTaiQuayRequest request);
 
-    java.util.List<com.medicare.clinic.dto.response.PhanHoiLichHenTrongNgay> layDanhSachLichHenTrongNgay(java.time.LocalDate ngayKham);
+    java.util.List<com.medicare.clinic.dto.response.LichHenTrongNgayResponse> layDanhSachLichHenTrongNgay(java.time.LocalDate ngayKham);
 }

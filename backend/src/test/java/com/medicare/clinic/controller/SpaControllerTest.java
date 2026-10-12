@@ -1,6 +1,6 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;

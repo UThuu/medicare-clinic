@@ -1,4 +1,4 @@
-package com.medicare.clinic.dto.auth;
+package com.medicare.clinic.dto.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

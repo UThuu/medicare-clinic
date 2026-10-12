@@ -190,7 +190,7 @@ public class ThanhToanService implements IThanhToanService {
 
     @Override
     @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
-    public ThanhToanTienMatResponse thanhToanTienMat(ThanhToanTienMatRequest request) {
+    public KetQuaThanhToanResponse thanhToanTienMat(ThanhToanTienMatRequest request) {
         log.info("Bắt đầu xử lý thanh toán tiền mặt cho hóa đơn: {}", request.getIdHoaDon());
 
         if (request.getIdHoaDon() == null || request.getIdHoaDon().trim().isEmpty()) {
@@ -263,11 +263,12 @@ public class ThanhToanService implements IThanhToanService {
         log.info("Thanh toán tiền mặt thành công cho hóa đơn: {}, tiền khách đưa: {}, tiền thối lại: {}",
                 hoaDon.getId(), tienKhachDua, tienThoiLai);
 
-        return ThanhToanTienMatResponse.builder()
+        return KetQuaThanhToanResponse.builder()
                 .idThanhToan(thanhToan.getIdThanhToan())
                 .idGiaoDich(giaoDich.getIdGiaoDich())
                 .maGiaoDich(giaoDich.getMaGiaoDich())
                 .idHoaDon(hoaDon.getId())
+                .soTien(tongTien)
                 .tongTien(tongTien)
                 .tienKhachDua(tienKhachDua)
                 .tienThoiLai(tienThoiLai)

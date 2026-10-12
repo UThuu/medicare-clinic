@@ -1,6 +1,6 @@
 package com.medicare.clinic.service.impl;
 
-import com.medicare.clinic.dto.khambenh.SaveKhamBenhRequest;
+import com.medicare.clinic.dto.request.SaveKhamBenhRequest;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.entity.enums.TrangThaiLuotKham;
 import com.medicare.clinic.repository.*;

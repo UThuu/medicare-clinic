@@ -1,6 +1,6 @@
 package com.medicare.clinic.service.impl;
 
-import com.medicare.clinic.dto.record.MedicalRecordResponse;
+import com.medicare.clinic.dto.response.MedicalRecordResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.*;
 import com.medicare.clinic.service.DoctorRecordService;

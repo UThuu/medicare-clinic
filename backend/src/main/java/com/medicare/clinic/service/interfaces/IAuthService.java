@@ -1,7 +1,7 @@
 package com.medicare.clinic.service.interfaces;
 
 import com.medicare.clinic.entity.TaiKhoan;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 
 public interface IAuthService {
     TaiKhoan xacThucTaiKhoan(String tenDangNhap, String matKhau);

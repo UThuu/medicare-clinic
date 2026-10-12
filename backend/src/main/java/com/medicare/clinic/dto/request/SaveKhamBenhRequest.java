@@ -1,4 +1,4 @@
-package com.medicare.clinic.dto.khambenh;
+package com.medicare.clinic.dto.request;
 
 import lombok.Data;
 

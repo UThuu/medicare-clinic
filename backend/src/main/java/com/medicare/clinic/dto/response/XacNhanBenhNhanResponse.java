@@ -10,7 +10,7 @@ import java.time.LocalTime;
 
 @Getter
 @AllArgsConstructor
-public class PhanHoiXacNhanBenhNhan {
+public class XacNhanBenhNhanResponse {
 
     private boolean xacNhan;
 

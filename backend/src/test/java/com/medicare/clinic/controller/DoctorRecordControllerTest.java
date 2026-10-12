@@ -1,6 +1,6 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.service.DoctorRecordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

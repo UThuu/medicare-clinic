@@ -1,8 +1,8 @@
 package com.medicare.clinic.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medicare.clinic.dto.auth.LoginRequest;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.request.LoginRequest;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.service.interfaces.IAuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

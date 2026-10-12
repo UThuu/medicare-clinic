@@ -1,5 +1,5 @@
 package com.medicare.clinic.service;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.entity.HoaDon;
 import com.medicare.clinic.repository.HoaDonRepository;
 import jakarta.servlet.http.HttpServletRequest;

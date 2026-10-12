@@ -1,7 +1,7 @@
 package com.medicare.clinic.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.entity.enums.*;
 import jakarta.persistence.EntityManager;

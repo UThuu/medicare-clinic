@@ -1,6 +1,7 @@
 package com.medicare.clinic.dto.response;
 
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;
+import com.medicare.clinic.entity.enums.TrangThaiLuotKham;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -9,7 +10,13 @@ import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
-public class PhanHoiLichKhamTiepNhan {
+public class TiepNhanBenhNhanResponse {
+
+    private boolean thanhCong;
+
+    private String thongBao;
+
+    private String idLuotKham;
 
     private String idLichKham;
 
@@ -17,13 +24,13 @@ public class PhanHoiLichKhamTiepNhan {
 
     private String hoTen;
 
-    private String maBacSi;
-
     private LocalDate ngayKham;
 
     private LocalTime gioKham;
 
-    private TrangThaiLichKham trangThai;
+    private String maBacSi;
 
-    private boolean daCoLuotKham;
+    private TrangThaiLichKham trangThaiLichKham;
+
+    private TrangThaiLuotKham trangThaiLuotKham;
 }

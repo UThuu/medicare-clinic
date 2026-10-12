@@ -5,7 +5,7 @@ import com.medicare.clinic.dto.request.ThanhToanTienMatRequest;
 import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.ChiPhiKhamPreviewResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
-import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
+
 import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.dto.response.VNPayCallbackResponse;
@@ -191,7 +191,7 @@ public class ThanhToanServiceTest {
                 .ghiChu("Khách thanh toán tiền mặt đủ")
                 .build();
 
-        ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
+        KetQuaThanhToanResponse response = thanhToanService.thanhToanTienMat(request);
 
         assertNotNull(response);
         assertEquals("HD-001", response.getIdHoaDon());
@@ -220,7 +220,7 @@ public class ThanhToanServiceTest {
                 .tienKhachDua(BigDecimal.valueOf(500000)) // Hóa đơn 200k, khách đưa tờ 500k
                 .build();
 
-        ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
+        KetQuaThanhToanResponse response = thanhToanService.thanhToanTienMat(request);
 
         assertNotNull(response);
         assertEquals(BigDecimal.valueOf(500000), response.getTienKhachDua());

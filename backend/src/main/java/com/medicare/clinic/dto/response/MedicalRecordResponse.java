@@ -1,4 +1,4 @@
-package com.medicare.clinic.dto.record;
+package com.medicare.clinic.dto.response;
 
 import com.medicare.clinic.entity.enums.GioiTinh;
 import com.medicare.clinic.entity.enums.TrangThaiLichKham;

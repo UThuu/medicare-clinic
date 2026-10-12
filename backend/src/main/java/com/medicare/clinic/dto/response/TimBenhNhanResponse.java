@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
-public class PhanHoiTimBenhNhan {
+public class TimBenhNhanResponse {
 
     private String idBenhNhan;
 

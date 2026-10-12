@@ -1,5 +1,5 @@
 package com.medicare.clinic.controller;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
 import org.junit.jupiter.api.*;
 import org.springframework.mock.web.MockHttpSession;

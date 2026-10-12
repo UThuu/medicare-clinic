@@ -6,7 +6,6 @@ import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.GiaoDichResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
-import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.dto.response.VNPayCallbackResponse;
@@ -35,7 +34,7 @@ public interface IThanhToanService {
     /**
      * UC-18: Xác nhận thanh toán tiền mặt tại quầy (tính tiền thừa/thối lại)
      */
-    ThanhToanTienMatResponse thanhToanTienMat(ThanhToanTienMatRequest request);
+    KetQuaThanhToanResponse thanhToanTienMat(ThanhToanTienMatRequest request);
 
     /**
      * UC-19: Lấy thông tin mã VietQR để thanh toán hóa đơn tại quầy

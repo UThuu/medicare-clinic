@@ -1,6 +1,6 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.dto.response.DoctorScheduleResponse;
 import com.medicare.clinic.service.interfaces.IScheduleService;
 import jakarta.servlet.http.HttpServletRequest;

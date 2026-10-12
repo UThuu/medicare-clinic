@@ -257,7 +257,7 @@ public class AuthServiceTest {
         
         when(taiKhoanRepository.findByTenDangNhap("user123")).thenReturn(Optional.of(mockTaiKhoan));
         
-        com.medicare.clinic.dto.auth.LoginResponse response = authService.dangNhap("user123", rawPassword);
+        com.medicare.clinic.dto.response.LoginResponse response = authService.dangNhap("user123", rawPassword);
         
         assertNotNull(response);
         assertEquals("TK001", response.getIdTaiKhoan());
@@ -278,7 +278,7 @@ public class AuthServiceTest {
         when(taiKhoanRepository.findByTenDangNhap("user123")).thenReturn(Optional.of(mockTaiKhoan));
         when(taiKhoanRepository.findVaiTroByMaNv("NV001")).thenReturn(java.util.Collections.singletonList("BAC_SI"));
         
-        com.medicare.clinic.dto.auth.LoginResponse response = authService.dangNhap("user123", rawPassword);
+        com.medicare.clinic.dto.response.LoginResponse response = authService.dangNhap("user123", rawPassword);
         
         assertNotNull(response);
         assertEquals("TK001", response.getIdTaiKhoan());

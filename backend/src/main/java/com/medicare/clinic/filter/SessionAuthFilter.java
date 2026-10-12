@@ -1,7 +1,7 @@
 package com.medicare.clinic.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

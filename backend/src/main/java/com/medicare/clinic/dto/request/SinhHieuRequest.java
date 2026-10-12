@@ -2,12 +2,19 @@ package com.medicare.clinic.dto.request;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+/** Request DTO cho ghi nhận và cập nhật chỉ số sinh hiệu bệnh nhân. */
 @Data
-public class CapNhatSinhHieuRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class SinhHieuRequest {
 
     @NotNull(message = "Huyết áp tâm thu không được để trống")
     @DecimalMin(value = "1", message = "Huyết áp tâm thu phải lớn hơn 0")

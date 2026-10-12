@@ -1,7 +1,7 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
-import com.medicare.clinic.dto.khambenh.SaveKhamBenhRequest;
+import com.medicare.clinic.dto.response.LoginResponse;
+import com.medicare.clinic.dto.request.SaveKhamBenhRequest;
 import com.medicare.clinic.service.interfaces.IKhamBenhService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

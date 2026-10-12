@@ -1,13 +1,12 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.auth.LoginResponse;
+import com.medicare.clinic.dto.response.LoginResponse;
 import com.medicare.clinic.dto.request.TiepNhanBenhNhanRequest;
-import com.medicare.clinic.dto.request.XacNhanBenhNhanRequest;
-import com.medicare.clinic.dto.response.PhanHoiBenhNhanCho;
-import com.medicare.clinic.dto.response.PhanHoiLichKhamTiepNhan;
-import com.medicare.clinic.dto.response.PhanHoiTimBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiTiepNhanBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiXacNhanBenhNhan;
+import com.medicare.clinic.dto.response.BenhNhanChoResponse;
+import com.medicare.clinic.dto.response.LichKhamTiepNhanResponse;
+import com.medicare.clinic.dto.response.TimBenhNhanResponse;
+import com.medicare.clinic.dto.response.TiepNhanBenhNhanResponse;
+import com.medicare.clinic.dto.response.XacNhanBenhNhanResponse;
 import com.medicare.clinic.service.interfaces.ILuotKhamService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -152,7 +151,7 @@ public class LuotKhamController {
             );
         }
 
-        List<PhanHoiBenhNhanCho> ketQua =
+        List<BenhNhanChoResponse> ketQua =
                 luotKhamService.xemDanhSachBenhNhanCho(ngayKham);
 
         return ResponseEntity.ok(ketQua);
@@ -165,7 +164,7 @@ public class LuotKhamController {
     @PostMapping("/{idLuotKham}/xac-nhan")
     public ResponseEntity<?> xacNhanBenhNhan(
             @PathVariable String idLuotKham,
-            @RequestBody XacNhanBenhNhanRequest request,
+            @RequestBody TiepNhanBenhNhanRequest request,
             HttpServletRequest httpRequest
     ) {
         ResponseEntity<?> loiQuyen = kiemTraQuyenDieuDuong(httpRequest);
@@ -173,7 +172,7 @@ public class LuotKhamController {
             return loiQuyen;
         }
 
-        PhanHoiXacNhanBenhNhan ketQua =
+        XacNhanBenhNhanResponse ketQua =
                 luotKhamService.xacNhanBenhNhan(
                         idLuotKham,
                         request
@@ -202,7 +201,7 @@ public class LuotKhamController {
             return loiQuyen;
         }
 
-        List<PhanHoiTimBenhNhan> ketQua =
+        List<TimBenhNhanResponse> ketQua =
                 luotKhamService.timKiemBenhNhan(
                         soDienThoai,
                         hoTen,
@@ -228,7 +227,7 @@ public class LuotKhamController {
             return loiQuyen;
         }
 
-        List<PhanHoiLichKhamTiepNhan> ketQua =
+        List<LichKhamTiepNhanResponse> ketQua =
                 luotKhamService.xemLichKhamTrongNgay(
                         idBenhNhan,
                         LocalDate.now(
@@ -255,7 +254,7 @@ public class LuotKhamController {
             return loiQuyen;
         }
 
-        PhanHoiTiepNhanBenhNhan ketQua =
+        TiepNhanBenhNhanResponse ketQua =
                 luotKhamService.tiepNhanBenhNhan(request);
 
         return ResponseEntity.ok(ketQua);

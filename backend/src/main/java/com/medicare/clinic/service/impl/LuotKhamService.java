@@ -1,13 +1,12 @@
 package com.medicare.clinic.service.impl;
 
 import com.medicare.clinic.dto.request.TiepNhanBenhNhanRequest;
-import com.medicare.clinic.dto.request.XacNhanBenhNhanRequest;
 
-import com.medicare.clinic.dto.response.PhanHoiBenhNhanCho;
-import com.medicare.clinic.dto.response.PhanHoiLichKhamTiepNhan;
-import com.medicare.clinic.dto.response.PhanHoiTimBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiTiepNhanBenhNhan;
-import com.medicare.clinic.dto.response.PhanHoiXacNhanBenhNhan;
+import com.medicare.clinic.dto.response.BenhNhanChoResponse;
+import com.medicare.clinic.dto.response.LichKhamTiepNhanResponse;
+import com.medicare.clinic.dto.response.TimBenhNhanResponse;
+import com.medicare.clinic.dto.response.TiepNhanBenhNhanResponse;
+import com.medicare.clinic.dto.response.XacNhanBenhNhanResponse;
 
 import com.medicare.clinic.entity.BenhNhan;
 import com.medicare.clinic.entity.LichKham;
@@ -48,7 +47,7 @@ public class LuotKhamService implements ILuotKhamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PhanHoiBenhNhanCho> xemDanhSachBenhNhanCho(
+    public List<BenhNhanChoResponse> xemDanhSachBenhNhanCho(
             LocalDate ngayKham
     ) {
 
@@ -66,7 +65,7 @@ public class LuotKhamService implements ILuotKhamService {
     }
 
 
-    private PhanHoiBenhNhanCho chuyenSangPhanHoi(
+    private BenhNhanChoResponse chuyenSangPhanHoi(
             LuotKham luotKham
     ) {
 
@@ -76,7 +75,7 @@ public class LuotKhamService implements ILuotKhamService {
         BenhNhan benhNhan =
                 lichKham.getBenhNhan();
 
-        return new PhanHoiBenhNhanCho(
+        return new BenhNhanChoResponse(
 
                 luotKham.getIdLuotKham(),
 
@@ -111,9 +110,9 @@ public class LuotKhamService implements ILuotKhamService {
 
     @Override
     @Transactional(readOnly = true)
-    public PhanHoiXacNhanBenhNhan xacNhanBenhNhan(
+    public XacNhanBenhNhanResponse xacNhanBenhNhan(
             String idLuotKham,
-            XacNhanBenhNhanRequest request
+            TiepNhanBenhNhanRequest request
     ) {
 
         LuotKham luotKham =
@@ -187,7 +186,7 @@ public class LuotKhamService implements ILuotKhamService {
         }
 
 
-        return new PhanHoiXacNhanBenhNhan(
+        return new XacNhanBenhNhanResponse(
 
                 true,
 
@@ -220,7 +219,7 @@ public class LuotKhamService implements ILuotKhamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PhanHoiTimBenhNhan> timKiemBenhNhan(
+    public List<TimBenhNhanResponse> timKiemBenhNhan(
             String soDienThoai,
             String hoTen,
             LocalDate ngaySinh
@@ -278,7 +277,7 @@ public class LuotKhamService implements ILuotKhamService {
         return danhSach
                 .stream()
                 .map(benhNhan ->
-                        new PhanHoiTimBenhNhan(
+                        new TimBenhNhanResponse(
 
                                 benhNhan.getIdBenhNhan(),
 
@@ -303,7 +302,7 @@ public class LuotKhamService implements ILuotKhamService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PhanHoiLichKhamTiepNhan> xemLichKhamTrongNgay(
+    public List<LichKhamTiepNhanResponse> xemLichKhamTrongNgay(
             String idBenhNhan,
             LocalDate ngayKham
     ) {
@@ -339,7 +338,7 @@ public class LuotKhamService implements ILuotKhamService {
                                             );
 
 
-                    return new PhanHoiLichKhamTiepNhan(
+                    return new LichKhamTiepNhanResponse(
 
                             lichKham.getIdLichKham(),
 
@@ -368,7 +367,7 @@ public class LuotKhamService implements ILuotKhamService {
 
     @Override
     @Transactional
-    public PhanHoiTiepNhanBenhNhan tiepNhanBenhNhan(
+    public TiepNhanBenhNhanResponse tiepNhanBenhNhan(
             TiepNhanBenhNhanRequest request
     ) {
 
@@ -542,7 +541,7 @@ public class LuotKhamService implements ILuotKhamService {
         // 12. Trả kết quả
         // -----------------------------------------------------
 
-        return new PhanHoiTiepNhanBenhNhan(
+        return new TiepNhanBenhNhanResponse(
 
                 true,
 

@@ -5,7 +5,6 @@ import {
   XacNhanThanhToanRequest,
   KetQuaThanhToanResponse,
   ThanhToanTienMatRequest,
-  ThanhToanTienMatResponse,
   ThongTinQrResponse,
   ThanhToanQrRequest,
   GiaoDichResponse,
@@ -43,8 +42,8 @@ export const thanhToanService = {
    */
   thanhToanTienMat: async (
     payload: ThanhToanTienMatRequest
-  ): Promise<ThanhToanTienMatResponse> => {
-    const res = await api.post<ThanhToanTienMatResponse>('/thanhtoan/tien-mat', payload);
+  ): Promise<KetQuaThanhToanResponse> => {
+    const res = await api.post<KetQuaThanhToanResponse>('/thanhtoan/tien-mat', payload);
     return res.data;
   },
 

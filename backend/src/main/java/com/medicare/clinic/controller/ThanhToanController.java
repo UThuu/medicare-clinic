@@ -6,7 +6,6 @@ import com.medicare.clinic.dto.request.XacNhanThanhToanRequest;
 import com.medicare.clinic.dto.response.GiaoDichResponse;
 import com.medicare.clinic.dto.response.HoaDonResponse;
 import com.medicare.clinic.dto.response.KetQuaThanhToanResponse;
-import com.medicare.clinic.dto.response.ThanhToanTienMatResponse;
 import com.medicare.clinic.dto.response.ThongTinQrResponse;
 import com.medicare.clinic.dto.response.ThongTinThanhToanResponse;
 import com.medicare.clinic.dto.response.VNPayCallbackResponse;
@@ -95,7 +94,7 @@ public class ThanhToanController {
     public ResponseEntity<?> thanhToanTienMat(@RequestBody ThanhToanTienMatRequest request) {
         access.cashier(httpRequest);
         try {
-            ThanhToanTienMatResponse response = thanhToanService.thanhToanTienMat(request);
+            KetQuaThanhToanResponse response = thanhToanService.thanhToanTienMat(request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             Map<String, String> error = new HashMap<>();
