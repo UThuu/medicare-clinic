@@ -249,11 +249,14 @@ export default function DanhSachBenhNhanCho() {
         );
     }
 
+    const laDieuDuong = user?.vaiTro === "DIEU_DUONG";
+    const laLeTan = user?.vaiTro === "LE_TAN";
+
     // Các cột của bảng bệnh nhân chờ
-    const cot = [
+    const cacCotCoBan = [
         {
             key: "gioKham",
-            header: "Giờ khám",
+            header: "Giờ hẹn",
             width: "90px",
             render: (row: BenhNhanCho) =>
                 dinhDangGio(row.gioKham),
@@ -308,34 +311,40 @@ export default function DanhSachBenhNhanCho() {
                 );
             },
         },
-        {
-            key: "thaoTac",
-            header: "Thao tác",
-            width: "180px",
-            render: (row: BenhNhanCho) => {
-                const daCo = daCoSinhHieuIds.has(row.idLuotKham);
-                return daCo ? (
-                    <Button
-                        variant="secondary"
-                        onClick={() => {
-                            setBenhNhanCanCapNhat(row);
-                        }}
-                    >
-                        Cập nhật sinh hiệu
-                    </Button>
-                ) : (
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            setBenhNhanCanXacNhan(row);
-                        }}
-                    >
-                        Ghi nhận sinh hiệu
-                    </Button>
-                );
-            },
-        },
     ];
+
+    const cot = laDieuDuong
+        ? [
+            ...cacCotCoBan,
+            {
+                key: "thaoTac",
+                header: "Thao tác",
+                width: "180px",
+                render: (row: BenhNhanCho) => {
+                    const daCo = daCoSinhHieuIds.has(row.idLuotKham);
+                    return daCo ? (
+                        <Button
+                            variant="secondary"
+                            onClick={() => {
+                                setBenhNhanCanCapNhat(row);
+                            }}
+                        >
+                            Cập nhật sinh hiệu
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                setBenhNhanCanXacNhan(row);
+                            }}
+                        >
+                            Ghi nhận sinh hiệu
+                        </Button>
+                    );
+                },
+            },
+        ]
+        : cacCotCoBan;
 
     const tenHienThi =
         user?.hoTen || user?.tenDangNhap || "Nhân viên";
@@ -343,22 +352,31 @@ export default function DanhSachBenhNhanCho() {
     const vaiTroHienThi =
         user?.vaiTro || "Nhân viên";
 
+    const sidebarItems = laLeTan
+        ? [
+            { label: 'Tổng quan', href: '/staff', active: false },
+            { label: 'Tiếp nhận bệnh nhân', href: '/staff/patient-search', active: false },
+            { label: 'Đặt lịch', href: '/staff/lich-kham/dat-tai-quay', active: false },
+            { label: 'Danh sách chờ', href: '/staff/benh-nhan-cho', active: true },
+        ]
+        : [
+            {
+                label: 'Tổng quan',
+                href: '/staff',
+            },
+            {
+                label: 'Hàng chờ',
+                href: '/staff/benh-nhan-cho',
+                active: true,
+            },
+        ];
 
     return (
         <MainLayout
             doctorName={tenHienThi}
             roleLabel={vaiTroHienThi}
-            sidebarItems={[
-                {
-                    label: 'Tổng quan',
-                    href: '/staff',
-                },
-                {
-                    label: 'Hàng chờ',
-                    href: '/staff/benh-nhan-cho',
-                    active: true,
-                },
-            ]}
+            sidebarLogout={laLeTan}
+            sidebarItems={sidebarItems}
         >
             <div className="danh-sach-benh-nhan-cho">
                 <div className="danh-sach-benh-nhan-cho__breadcrumb">

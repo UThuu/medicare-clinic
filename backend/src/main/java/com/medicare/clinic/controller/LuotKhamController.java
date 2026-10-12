@@ -82,6 +82,48 @@ public class LuotKhamController {
             );
         }
 
+    private ResponseEntity<?> kiemTraQuyenXemHangCho(
+            HttpServletRequest request
+    ) {
+        LoginResponse user = layNguoiDungDangNhap(request);
+
+        if (user == null) {
+            return loi(
+                    HttpStatus.UNAUTHORIZED,
+                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
+            );
+        }
+
+        String vaiTro = user.getVaiTro();
+        if (!"DIEU_DUONG".equals(vaiTro) && !"LE_TAN".equals(vaiTro)) {
+            return loi(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ điều dưỡng và lễ tân mới được xem danh sách bệnh nhân chờ."
+            );
+        }
+
+        return null;
+    }
+
+    private ResponseEntity<?> kiemTraQuyenDieuDuong(
+            HttpServletRequest request
+    ) {
+        LoginResponse user = layNguoiDungDangNhap(request);
+
+        if (user == null) {
+            return loi(
+                    HttpStatus.UNAUTHORIZED,
+                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
+            );
+        }
+
+        if (!"DIEU_DUONG".equals(user.getVaiTro())) {
+            return loi(
+                    HttpStatus.FORBIDDEN,
+                    "Chỉ điều dưỡng mới được thực hiện thao tác này."
+            );
+        }
+
         return null;
     }
 
@@ -90,18 +132,27 @@ public class LuotKhamController {
     // =====================================================
 
     @GetMapping("/cho-kham")
-    public List<PhanHoiBenhNhanCho> xemDanhSachBenhNhanCho(
+    public ResponseEntity<?> xemDanhSachBenhNhanCho(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate ngayKham
+            LocalDate ngayKham,
+            HttpServletRequest httpRequest
     ) {
+        ResponseEntity<?> loiQuyen = kiemTraQuyenXemHangCho(httpRequest);
+        if (loiQuyen != null) {
+            return loiQuyen;
+        }
+
         if (ngayKham == null) {
             ngayKham = LocalDate.now(
                     ZoneId.of("Asia/Ho_Chi_Minh")
             );
         }
 
-        return luotKhamService.xemDanhSachBenhNhanCho(ngayKham);
+        List<PhanHoiBenhNhanCho> ketQua =
+                luotKhamService.xemDanhSachBenhNhanCho(ngayKham);
+
+        return ResponseEntity.ok(ketQua);
     }
 
     // =====================================================
@@ -109,14 +160,23 @@ public class LuotKhamController {
     // =====================================================
 
     @PostMapping("/{idLuotKham}/xac-nhan")
-    public PhanHoiXacNhanBenhNhan xacNhanBenhNhan(
+    public ResponseEntity<?> xacNhanBenhNhan(
             @PathVariable String idLuotKham,
-            @RequestBody XacNhanBenhNhanRequest request
+            @RequestBody XacNhanBenhNhanRequest request,
+            HttpServletRequest httpRequest
     ) {
-        return luotKhamService.xacNhanBenhNhan(
-                idLuotKham,
-                request
-        );
+        ResponseEntity<?> loiQuyen = kiemTraQuyenDieuDuong(httpRequest);
+        if (loiQuyen != null) {
+            return loiQuyen;
+        }
+
+        PhanHoiXacNhanBenhNhan ketQua =
+                luotKhamService.xacNhanBenhNhan(
+                        idLuotKham,
+                        request
+                );
+
+        return ResponseEntity.ok(ketQua);
     }
 
     // =====================================================

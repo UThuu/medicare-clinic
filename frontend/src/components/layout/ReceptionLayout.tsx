@@ -19,7 +19,7 @@ export function ReceptionIcon({ kind }: { kind: 'patient' | 'calendar' | 'queue'
 }
 
 export function ReceptionLayout({ children, section = 'overview' }: {
-  children: ReactNode; section?: 'overview' | 'reception' | 'booking';
+  children: ReactNode; section?: 'overview' | 'reception' | 'booking' | 'queue';
 }) {
   const { user } = useAuth();
   return (
@@ -32,7 +32,7 @@ export function ReceptionLayout({ children, section = 'overview' }: {
         { label: 'Tổng quan', href: '/staff', active: section === 'overview' },
         { label: 'Tiếp nhận bệnh nhân', href: '/staff/patient-search', active: section === 'reception' },
         { label: 'Đặt lịch', href: '/staff/lich-kham/dat-tai-quay', active: section === 'booking' },
-        { label: 'Danh sách chờ', disabled: true },
+        { label: 'Danh sách chờ', href: '/staff/benh-nhan-cho', active: section === 'queue' },
       ]}
     >{children}</MainLayout>
   );

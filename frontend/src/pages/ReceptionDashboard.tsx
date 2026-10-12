@@ -32,12 +32,12 @@ export function ReceptionDashboard() {
             </div>
             <Button size="lg" onClick={() => navigate('/staff/lich-kham/dat-tai-quay')}>Đặt lịch</Button>
           </section>
-          <section className="mc-reception-card mc-reception-function is-unavailable" aria-disabled="true">
+          <section className="mc-reception-card mc-reception-function">
             <div className="mc-reception-function__heading">
               <span className="mc-reception-icon"><ReceptionIcon kind="queue" /></span>
               <div><h2>Danh sách chờ</h2><p>Theo dõi bệnh nhân chờ đo sinh hiệu.</p></div>
             </div>
-            <Button size="lg" disabled>Chưa khả dụng</Button>
+            <Button size="lg" onClick={() => navigate('/staff/benh-nhan-cho')}>Xem hàng chờ</Button>
           </section>
         </div>
         <section className="mc-reception-card mc-reception-appointments" aria-labelledby="reception-appointments-title">
