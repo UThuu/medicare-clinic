@@ -7,6 +7,7 @@ import com.medicare.clinic.dto.response.BenhNhanTimKiemResponse;
 
 import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
 import com.medicare.clinic.dto.response.BenhNhanThongBaoLichKhamResponse;
+import com.medicare.clinic.dto.response.HoSoYTeCaNhanResponse;
 
 public interface IBenhNhanService {
 
@@ -14,4 +15,5 @@ public interface IBenhNhanService {
     BenhNhanTaoMoiResponse taoHoSoBenhNhanMoi(BenhNhanTaoMoiRequest request);
     BenhNhanTimKiemResponse kiemTraSoDienThoai(BenhNhanTimKiemRequest request);
     BenhNhanThongBaoLichKhamResponse thongBaoLichKham(String idBenhNhan, BenhNhanThongBaoLichKhamRequest request);
+    HoSoYTeCaNhanResponse layHoSoYTeCaNhan(String idBenhNhan);
 }

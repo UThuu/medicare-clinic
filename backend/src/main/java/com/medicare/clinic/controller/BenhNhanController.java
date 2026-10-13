@@ -56,6 +56,18 @@ public class BenhNhanController {
                 user.getIdBenhNhan(), request == null ? new BenhNhanThongBaoLichKhamRequest() : request));
     }
 
+    @GetMapping("/ho-so-y-te")
+    public ResponseEntity<?> layHoSoYTeCaNhan(HttpServletRequest httpRequest) {
+        LoginResponse user = currentUser(httpRequest);
+        if (user == null) return unauthorized();
+        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
+        if (user.getIdBenhNhan() == null || user.getIdBenhNhan().trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Tài khoản của bạn chưa được liên kết với hồ sơ bệnh nhân."));
+        }
+        return execute(() -> benhnhanService.layHoSoYTeCaNhan(user.getIdBenhNhan()));
+    }
+
     private LoginResponse currentUser(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) return null;
