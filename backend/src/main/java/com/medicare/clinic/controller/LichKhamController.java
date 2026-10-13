@@ -1,11 +1,7 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.response.LoginResponse;
-import com.medicare.clinic.dto.request.BacSiGoiYDaTungKhamRequest;
-import com.medicare.clinic.dto.request.LichKhamDatTaiQuayRequest;
-import com.medicare.clinic.dto.request.LichKhamDatTrucTuyenRequest;
-import com.medicare.clinic.dto.request.LichKhamGoiYKhungGioThayTheRequest;
-import com.medicare.clinic.dto.request.LichKhamKiemTraTrongRequest;
+import com.medicare.clinic.dto.response.*;
+import com.medicare.clinic.dto.request.*;
 import com.medicare.clinic.service.interfaces.ILichKhamService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -13,10 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.ConcurrencyFailureException;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/lichkham")
@@ -25,75 +21,75 @@ public class LichKhamController {
     private final ILichKhamService lichkhamService;
 
     @GetMapping("/trong-ngay")
-    public ResponseEntity<?> lichHenTrongNgay(
+    public ResponseEntity<List<LichHenTrongNgayResponse>> lichHenTrongNgay(
             @RequestParam(required = false)
             @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
-            java.time.LocalDate ngayKham,
+            LocalDate ngayKham,
             HttpServletRequest request
     ) {
-        ResponseEntity<?> denied = requireRole(request, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.layDanhSachLichHenTrongNgay(ngayKham));
+        requireRole(request, "LE_TAN");
+        return ResponseEntity.ok(lichkhamService.layDanhSachLichHenTrongNgay(ngayKham));
     }
 
     @GetMapping("/bac-si")
-    public ResponseEntity<?> counterDoctors(HttpServletRequest request) {
-        ResponseEntity<?> denied = requireRole(request, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.danhSachBacSi());
+    public ResponseEntity<List<BacSiDatLichResponse>> counterDoctors(HttpServletRequest request) {
+        requireRole(request, "LE_TAN");
+        return ResponseEntity.ok(lichkhamService.danhSachBacSi());
     }
 
     @GetMapping("/bac-si-truc-tuyen")
-    public ResponseEntity<?> doctors(HttpServletRequest request) {
-        ResponseEntity<?> denied=requireRole(request,"BENH_NHAN"); if(denied!=null)return denied;
-        return execute(() -> lichkhamService.danhSachBacSi(currentUser(request).getIdBenhNhan()));
+    public ResponseEntity<BacSiGoiYDaTungKhamResponse> doctors(HttpServletRequest request) {
+        LoginResponse user = requireRole(request, "BENH_NHAN");
+        return ResponseEntity.ok(lichkhamService.danhSachBacSi(user.getIdBenhNhan()));
     }
+
     @GetMapping("/khung-gio")
-    public ResponseEntity<?> slots(@RequestParam String maBacSi,@RequestParam java.time.LocalDate ngayKham,HttpServletRequest request) {
-        ResponseEntity<?> denied=requireRole(request,"BENH_NHAN","LE_TAN"); if(denied!=null)return denied;
-        return execute(() -> lichkhamService.khungGioTrong(maBacSi,ngayKham));
+    public ResponseEntity<LichKhamKhungGioResponse> slots(
+            @RequestParam String maBacSi,
+            @RequestParam LocalDate ngayKham,
+            HttpServletRequest request) {
+        requireRole(request, "BENH_NHAN", "LE_TAN");
+        return ResponseEntity.ok(lichkhamService.khungGioTrong(maBacSi, ngayKham));
     }
 
     @PostMapping("/kiem-tra-trong")
-    public ResponseEntity<?> kiemTraLichTrong(@RequestBody LichKhamKiemTraTrongRequest request,
-                                               HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BENH_NHAN", "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.kiemTraLichTrong(request));
+    public ResponseEntity<LichKhamKiemTraTrongResponse> kiemTraLichTrong(
+            @RequestBody LichKhamKiemTraTrongRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "BENH_NHAN", "LE_TAN");
+        return ResponseEntity.ok(lichkhamService.kiemTraLichTrong(request));
     }
 
     @PostMapping("/bac-si-da-kham")
-    public ResponseEntity<?> goiYBacSiDaTungKham(@RequestBody(required = false) BacSiGoiYDaTungKhamRequest request,
-                                                   HttpServletRequest httpRequest) {
-        LoginResponse user = currentUser(httpRequest);
-        if (user == null) return unauthorized();
-        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
-        return execute(() -> lichkhamService.goiYBacSiDaTungKham(user.getIdBenhNhan(), request));
+    public ResponseEntity<BacSiGoiYDaTungKhamResponse> goiYBacSiDaTungKham(
+            @RequestBody(required = false) BacSiGoiYDaTungKhamRequest request,
+            HttpServletRequest httpRequest) {
+        LoginResponse user = requireRole(httpRequest, "BENH_NHAN");
+        return ResponseEntity.ok(lichkhamService.goiYBacSiDaTungKham(user.getIdBenhNhan(), request));
     }
 
     @PostMapping("/goi-y-khung-gio-thay-the")
-    public ResponseEntity<?> goiYKhungGioThayThe(@RequestBody LichKhamGoiYKhungGioThayTheRequest request,
-                                                  HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BENH_NHAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.goiYKhungGioThayThe(request));
+    public ResponseEntity<LichKhamGoiYKhungGioThayTheResponse> goiYKhungGioThayThe(
+            @RequestBody LichKhamGoiYKhungGioThayTheRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "BENH_NHAN");
+        return ResponseEntity.ok(lichkhamService.goiYKhungGioThayThe(request));
     }
 
     @PostMapping("/dat-truc-tuyen")
-    public ResponseEntity<?> datLichKhamTrucTuyen(@RequestBody LichKhamDatTrucTuyenRequest request,
-                                                   HttpServletRequest httpRequest) {
-        LoginResponse user = currentUser(httpRequest);
-        if (user == null) return unauthorized();
-        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
-        return execute(() -> lichkhamService.datLichKhamTrucTuyen(user.getIdBenhNhan(), request));
+    public ResponseEntity<DatLichKhamResponse> datLichKhamTrucTuyen(
+            @RequestBody LichKhamDatTrucTuyenRequest request,
+            HttpServletRequest httpRequest) {
+        LoginResponse user = requireRole(httpRequest, "BENH_NHAN");
+        return ResponseEntity.ok(lichkhamService.datLichKhamTrucTuyen(user.getIdBenhNhan(), request));
     }
 
     @PostMapping("/dat-tai-quay")
-    public ResponseEntity<?> datLichKhamTaiQuay(@RequestBody LichKhamDatTaiQuayRequest request,
-                                                HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> lichkhamService.datLichKhamTaiQuay(request));
+    public ResponseEntity<DatLichKhamResponse> datLichKhamTaiQuay(
+            @RequestBody LichKhamDatTaiQuayRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "LE_TAN");
+        return ResponseEntity.ok(lichkhamService.datLichKhamTaiQuay(request));
     }
 
     private LoginResponse currentUser(HttpServletRequest request) {
@@ -103,26 +99,14 @@ public class LichKhamController {
         return user instanceof LoginResponse ? (LoginResponse) user : null;
     }
 
-    private ResponseEntity<?> requireRole(HttpServletRequest request, String... roles) {
+    private LoginResponse requireRole(HttpServletRequest request, String... roles) {
         LoginResponse user = currentUser(request);
-        if (user == null) return unauthorized();
-        for (String role : roles) if (role.equals(user.getVaiTro())) return null;
-        return forbidden();
-    }
-
-    private ResponseEntity<?> execute(java.util.function.Supplier<Object> action) {
-        try { return ResponseEntity.ok(action.get()); }
-        catch (ConcurrencyFailureException e) { return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Khung giờ đang được đặt. Hãy tải lại và chọn giờ khác.")); }
-        catch (IllegalStateException e) { return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage())); }
-        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
-        catch (DataAccessException e) { return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message", "Không thể tải hoặc lưu lịch khám. Vui lòng thử lại.")); }
-    }
-
-    private ResponseEntity<?> unauthorized() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."));
-    }
-
-    private ResponseEntity<?> forbidden() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Bạn không có quyền truy cập tính năng này."));
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
+        }
+        for (String role : roles) {
+            if (role.equals(user.getVaiTro())) return user;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tính năng này.");
     }
 }

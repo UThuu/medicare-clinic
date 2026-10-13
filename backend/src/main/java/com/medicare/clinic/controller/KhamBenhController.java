@@ -21,7 +21,7 @@ public class KhamBenhController {
     private final IKhamBenhService khamBenhService;
 
     @PostMapping("/ket-qua")
-    public ResponseEntity<?> saveKetQuaKham(@RequestBody SaveKhamBenhRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, String>> saveKetQuaKham(@RequestBody SaveKhamBenhRequest request, HttpServletRequest httpRequest) {
         String maNv = requireDoctor(httpRequest);
         try {
             khamBenhService.saveKhamBenh(maNv, request);
@@ -35,7 +35,7 @@ public class KhamBenhController {
     }
 
     @PostMapping("/{idLichKham}/hoan-tat")
-    public ResponseEntity<?> hoanTatKham(@PathVariable String idLichKham, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, String>> hoanTatKham(@PathVariable String idLichKham, HttpServletRequest httpRequest) {
         String maNv = requireDoctor(httpRequest);
         try {
             khamBenhService.hoanTatKham(maNv, idLichKham);
@@ -46,7 +46,7 @@ public class KhamBenhController {
     }
 
     @PostMapping("/{idLichKham}/bat-dau")
-    public ResponseEntity<?> startKhamBenh(@PathVariable String idLichKham, HttpServletRequest httpRequest) {
+    public ResponseEntity<Map<String, String>> startKhamBenh(@PathVariable String idLichKham, HttpServletRequest httpRequest) {
         String maNv = requireDoctor(httpRequest);
         try {
             khamBenhService.startKhamBenh(maNv, idLichKham);

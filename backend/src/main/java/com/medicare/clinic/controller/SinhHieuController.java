@@ -14,8 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Collections;
 import java.util.Set;
 
 @RestController
@@ -29,17 +29,13 @@ public class SinhHieuController {
 
     private final ISinhHieuService sinhHieuService;
 
-    private LoginResponse layNguoiDungDangNhap(
-            HttpServletRequest request
-    ) {
+    private LoginResponse layNguoiDungDangNhap(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
-
         if (session == null) {
             return null;
         }
 
         Object authUser = session.getAttribute("AUTH_USER");
-
         if (!(authUser instanceof LoginResponse)) {
             return null;
         }
@@ -47,23 +43,10 @@ public class SinhHieuController {
         return (LoginResponse) authUser;
     }
 
-    private ResponseEntity<?> loi(
-            HttpStatus status,
-            String message
-    ) {
-        return ResponseEntity
-                .status(status)
-                .body(Collections.singletonMap("message", message));
-    }
-
-    private boolean coVaiTro(
-            LoginResponse user,
-            String... vaiTroChoPhep
-    ) {
+    private boolean coVaiTro(LoginResponse user, String... vaiTroChoPhep) {
         if (user == null || user.getVaiTro() == null) {
             return false;
         }
-
         return Set.of(vaiTroChoPhep).contains(user.getVaiTro());
     }
 
@@ -72,7 +55,7 @@ public class SinhHieuController {
      * Danh tính điều dưỡng được lấy từ phiên đăng nhập.
      */
     @PostMapping("/luot-kham/{idLuotKham}")
-    public ResponseEntity<?> ghiNhanSinhHieu(
+    public ResponseEntity<SinhHieuResponse> ghiNhanSinhHieu(
             @PathVariable String idLuotKham,
             @Valid @RequestBody SinhHieuRequest requestBody,
             HttpServletRequest httpRequest
@@ -80,41 +63,27 @@ public class SinhHieuController {
         LoginResponse user = layNguoiDungDangNhap(httpRequest);
 
         if (user == null) {
-            return loi(
-                    HttpStatus.UNAUTHORIZED,
-                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
-            );
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
         }
 
         if (!coVaiTro(user, "DIEU_DUONG")) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Chỉ điều dưỡng mới được ghi nhận sinh hiệu."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ điều dưỡng mới được ghi nhận sinh hiệu.");
         }
 
         String maNhanVien = user.getMaNv();
-
         if (maNhanVien == null || maNhanVien.isBlank()) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Tài khoản điều dưỡng chưa được liên kết với mã nhân viên."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản điều dưỡng chưa được liên kết với mã nhân viên.");
         }
 
         if (idLuotKham == null || idLuotKham.isBlank()) {
-            return loi(
-                    HttpStatus.BAD_REQUEST,
-                    "Mã lượt khám không được để trống."
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã lượt khám không được để trống.");
         }
 
-        SinhHieuResponse ketQua =
-                sinhHieuService.ghiNhanSinhHieu(
-                        idLuotKham,
-                        maNhanVien.trim(),
-                        requestBody
-                );
+        SinhHieuResponse ketQua = sinhHieuService.ghiNhanSinhHieu(
+                idLuotKham,
+                maNhanVien.trim(),
+                requestBody
+        );
 
         return ResponseEntity.ok(ketQua);
     }
@@ -124,36 +93,25 @@ public class SinhHieuController {
      * Cho phép Điều dưỡng và Bác sĩ.
      */
     @GetMapping("/luot-kham/{idLuotKham}")
-    public ResponseEntity<?> xemSinhHieu(
+    public ResponseEntity<SinhHieuResponse> xemSinhHieu(
             @PathVariable String idLuotKham,
             HttpServletRequest httpRequest
     ) {
         LoginResponse user = layNguoiDungDangNhap(httpRequest);
 
         if (user == null) {
-            return loi(
-                    HttpStatus.UNAUTHORIZED,
-                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
-            );
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
         }
 
         if (!coVaiTro(user, "DIEU_DUONG", "BAC_SI")) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Tài khoản không có quyền xem sinh hiệu."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản không có quyền xem sinh hiệu.");
         }
 
         if (idLuotKham == null || idLuotKham.isBlank()) {
-            return loi(
-                    HttpStatus.BAD_REQUEST,
-                    "Mã lượt khám không được để trống."
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã lượt khám không được để trống.");
         }
 
-        SinhHieuResponse ketQua =
-                sinhHieuService.xemSinhHieuMoiNhat(idLuotKham);
-
+        SinhHieuResponse ketQua = sinhHieuService.xemSinhHieuMoiNhat(idLuotKham);
         if (ketQua == null) {
             return ResponseEntity.noContent().build();
         }
@@ -165,7 +123,7 @@ public class SinhHieuController {
      * UC05 - Cập nhật sinh hiệu.
      */
     @PutMapping("/luot-kham/{idLuotKham}")
-    public ResponseEntity<?> capNhatSinhHieu(
+    public ResponseEntity<SinhHieuResponse> capNhatSinhHieu(
             @PathVariable String idLuotKham,
             @Valid @RequestBody SinhHieuRequest requestBody,
             HttpServletRequest httpRequest
@@ -173,39 +131,22 @@ public class SinhHieuController {
         LoginResponse user = layNguoiDungDangNhap(httpRequest);
 
         if (user == null) {
-            return loi(
-                    HttpStatus.UNAUTHORIZED,
-                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
-            );
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
         }
 
         if (!coVaiTro(user, "DIEU_DUONG")) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Chỉ điều dưỡng mới được cập nhật sinh hiệu."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ điều dưỡng mới được cập nhật sinh hiệu.");
         }
 
         if (user.getMaNv() == null || user.getMaNv().isBlank()) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Tài khoản điều dưỡng chưa được liên kết với mã nhân viên."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản điều dưỡng chưa được liên kết với mã nhân viên.");
         }
 
         if (idLuotKham == null || idLuotKham.isBlank()) {
-            return loi(
-                    HttpStatus.BAD_REQUEST,
-                    "Mã lượt khám không được để trống."
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã lượt khám không được để trống.");
         }
 
-        SinhHieuResponse ketQua =
-                sinhHieuService.capNhatSinhHieu(
-                        idLuotKham,
-                        requestBody
-                );
-
+        SinhHieuResponse ketQua = sinhHieuService.capNhatSinhHieu(idLuotKham, requestBody);
         return ResponseEntity.ok(ketQua);
     }
 }

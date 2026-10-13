@@ -1,10 +1,7 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.dto.response.LoginResponse;
-import com.medicare.clinic.dto.request.BenhNhanDiUngRequest;
-import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
-import com.medicare.clinic.dto.request.BenhNhanTimKiemRequest;
-import com.medicare.clinic.dto.request.BenhNhanTaoMoiRequest;
+import com.medicare.clinic.dto.response.*;
+import com.medicare.clinic.dto.request.*;
 import com.medicare.clinic.service.interfaces.IBenhNhanService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -12,9 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
-import java.util.function.Supplier;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/benhnhan")
@@ -23,77 +20,72 @@ public class BenhNhanController {
     private final IBenhNhanService benhnhanService;
 
     @PostMapping("/tim-kiem")
-    public ResponseEntity<?> timKiemHoSo(@RequestBody BenhNhanTimKiemRequest request,
-                                         HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> benhnhanService.timKiemHoSoBenhNhan(request));
+    public ResponseEntity<BenhNhanTimKiemResponse> timKiemHoSo(
+            @RequestBody BenhNhanTimKiemRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "LE_TAN");
+        return ResponseEntity.ok(benhnhanService.timKiemHoSoBenhNhan(request));
     }
 
     @PostMapping("/tao-moi")
-    public ResponseEntity<?> taoHoSoMoi(@RequestBody BenhNhanTaoMoiRequest request,
-                                        HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> benhnhanService.taoHoSoBenhNhanMoi(request));
+    public ResponseEntity<BenhNhanTaoMoiResponse> taoHoSoMoi(
+            @RequestBody BenhNhanTaoMoiRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "LE_TAN");
+        return ResponseEntity.ok(benhnhanService.taoHoSoBenhNhanMoi(request));
     }
 
     @PostMapping("/kiem-tra-so-dien-thoai")
-    public ResponseEntity<?> kiemTraSoDienThoai(@RequestBody BenhNhanTimKiemRequest request,
-                                               HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "LE_TAN");
-        if (denied != null) return denied;
-        return execute(() -> benhnhanService.kiemTraSoDienThoai(request));
+    public ResponseEntity<BenhNhanTimKiemResponse> kiemTraSoDienThoai(
+            @RequestBody BenhNhanTimKiemRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "LE_TAN");
+        return ResponseEntity.ok(benhnhanService.kiemTraSoDienThoai(request));
     }
 
     @PostMapping("/thong-bao-lich-kham")
-    public ResponseEntity<?> thongBaoLichKham(
+    public ResponseEntity<BenhNhanThongBaoLichKhamResponse> thongBaoLichKham(
             @RequestBody(required = false) BenhNhanThongBaoLichKhamRequest request,
             HttpServletRequest httpRequest) {
-        LoginResponse user = currentUser(httpRequest);
-        if (user == null) return unauthorized();
-        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
-        return execute(() -> benhnhanService.thongBaoLichKham(
+        LoginResponse user = requireRole(httpRequest, "BENH_NHAN");
+        return ResponseEntity.ok(benhnhanService.thongBaoLichKham(
                 user.getIdBenhNhan(), request == null ? new BenhNhanThongBaoLichKhamRequest() : request));
     }
 
     @GetMapping("/ho-so-y-te")
-    public ResponseEntity<?> layHoSoYTeCaNhan(HttpServletRequest httpRequest) {
-        LoginResponse user = currentUser(httpRequest);
-        if (user == null) return unauthorized();
-        if (!"BENH_NHAN".equals(user.getVaiTro())) return forbidden();
+    public ResponseEntity<HoSoYTeCaNhanResponse> layHoSoYTeCaNhan(HttpServletRequest httpRequest) {
+        LoginResponse user = requireRole(httpRequest, "BENH_NHAN");
         if (user.getIdBenhNhan() == null || user.getIdBenhNhan().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Tài khoản của bạn chưa được liên kết với hồ sơ bệnh nhân."));
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản của bạn chưa được liên kết với hồ sơ bệnh nhân.");
         }
-        return execute(() -> benhnhanService.layHoSoYTeCaNhan(user.getIdBenhNhan()));
+        return ResponseEntity.ok(benhnhanService.layHoSoYTeCaNhan(user.getIdBenhNhan()));
     }
 
     // CRUD Dị ứng bệnh nhân dùng chung cho cả Bác sĩ (UC-07) và Điều dưỡng (UC-03)
     @GetMapping("/{idBenhNhan}/di-ung")
-    public ResponseEntity<?> layDanhSachDiUng(@PathVariable String idBenhNhan,
-                                              HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
-        if (denied != null) return denied;
-        return execute(() -> benhnhanService.layDanhSachDiUng(idBenhNhan));
+    public ResponseEntity<List<MedicalRecordResponse.AllergyInfo>> layDanhSachDiUng(
+            @PathVariable String idBenhNhan,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
+        return ResponseEntity.ok(benhnhanService.layDanhSachDiUng(idBenhNhan));
     }
 
     @PostMapping("/{idBenhNhan}/di-ung")
-    public ResponseEntity<?> themHoacCapNhatDiUng(@PathVariable String idBenhNhan,
-                                                  @RequestBody BenhNhanDiUngRequest request,
-                                                  HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
-        if (denied != null) return denied;
-        return execute(() -> benhnhanService.themHoacCapNhatDiUng(idBenhNhan, request.getThanhPhan(), request.getGhiChu()));
+    public ResponseEntity<List<MedicalRecordResponse.AllergyInfo>> themHoacCapNhatDiUng(
+            @PathVariable String idBenhNhan,
+            @RequestBody BenhNhanDiUngRequest request,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
+        return ResponseEntity.ok(benhnhanService.themHoacCapNhatDiUng(idBenhNhan, request.getThanhPhan(), request.getGhiChu()));
     }
 
     @DeleteMapping("/{idBenhNhan}/di-ung")
-    public ResponseEntity<?> xoaDiUng(@PathVariable String idBenhNhan,
-                                      @RequestParam String thanhPhan,
-                                      HttpServletRequest httpRequest) {
-        ResponseEntity<?> denied = requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
-        if (denied != null) return denied;
-        return execute(() -> benhnhanService.xoaDiUng(idBenhNhan, thanhPhan));
+    public ResponseEntity<List<MedicalRecordResponse.AllergyInfo>> xoaDiUng(
+            @PathVariable String idBenhNhan,
+            @RequestParam String thanhPhan,
+            HttpServletRequest httpRequest) {
+        requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
+        return ResponseEntity.ok(benhnhanService.xoaDiUng(idBenhNhan, thanhPhan));
     }
 
     private LoginResponse currentUser(HttpServletRequest request) {
@@ -103,24 +95,14 @@ public class BenhNhanController {
         return user instanceof LoginResponse ? (LoginResponse) user : null;
     }
 
-    private ResponseEntity<?> requireRole(HttpServletRequest request, String... roles) {
+    private LoginResponse requireRole(HttpServletRequest request, String... roles) {
         LoginResponse user = currentUser(request);
-        if (user == null) return unauthorized();
-        for (String role : roles) if (role.equals(user.getVaiTro())) return null;
-        return forbidden();
-    }
-
-    private ResponseEntity<?> execute(Supplier<Object> action) {
-        try { return ResponseEntity.ok(action.get()); }
-        catch (IllegalStateException e) { return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage())); }
-        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
-    }
-
-    private ResponseEntity<?> unauthorized() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."));
-    }
-
-    private ResponseEntity<?> forbidden() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Bạn không có quyền truy cập tính năng này."));
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
+        }
+        for (String role : roles) {
+            if (role.equals(user.getVaiTro())) return user;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tính năng này.");
     }
 }
