@@ -345,3 +345,93 @@
   z-index: 1;
   background: #F8FAFC;
 }
+
+/* ==========================================================================
+   CRUD DỊ ỨNG BỆNH NHÂN (UC-07)
+   ========================================================================== */
+.allergy-count-badge {
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #FDE68A;
+}
+
+.allergy-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #FEE2E2;
+  color: #B91C1C;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #FECACA;
+}
+
+.allergy-btn-edit,
+.allergy-btn-delete {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid transparent;
+}
+
+.allergy-btn-edit {
+  background: #F1F5F9;
+  color: #334155;
+  border-color: #CBD5E1;
+}
+
+.allergy-btn-edit:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+.allergy-btn-delete {
+  background: #FFF1F2;
+  color: #E11D48;
+  border-color: #FECDD3;
+}
+
+.allergy-btn-delete:hover {
+  background: #FFE4E6;
+  color: #BE123C;
+}
+
+.allergy-chip {
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #475569;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.allergy-chip:hover {
+  background: #E0F2FE;
+  border-color: #7DD3FC;
+  color: #0369A1;
+}
+
+.allergy-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  background: #FAFAFA;
+  border-radius: 8px;
+  border: 1px dashed #E2E8F0;
+  margin: 1rem;
+}
+

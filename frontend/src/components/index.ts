@@ -11,6 +11,7 @@ export { StatusBadge } from './common/StatusBadge';
 export { Table } from './common/Table';
 export { Alert } from './common/Alert';
 export { AllergyWarning } from './common/AllergyWarning';
+export { AllergyManageModal } from './common/AllergyManageModal';
 export { PatientContextHeader } from './common/PatientContextHeader';
 export { PatientSummary } from './common/PatientSummary';
 
