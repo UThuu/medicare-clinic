@@ -12,6 +12,7 @@ export { Table } from './common/Table';
 export { Alert } from './common/Alert';
 export { AllergyWarning } from './common/AllergyWarning';
 export { PatientContextHeader } from './common/PatientContextHeader';
+export { PatientSummary } from './common/PatientSummary';
 
 export { Header } from './layout/Header';
 export { MainLayout } from './layout/MainLayout';

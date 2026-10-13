@@ -347,11 +347,14 @@ export const PatientRecord: React.FC = () => {
                 {activeTab === 'don_thuoc' && (
                     <div className="bottom-row">
                         <div className="card history-card" style={{ flex: 1 }}>
-                            <div className="card-header">
+                            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h3>ĐƠN THUỐC ĐÃ KÊ</h3>
+                                <Button variant="primary" onClick={() => navigate(`/staff/medical-record/${idLuotKham}/prescription`)}>
+                                    Kê đơn / Xem đơn thuốc →
+                                </Button>
                             </div>
                             <div className="card-body" style={{ padding: '1rem' }}>
-                                <p style={{ color: '#64748B' }}>Tính năng hiển thị chi tiết đơn thuốc đang được cập nhật.</p>
+                                <p style={{ color: '#64748B' }}>Nhấn nút phía trên để xem chi tiết hoặc thực hiện kê đơn thuốc cho bệnh nhân.</p>
                             </div>
                         </div>
                     </div>

@@ -15,6 +15,7 @@ import { StaffDashboard } from './pages/StaffDashboard';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
 import { RecordExamResult } from './pages/RecordExamResult';
+import { DoctorPrescription } from './pages/DoctorPrescription';
 
 import { CashierBillingPage } from './pages/cashier/CashierBillingPage';
 import { HoaDonTraCuu } from './pages/HoaDonTraCuu';
@@ -161,6 +162,14 @@ const App: React.FC = () => {
                     element={
                         <ProtectedRoute allowedRoles={['BAC_SI']}>
                             <RecordExamResult />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/staff/medical-record/:id/prescription"
+                    element={
+                        <ProtectedRoute allowedRoles={['BAC_SI']}>
+                            <DoctorPrescription />
                         </ProtectedRoute>
                     }
                 />

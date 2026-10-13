@@ -236,6 +236,9 @@ export const RecordExamResult: React.FC = () => {
                         <Button variant="primary" onClick={handleSave} disabled={!canEdit || isSaving}>
                             {isSaving ? 'Đang lưu...' : 'Lưu kết quả khám'}
                         </Button>
+                        <Button variant="secondary" onClick={() => navigate(`/staff/medical-record/${idLuotKham}/prescription`)}>
+                            Kê đơn thuốc →
+                        </Button>
                     </div>
                 </Card>
             </div>

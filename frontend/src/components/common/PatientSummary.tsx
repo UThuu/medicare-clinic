@@ -15,9 +15,13 @@ export const PatientSummary: React.FC<PatientSummaryProps> = ({
     idBenhNhan, hoTen, ngaySinh, gioiTinh, soDienThoai, diaChi, trangThaiLuotKham
 }) => {
     const calculateAge = (dob: string) => {
-        const diff_ms = Date.now() - new Date(dob).getTime();
+        if (!dob) return null;
+        const parsed = new Date(dob).getTime();
+        if (isNaN(parsed)) return null;
+        const diff_ms = Date.now() - parsed;
         const age_dt = new Date(diff_ms); 
-        return Math.abs(age_dt.getUTCFullYear() - 1970);
+        const age = Math.abs(age_dt.getUTCFullYear() - 1970);
+        return isNaN(age) ? null : age;
     };
 
     return (
@@ -64,7 +68,7 @@ export const PatientSummary: React.FC<PatientSummaryProps> = ({
                                 <line x1="8" y1="2" x2="8" y2="6"></line>
                                 <line x1="3" y1="10" x2="21" y2="10"></line>
                             </svg>
-                            <span>{calculateAge(ngaySinh)} tuổi</span>
+                            <span>{calculateAge(ngaySinh) !== null ? `${calculateAge(ngaySinh)} tuổi` : '—'}</span>
                         </div>
                         <div className="mc-patient-summary__meta-item">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
