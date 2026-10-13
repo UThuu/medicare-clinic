@@ -56,7 +56,7 @@ export const DoctorSchedule: React.FC = () => {
     setError(null);
 
     try {
-      const data = await scheduleService.getWaitingPatients(targetDate);
+      const data = await scheduleService.getDoctorSchedule(targetDate);
 
       data.sort((a, b) => {
         if (a.gioKham !== b.gioKham) {
@@ -251,7 +251,7 @@ export const DoctorSchedule: React.FC = () => {
     {
       key: 'benhNhan',
       header: 'Bệnh nhân',
-      width: '35%',
+      width: '28%',
       render: (r) => renderClickable(
         <div>
           <strong style={{ display: 'block', color: '#111' }}>{r.tenBenhNhan}</strong>
@@ -276,7 +276,7 @@ export const DoctorSchedule: React.FC = () => {
     {
       key: 'sinhHieu',
       header: 'Sinh hiệu',
-      width: '20%',
+      width: '18%',
       render: (r) => {
         const idLuotKham = r.idLuotKham;
         const shAsync = idLuotKham ? sinhHieuTheoLuotKham[idLuotKham] : null;
@@ -311,8 +311,8 @@ export const DoctorSchedule: React.FC = () => {
     {
       key: 'trangThai',
       header: 'Trạng thái',
-      width: '15%',
-      align: 'right',
+      width: '12%',
+      align: 'center',
       render: (r) => {
         const status = getStatusDisplay(
             r.trangThaiLichKham,
@@ -324,6 +324,26 @@ export const DoctorSchedule: React.FC = () => {
             r.idLichKham
         );
       },
+    },
+    {
+      key: 'thaoTac',
+      header: 'Thao tác',
+      width: '12%',
+      align: 'center',
+      render: (r) => (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <Button
+            variant="primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/staff/medical-record/${r.idLichKham}`);
+            }}
+            style={{ padding: '6px 14px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          >
+            Khám bệnh
+          </Button>
+        </div>
+      ),
     },
   ];
 
