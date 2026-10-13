@@ -1,19 +1,16 @@
 package com.medicare.clinic.controller;
 
-import com.medicare.clinic.service.interfaces.IAuthService;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import lombok.RequiredArgsConstructor;
-
 import com.medicare.clinic.dto.request.LoginRequest;
 import com.medicare.clinic.dto.response.LoginResponse;
+import com.medicare.clinic.service.interfaces.IAuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.Collections;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,11 +19,10 @@ public class AuthController {
     private final IAuthService authService;
     
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         if (request.getTenDangNhap() == null || request.getTenDangNhap().trim().isEmpty() || 
             request.getMatKhau() == null || request.getMatKhau().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Collections.singletonMap("message", "Tên đăng nhập và mật khẩu không được để trống."));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập và mật khẩu không được để trống.");
         }
 
         try {
@@ -43,24 +39,22 @@ public class AuthController {
             
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("message", "Thông tin đăng nhập không hợp lệ hoặc tài khoản không hoạt động."));
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thông tin đăng nhập không hợp lệ hoặc tài khoản không hoạt động.");
         }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMe(HttpServletRequest httpRequest) {
+    public ResponseEntity<LoginResponse> getMe(HttpServletRequest httpRequest) {
         HttpSession session = httpRequest.getSession(false);
         if (session != null) {
             Object authUser = session.getAttribute("AUTH_USER");
-            if (authUser instanceof LoginResponse) {
+            if (authUser instanceof LoginResponse loginResponse) {
                 return ResponseEntity.ok()
-                        .header("Cache-Control", "no-store")
-                        .body((LoginResponse) authUser);
+                        .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .body(loginResponse);
             }
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Collections.singletonMap("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."));
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
     }
 
     @PostMapping("/logout")
@@ -70,7 +64,7 @@ public class AuthController {
             session.invalidate();
         }
         return ResponseEntity.noContent()
-                .header("Cache-Control", "no-store")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .build();
     }
 }

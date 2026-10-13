@@ -18,10 +18,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -35,17 +35,13 @@ public class LuotKhamController {
 
     private final ILuotKhamService luotKhamService;
 
-    private LoginResponse layNguoiDungDangNhap(
-            HttpServletRequest request
-    ) {
+    private LoginResponse layNguoiDungDangNhap(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
-
         if (session == null) {
             return null;
         }
 
         Object authUser = session.getAttribute("AUTH_USER");
-
         if (!(authUser instanceof LoginResponse)) {
             return null;
         }
@@ -53,80 +49,35 @@ public class LuotKhamController {
         return (LoginResponse) authUser;
     }
 
-    private ResponseEntity<?> loi(
-            HttpStatus status,
-            String message
-    ) {
-        return ResponseEntity
-                .status(status)
-                .body(Collections.singletonMap("message", message));
-    }
-
-    private ResponseEntity<?> kiemTraQuyenLeTan(
-            HttpServletRequest request
-    ) {
+    private void kiemTraQuyenLeTan(HttpServletRequest request) {
         LoginResponse user = layNguoiDungDangNhap(request);
-
         if (user == null) {
-            return loi(
-                    HttpStatus.UNAUTHORIZED,
-                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
-            );
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
         }
-
         if (!"LE_TAN".equals(user.getVaiTro())) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Chỉ lễ tân mới được sử dụng chức năng tiếp nhận bệnh nhân."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ lễ tân mới được sử dụng chức năng tiếp nhận bệnh nhân.");
         }
-
-        return null;
     }
 
-    private ResponseEntity<?> kiemTraQuyenXemHangCho(
-            HttpServletRequest request
-    ) {
+    private void kiemTraQuyenXemHangCho(HttpServletRequest request) {
         LoginResponse user = layNguoiDungDangNhap(request);
-
         if (user == null) {
-            return loi(
-                    HttpStatus.UNAUTHORIZED,
-                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
-            );
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
         }
-
         String vaiTro = user.getVaiTro();
         if (!"DIEU_DUONG".equals(vaiTro) && !"LE_TAN".equals(vaiTro)) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Chỉ điều dưỡng và lễ tân mới được xem danh sách bệnh nhân chờ."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ điều dưỡng và lễ tân mới được xem danh sách bệnh nhân chờ.");
         }
-
-        return null;
     }
 
-    private ResponseEntity<?> kiemTraQuyenDieuDuong(
-            HttpServletRequest request
-    ) {
+    private void kiemTraQuyenDieuDuong(HttpServletRequest request) {
         LoginResponse user = layNguoiDungDangNhap(request);
-
         if (user == null) {
-            return loi(
-                    HttpStatus.UNAUTHORIZED,
-                    "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
-            );
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
         }
-
         if (!"DIEU_DUONG".equals(user.getVaiTro())) {
-            return loi(
-                    HttpStatus.FORBIDDEN,
-                    "Chỉ điều dưỡng mới được thực hiện thao tác này."
-            );
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ điều dưỡng mới được thực hiện thao tác này.");
         }
-
-        return null;
     }
 
     // =====================================================
@@ -134,26 +85,19 @@ public class LuotKhamController {
     // =====================================================
 
     @GetMapping("/cho-kham")
-    public ResponseEntity<?> xemDanhSachBenhNhanCho(
+    public ResponseEntity<List<BenhNhanChoResponse>> xemDanhSachBenhNhanCho(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate ngayKham,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> loiQuyen = kiemTraQuyenXemHangCho(httpRequest);
-        if (loiQuyen != null) {
-            return loiQuyen;
-        }
+        kiemTraQuyenXemHangCho(httpRequest);
 
         if (ngayKham == null) {
-            ngayKham = LocalDate.now(
-                    ZoneId.of("Asia/Ho_Chi_Minh")
-            );
+            ngayKham = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         }
 
-        List<BenhNhanChoResponse> ketQua =
-                luotKhamService.xemDanhSachBenhNhanCho(ngayKham);
-
+        List<BenhNhanChoResponse> ketQua = luotKhamService.xemDanhSachBenhNhanCho(ngayKham);
         return ResponseEntity.ok(ketQua);
     }
 
@@ -162,22 +106,13 @@ public class LuotKhamController {
     // =====================================================
 
     @PostMapping("/{idLuotKham}/xac-nhan")
-    public ResponseEntity<?> xacNhanBenhNhan(
+    public ResponseEntity<XacNhanBenhNhanResponse> xacNhanBenhNhan(
             @PathVariable String idLuotKham,
             @RequestBody TiepNhanBenhNhanRequest request,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> loiQuyen = kiemTraQuyenDieuDuong(httpRequest);
-        if (loiQuyen != null) {
-            return loiQuyen;
-        }
-
-        XacNhanBenhNhanResponse ketQua =
-                luotKhamService.xacNhanBenhNhan(
-                        idLuotKham,
-                        request
-                );
-
+        kiemTraQuyenDieuDuong(httpRequest);
+        XacNhanBenhNhanResponse ketQua = luotKhamService.xacNhanBenhNhan(idLuotKham, request);
         return ResponseEntity.ok(ketQua);
     }
 
@@ -186,7 +121,7 @@ public class LuotKhamController {
     // =====================================================
 
     @GetMapping("/tiep-nhan/tim-benh-nhan")
-    public ResponseEntity<?> timKiemBenhNhan(
+    public ResponseEntity<List<TimBenhNhanResponse>> timKiemBenhNhan(
             @RequestParam(required = false) String soDienThoai,
             @RequestParam(required = false) String hoTen,
             @RequestParam(required = false)
@@ -194,20 +129,8 @@ public class LuotKhamController {
             LocalDate ngaySinh,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> loiQuyen =
-                kiemTraQuyenLeTan(httpRequest);
-
-        if (loiQuyen != null) {
-            return loiQuyen;
-        }
-
-        List<TimBenhNhanResponse> ketQua =
-                luotKhamService.timKiemBenhNhan(
-                        soDienThoai,
-                        hoTen,
-                        ngaySinh
-                );
-
+        kiemTraQuyenLeTan(httpRequest);
+        List<TimBenhNhanResponse> ketQua = luotKhamService.timKiemBenhNhan(soDienThoai, hoTen, ngaySinh);
         return ResponseEntity.ok(ketQua);
     }
 
@@ -216,25 +139,15 @@ public class LuotKhamController {
     // =====================================================
 
     @GetMapping("/tiep-nhan/benh-nhan/{idBenhNhan}/lich-hom-nay")
-    public ResponseEntity<?> xemLichKhamTrongNgay(
+    public ResponseEntity<List<LichKhamTiepNhanResponse>> xemLichKhamTrongNgay(
             @PathVariable String idBenhNhan,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> loiQuyen =
-                kiemTraQuyenLeTan(httpRequest);
-
-        if (loiQuyen != null) {
-            return loiQuyen;
-        }
-
-        List<LichKhamTiepNhanResponse> ketQua =
-                luotKhamService.xemLichKhamTrongNgay(
-                        idBenhNhan,
-                        LocalDate.now(
-                                ZoneId.of("Asia/Ho_Chi_Minh")
-                        )
-                );
-
+        kiemTraQuyenLeTan(httpRequest);
+        List<LichKhamTiepNhanResponse> ketQua = luotKhamService.xemLichKhamTrongNgay(
+                idBenhNhan,
+                LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))
+        );
         return ResponseEntity.ok(ketQua);
     }
 
@@ -243,20 +156,12 @@ public class LuotKhamController {
     // =====================================================
 
     @PostMapping("/tiep-nhan")
-    public ResponseEntity<?> tiepNhanBenhNhan(
+    public ResponseEntity<TiepNhanBenhNhanResponse> tiepNhanBenhNhan(
             @RequestBody TiepNhanBenhNhanRequest request,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> loiQuyen =
-                kiemTraQuyenLeTan(httpRequest);
-
-        if (loiQuyen != null) {
-            return loiQuyen;
-        }
-
-        TiepNhanBenhNhanResponse ketQua =
-                luotKhamService.tiepNhanBenhNhan(request);
-
+        kiemTraQuyenLeTan(httpRequest);
+        TiepNhanBenhNhanResponse ketQua = luotKhamService.tiepNhanBenhNhan(request);
         return ResponseEntity.ok(ketQua);
     }
 }

@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/doctor/schedules")
@@ -29,30 +29,11 @@ public class DoctorScheduleController {
     private final IScheduleService scheduleService;
 
     @GetMapping
-    public ResponseEntity<?> getDoctorSchedules(
+    public ResponseEntity<List<DoctorScheduleResponse>> getDoctorSchedules(
             @RequestParam(value = "date", required = false) String dateStr,
             HttpServletRequest request) {
 
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("AUTH_USER") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực."));
-        }
-
-        Object authObj = session.getAttribute("AUTH_USER");
-        if (!(authObj instanceof LoginResponse)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực."));
-        }
-
-        LoginResponse user = (LoginResponse) authObj;
-        if (!"BAC_SI".equals(user.getVaiTro())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .body(Map.of("message", "Bạn không có quyền truy cập tính năng này."));
-        }
+        LoginResponse user = requireDoctor(request);
 
         LocalDate ngayKham;
         if (dateStr == null || dateStr.trim().isEmpty()) {
@@ -61,9 +42,7 @@ public class DoctorScheduleController {
             try {
                 ngayKham = LocalDate.parse(dateStr);
             } catch (DateTimeParseException e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .body(Map.of("message", "Ngày khám không đúng định dạng yyyy-MM-dd."));
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ngày khám không đúng định dạng yyyy-MM-dd.");
             }
         }
 
@@ -76,30 +55,11 @@ public class DoctorScheduleController {
 
     // Danh sách chờ khám dùng chung với điều dưỡng; không lọc theo bác sĩ phụ trách.
     @GetMapping("/waiting")
-    public ResponseEntity<?> getWaitingPatients(
+    public ResponseEntity<List<DoctorScheduleResponse>> getWaitingPatients(
             @RequestParam(value = "date", required = false) String dateStr,
             HttpServletRequest request) {
 
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("AUTH_USER") == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực."));
-        }
-
-        Object authObj = session.getAttribute("AUTH_USER");
-        if (!(authObj instanceof LoginResponse)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .body(Map.of("message", "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực."));
-        }
-
-        LoginResponse user = (LoginResponse) authObj;
-        if (!"BAC_SI".equals(user.getVaiTro())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .body(Map.of("message", "Bạn không có quyền truy cập tính năng này."));
-        }
+        requireDoctor(request);
 
         LocalDate ngayKham;
         if (dateStr == null || dateStr.trim().isEmpty()) {
@@ -108,9 +68,7 @@ public class DoctorScheduleController {
             try {
                 ngayKham = LocalDate.parse(dateStr);
             } catch (DateTimeParseException e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                        .body(Map.of("message", "Ngày khám không đúng định dạng yyyy-MM-dd."));
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ngày khám không đúng định dạng yyyy-MM-dd.");
             }
         }
 
@@ -120,4 +78,21 @@ public class DoctorScheduleController {
                 .body(waiting != null ? waiting : Collections.emptyList());
     }
 
+    private LoginResponse requireDoctor(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("AUTH_USER") == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực.");
+        }
+
+        Object authObj = session.getAttribute("AUTH_USER");
+        if (!(authObj instanceof LoginResponse user)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn. Yêu cầu xác thực.");
+        }
+
+        if (!"BAC_SI".equals(user.getVaiTro())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tính năng này.");
+        }
+
+        return user;
+    }
 }
