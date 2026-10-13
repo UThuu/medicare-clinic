@@ -23,6 +23,8 @@ public interface LuotKhamRepository
 
     boolean existsByLichKham_IdLichKham(String idLichKham);
 
+    java.util.Optional<LuotKham> findByLichKham_IdLichKham(String idLichKham);
+
     @Query("SELECT l FROM LuotKham l " +
            "JOIN FETCH l.lichKham lk " +
            "JOIN FETCH lk.bacSi bs " +

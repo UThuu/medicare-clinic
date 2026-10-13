@@ -1,0 +1,699 @@
+/* ========================================================
+   DOCTOR PRESCRIPTION STYLES (UC-11, UC-12, UC-13, UC-14)
+   Đồng bộ 100% với bố cục chuẩn Hồ sơ bệnh nhân (UC-07)
+   ======================================================== */
+
+.dp-page {
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem 1.5rem 0.8rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  max-height: calc(100vh - 64px);
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  gap: 8px;
+  font-family: inherit;
+  color: #1e293b;
+}
+
+/* Navigation Row */
+.dp-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding: 0.1rem 0;
+}
+
+.dp-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.dp-bc-link {
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.dp-bc-link:hover {
+  color: #0f766e;
+}
+
+.dp-bc-sep {
+  color: #94a3b8;
+}
+
+.dp-bc-current {
+  color: #334155;
+  font-weight: 600;
+}
+
+.dp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: opacity 0.2s;
+}
+
+.dp-back-btn:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Post-Save Success / Error Banner */
+.dp-success-banner {
+  flex: 0 0 auto;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 6px rgba(22, 101, 52, 0.05);
+}
+
+.dp-success-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dp-success-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.dp-success-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #15803d;
+  margin: 0;
+}
+
+.dp-success-desc {
+  font-size: 12px;
+  color: #166534;
+  margin: 0;
+}
+
+.dp-success-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dp-banner-btn-print {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #16a34a;
+  color: #15803d;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dp-banner-btn-print:hover {
+  background: #dcfce7;
+}
+
+.dp-banner-btn-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #16a34a;
+  border: 1px solid #16a34a;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dp-banner-btn-next:hover {
+  background: #15803d;
+}
+
+/* Patient Summary Wrapper (Chuẩn thước đo vị trí) */
+.dp-patient-summary-wrapper {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/* Dual Column Cards (Clinical Info + Allergy Info) */
+.dp-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.dp-info-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  min-width: 0;
+}
+
+.dp-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.dp-section-badge--clinical {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.dp-section-badge--allergy {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.dp-section-badge--prescription {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.dp-clinical-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+  font-size: 13px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dp-clinical-item strong {
+  min-width: 80px;
+  color: #1e293b;
+}
+
+.dp-allergy-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.dp-allergy-tag {
+  display: inline-block;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 3px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dp-allergy-empty {
+  color: #64748b;
+  font-size: 12.5px;
+  margin: 3px 0 0;
+}
+
+/* Card 3: Chi tiết đơn thuốc (Takes remaining height, fixed footer) */
+.dp-prescription-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 18px 10px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dp-prescription-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin-bottom: 6px;
+}
+
+.dp-prescription-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Empty State */
+.dp-empty-box {
+  flex: 1;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 30px 20px;
+  text-align: center;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.dp-empty-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ccfbf1;
+  color: #0f766e;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.dp-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.dp-empty-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 14px;
+}
+
+/* Fixed Table Header (Cố định, không cuộn) */
+.dp-table-header {
+  display: grid;
+  grid-template-columns: minmax(180px, 2.5fr) minmax(65px, 0.8fr) minmax(75px, 0.9fr) minmax(105px, 1.3fr) minmax(150px, 2fr) minmax(50px, 0.6fr);
+  gap: 10px;
+  padding: 6px 8px 6px 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+  flex: 0 0 auto;
+}
+
+/* PHẠM VI SCROLL: Chỉ cuộn danh sách các dòng thuốc (Ảnh 4) */
+.dp-med-scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  padding-top: 6px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dp-med-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dp-med-scroll-area::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+.dp-med-scroll-area::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.dp-med-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dp-med-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dp-med-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dp-med-inputs {
+  display: grid;
+  grid-template-columns: minmax(180px, 2.5fr) minmax(65px, 0.8fr) minmax(75px, 0.9fr) minmax(105px, 1.3fr) minmax(150px, 2fr) minmax(50px, 0.6fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.dp-med-inputs > div {
+  min-width: 0;
+}
+
+.dp-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  transition: all 0.2s;
+}
+
+.dp-input:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+}
+
+.dp-input--warning {
+  border-color: #f59e0b !important;
+  background-color: #fffdf5;
+}
+
+.dp-unit-box {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 7px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  font-size: 12.5px;
+  color: #334155;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dp-del-btn {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 7px 4px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.dp-del-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* Allergy Warning Box */
+.dp-warning-box {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 2px;
+}
+
+.dp-warning-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dp-warning-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fef3c7;
+  border: 1.5px solid #f59e0b;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dp-warning-heading {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.dp-warning-desc {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #78350f;
+}
+
+.dp-warning-form {
+  margin-top: 8px;
+}
+
+.dp-warning-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+
+.dp-warning-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.dp-reason-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12.5px;
+}
+
+.dp-btn-change-med {
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.dp-btn-change-med:hover {
+  background: #f1f5f9;
+}
+
+.dp-btn-confirm-override {
+  padding: 7px 14px;
+  border: none;
+  background: #0f766e;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.dp-btn-confirm-override:hover {
+  background: #115e59;
+}
+
+.dp-btn-confirm-override:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.dp-warning-badge-resolved {
+  display: inline-block;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.dp-warning-note {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Nút thêm thuốc */
+.dp-add-med-btn {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  background: #ccfbf1;
+  color: #0f766e;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.dp-add-med-btn:hover {
+  background: #99f6e4;
+}
+
+/* Footer Section CỐ ĐỊNH Ở ĐÁY CARD (KHÔNG BỊ CUỘN) */
+.dp-footer-section {
+  flex: 0 0 auto;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 8px;
+  margin-top: auto;
+}
+
+.dp-note-wrap {
+  margin-bottom: 8px;
+}
+
+.dp-note-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.dp-note-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.dp-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dp-btn-reset {
+  padding: 8px 16px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dp-btn-reset:hover {
+  background: #f8fafc;
+}
+
+.dp-btn-submit {
+  padding: 8px 20px;
+  border: none;
+  background: #0f766e;
+  color: #ffffff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dp-btn-submit:hover:not(:disabled) {
+  background: #115e59;
+}
+
+.dp-btn-submit:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .dp-two-cols {
+    grid-template-columns: 1fr;
+  }
+}
