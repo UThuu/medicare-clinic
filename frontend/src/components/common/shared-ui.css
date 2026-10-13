@@ -26,8 +26,8 @@
 }
 
 * { box-sizing: border-box; }
-.mc-app { min-height: 100vh; font-family: var(--mc-font); color: var(--mc-neutral-900); background: var(--mc-neutral-50); font-size: 15px; line-height: 24px; }
-.mc-header { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--mc-neutral-0); border-bottom: 1px solid var(--mc-neutral-200); }
+.mc-app { height: 100vh; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: var(--mc-font); color: var(--mc-neutral-900); background: var(--mc-neutral-50); font-size: 15px; line-height: 24px; }
+.mc-header { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: var(--mc-neutral-0); border-bottom: 1px solid var(--mc-neutral-200); z-index: 100; }
 .mc-brand, .mc-user { display: flex; align-items: center; gap: 10px; }
 .mc-brand__mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: var(--mc-primary-500); color: white; font-weight: 700; font-size: 22px; }
 .mc-brand__name { font-weight: 700; line-height: 20px; }
@@ -36,8 +36,8 @@
 .mc-user span:not(.mc-avatar) { color: var(--mc-neutral-600); font-size: 12px; }
 .mc-avatar { border-radius: 50%; display: inline-grid; place-items: center; background: var(--mc-neutral-100); color: var(--mc-neutral-500); }
 .mc-avatar--sm { width: 36px; height: 36px; }
-.mc-shell { display: flex; min-height: calc(100vh - 64px); }
-.mc-sidebar { display: flex; flex-direction: column; width: 160px; flex: 0 0 160px; background: var(--mc-neutral-0); border-right: 1px solid var(--mc-neutral-200); padding: 24px 10px; }
+.mc-shell { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+.mc-sidebar { display: flex; flex-direction: column; width: 160px; flex: 0 0 160px; height: 100%; background: var(--mc-neutral-0); border-right: 1px solid var(--mc-neutral-200); padding: 24px 10px; box-sizing: border-box; overflow-y: auto; }
 /* Shared sidebar footer for staff and customer layouts. */
 .mc-sidebar nav { flex: 1; }
 .mc-sidebar__logout { display: flex; align-items: center; gap: 14px; padding: 16px 14px; margin-top: 24px; border: 0; border-radius: 8px; background: transparent; font: inherit; color: var(--mc-neutral-800); text-align: left; cursor: pointer; }
@@ -48,7 +48,7 @@
 .mc-sidebar__item { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; margin-bottom: 4px; border-left: 3px solid transparent; border-radius: 0 8px 8px 0; color: var(--mc-neutral-800); text-decoration: none; }
 .mc-sidebar__item:hover { background: var(--mc-neutral-50); }
 .mc-sidebar__item.is-active { border-left-color: var(--mc-primary-500); background: var(--mc-primary-50); color: var(--mc-primary-700); font-weight: 700; }
-.mc-main { flex: 1; min-width: 0; padding: 32px; }
+.mc-main { flex: 1; min-width: 0; height: 100%; overflow-y: auto; padding: 24px 32px; box-sizing: border-box; }
 
 /* =========================================================
    BUTTON

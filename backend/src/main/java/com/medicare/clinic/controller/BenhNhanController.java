@@ -70,6 +70,14 @@ public class BenhNhanController {
     }
 
     // CRUD Dị ứng bệnh nhân dùng chung cho cả Bác sĩ (UC-07) và Điều dưỡng (UC-03)
+    @GetMapping("/{idBenhNhan}/di-ung")
+    public ResponseEntity<?> layDanhSachDiUng(@PathVariable String idBenhNhan,
+                                              HttpServletRequest httpRequest) {
+        ResponseEntity<?> denied = requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
+        if (denied != null) return denied;
+        return execute(() -> benhnhanService.layDanhSachDiUng(idBenhNhan));
+    }
+
     @PostMapping("/{idBenhNhan}/di-ung")
     public ResponseEntity<?> themHoacCapNhatDiUng(@PathVariable String idBenhNhan,
                                                   @RequestBody BenhNhanDiUngRequest request,
