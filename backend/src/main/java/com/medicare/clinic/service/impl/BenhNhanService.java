@@ -23,13 +23,42 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
+import com.medicare.clinic.dto.response.HoSoYTeCaNhanResponse;
+import com.medicare.clinic.entity.*;
+import com.medicare.clinic.repository.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
-@RequiredArgsConstructor
 public class BenhNhanService implements IBenhNhanService {
 
     private static final ZoneId ZONE_VIETNAM = ZoneId.of("Asia/Ho_Chi_Minh");
     private final BenhNhanRepository benhNhanRepository;
     private final LichKhamRepository lichKhamRepository;
+    private final LuotKhamRepository luotKhamRepository;
+    private final BenhNhanDiUngRepository benhNhanDiUngRepository;
+    private final SinhHieuRepository sinhHieuRepository;
+    private final DonThuocRepository donThuocRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BenhNhanService(BenhNhanRepository benhNhanRepository,
+                           LichKhamRepository lichKhamRepository,
+                           LuotKhamRepository luotKhamRepository,
+                           BenhNhanDiUngRepository benhNhanDiUngRepository,
+                           SinhHieuRepository sinhHieuRepository,
+                           DonThuocRepository donThuocRepository) {
+        this.benhNhanRepository = benhNhanRepository;
+        this.lichKhamRepository = lichKhamRepository;
+        this.luotKhamRepository = luotKhamRepository;
+        this.benhNhanDiUngRepository = benhNhanDiUngRepository;
+        this.sinhHieuRepository = sinhHieuRepository;
+        this.donThuocRepository = donThuocRepository;
+    }
+
+    public BenhNhanService(BenhNhanRepository benhNhanRepository, LichKhamRepository lichKhamRepository) {
+        this(benhNhanRepository, lichKhamRepository, null, null, null, null);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -202,5 +231,134 @@ public class BenhNhanService implements IBenhNhanService {
         item.setHoTenBacSi(appointment.getBacSi().getNhanVien() == null ? null : appointment.getBacSi().getNhanVien().getHoTen());
         item.setNgayKham(appointment.getNgayKham()); item.setGioKham(appointment.getGioKham());
         item.setTrangThaiLichKham(appointment.getTrangThai());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public HoSoYTeCaNhanResponse layHoSoYTeCaNhan(String idBenhNhan) {
+        if (idBenhNhan == null || idBenhNhan.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã bệnh nhân không được để trống.");
+        }
+
+        BenhNhan patient = benhNhanRepository.findById(idBenhNhan.trim())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ bệnh nhân."));
+
+        // Thông tin hành chính
+        HoSoYTeCaNhanResponse.ThongTinBenhNhanDTO patientDTO = HoSoYTeCaNhanResponse.ThongTinBenhNhanDTO.builder()
+                .idBenhNhan(patient.getIdBenhNhan())
+                .hoTen(patient.getHoTen())
+                .ngaySinh(patient.getNgaySinh())
+                .gioiTinh(patient.getGioiTinh())
+                .soDienThoai(patient.getSoDienThoai())
+                .diaChi(patient.getDiaChi())
+                .build();
+
+        // Tiền sử dị ứng
+        List<BenhNhanDiUng> diUngList = benhNhanDiUngRepository.findByBenhNhan_IdBenhNhan(patient.getIdBenhNhan());
+        List<HoSoYTeCaNhanResponse.DiUngDTO> diUngDTOs = diUngList.stream()
+                .map(d -> HoSoYTeCaNhanResponse.DiUngDTO.builder()
+                        .thanhPhan(d.getId() != null ? d.getId().getThanhPhan() : "")
+                        .ghiChu(d.getGhiChu())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Sinh hiệu
+        List<SinhHieu> vitalsList = sinhHieuRepository.findLatestByBenhNhanId(patient.getIdBenhNhan(), org.springframework.data.domain.Pageable.unpaged());
+        List<HoSoYTeCaNhanResponse.SinhHieuDTO> sinhHieuDTOs = vitalsList.stream()
+                .map(sh -> HoSoYTeCaNhanResponse.SinhHieuDTO.builder()
+                        .idLuotKham(sh.getLuotKham() != null ? sh.getLuotKham().getIdLuotKham() : null)
+                        .huyetApTamThu(sh.getHuyetApTamThu())
+                        .huyetApTamTruong(sh.getHuyetApTamTruong())
+                        .canNang(sh.getCanNang())
+                        .nhietDo(sh.getNhietDo())
+                        .thoiDiemDo(sh.getThoiDiemDo())
+                        .build())
+                .collect(Collectors.toList());
+
+        Map<String, HoSoYTeCaNhanResponse.SinhHieuDTO> vitalsMap = sinhHieuDTOs.stream()
+                .filter(sh -> sh.getIdLuotKham() != null)
+                .collect(Collectors.toMap(
+                        HoSoYTeCaNhanResponse.SinhHieuDTO::getIdLuotKham,
+                        sh -> sh,
+                        (existing, replacement) -> existing));
+
+        // Lịch sử khám
+        List<LuotKham> visits = luotKhamRepository.findAllByBenhNhanId(patient.getIdBenhNhan());
+        List<String> visitIds = visits.stream().map(LuotKham::getIdLuotKham).collect(Collectors.toList());
+
+        Map<String, DonThuoc> donThuocMap = Collections.emptyMap();
+        if (!visitIds.isEmpty()) {
+            List<DonThuoc> donThuocList = donThuocRepository.findWithDetailsByLuotKham_IdLuotKhamIn(visitIds);
+            donThuocMap = donThuocList.stream()
+                    .filter(dt -> dt.getLuotKham() != null)
+                    .collect(Collectors.toMap(
+                            dt -> dt.getLuotKham().getIdLuotKham(),
+                            dt -> dt,
+                            (existing, replacement) -> existing));
+        }
+
+        final Map<String, DonThuoc> finalDonThuocMap = donThuocMap;
+        List<HoSoYTeCaNhanResponse.LichSuKhamDTO> lichSuKhamDTOs = visits.stream().map(v -> {
+            LichKham lk = v.getLichKham();
+            String bacSiName = (lk != null && lk.getBacSi() != null && lk.getBacSi().getNhanVien() != null)
+                    ? lk.getBacSi().getNhanVien().getHoTen() : "";
+            String chuyenKhoa = (lk != null && lk.getBacSi() != null)
+                    ? lk.getBacSi().getChuyenKhoa() : "";
+
+            // REQ-014: Chỉ gắn đơn thuốc và kết quả chẩn đoán chính thức khi khám hoàn tất
+            boolean isHoanTat = v.getTrangThai() == com.medicare.clinic.entity.enums.TrangThaiLuotKham.HOAN_TAT;
+            HoSoYTeCaNhanResponse.DonThuocDTO donThuocDTO = null;
+
+            if (isHoanTat && finalDonThuocMap.containsKey(v.getIdLuotKham())) {
+                DonThuoc dt = finalDonThuocMap.get(v.getIdLuotKham());
+                List<HoSoYTeCaNhanResponse.ChiTietThuocDTO> chiTietList = Collections.emptyList();
+                if (dt.getChiTietDonThuocs() != null) {
+                    chiTietList = dt.getChiTietDonThuocs().stream().map(ct -> {
+                        Thuoc thuoc = ct.getThuoc();
+                        return HoSoYTeCaNhanResponse.ChiTietThuocDTO.builder()
+                                .idThuoc(thuoc != null ? thuoc.getIdThuoc() : null)
+                                .tenThuoc(thuoc != null ? thuoc.getTenThuoc() : "Thuốc")
+                                .donViTinh(thuoc != null ? thuoc.getDonViTinh() : "Đơn vị")
+                                .soLuong(ct.getSoLuong())
+                                .lieuLuong(ct.getLieuLuong())
+                                .huongDanSuDung(ct.getHuongDanSuDung())
+                                .donGia(ct.getDonGia())
+                                .thanhTien(ct.tinhThanhTien())
+                                .build();
+                    }).collect(Collectors.toList());
+                }
+
+                donThuocDTO = HoSoYTeCaNhanResponse.DonThuocDTO.builder()
+                        .idDonThuoc(dt.getId())
+                        .ngayKe(dt.getNgayKe())
+                        .ghiChu(dt.getGhiChu())
+                        .chiTiet(chiTietList)
+                        .build();
+            }
+
+            return HoSoYTeCaNhanResponse.LichSuKhamDTO.builder()
+                    .idLuotKham(v.getIdLuotKham())
+                    .idLichKham(lk != null ? lk.getIdLichKham() : null)
+                    .ngayKham(lk != null ? lk.getNgayKham() : null)
+                    .gioKham(lk != null ? lk.getGioKham() : null)
+                    .tenBacSi(bacSiName)
+                    .chuyenKhoa(chuyenKhoa)
+                    .lyDoKham(v.getLyDoKham())
+                    .trieuChung(v.getTrieuChung())
+                    .chanDoan(v.getChanDoan())
+                    .ketQuaKham(v.getKetQuaKham())
+                    .trangThai(v.getTrangThai())
+                    .sinhHieu(vitalsMap.get(v.getIdLuotKham()))
+                    .donThuoc(donThuocDTO)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return HoSoYTeCaNhanResponse.builder()
+                .benhNhan(patientDTO)
+                .diUng(diUngDTOs)
+                .sinhHieu(sinhHieuDTOs)
+                .lichSuKham(lichSuKhamDTOs)
+                .build();
     }
 }

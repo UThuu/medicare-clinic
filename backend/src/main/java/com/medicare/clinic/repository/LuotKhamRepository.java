@@ -32,6 +32,14 @@ public interface LuotKhamRepository
     List<LuotKham> findHistoryByBenhNhanId(
             @Param("idBenhNhan") String idBenhNhan, 
             @Param("currentLichKhamId") String currentLichKhamId);
+
+    @Query("SELECT l FROM LuotKham l " +
+           "JOIN FETCH l.lichKham lk " +
+           "JOIN FETCH lk.bacSi bs " +
+           "JOIN FETCH bs.nhanVien nv " +
+           "WHERE lk.benhNhan.idBenhNhan = :idBenhNhan " +
+           "ORDER BY lk.ngayKham DESC, lk.gioKham DESC")
+    List<LuotKham> findAllByBenhNhanId(@Param("idBenhNhan") String idBenhNhan);
     @Query("SELECT bs.maNv, nv.hoTen, bs.chuyenKhoa, bs.bangCap, " +
            "COUNT(l.idLuotKham), MAX(lk.ngayKham) " +
            "FROM LuotKham l " +

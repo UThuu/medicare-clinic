@@ -11,6 +11,7 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 
 import { Login } from './pages/Login';
 import { PatientDashboard } from './pages/PatientDashboard';
+import { HoSoYTeCaNhanPage } from './pages/HoSoYTeCaNhanPage';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { DoctorSchedule } from './pages/DoctorSchedule';
 import { PatientRecord } from './pages/PatientRecord';
@@ -98,6 +99,14 @@ const App: React.FC = () => {
                     element={
                         <ProtectedRoute allowedRoles={['BENH_NHAN']}>
                             <BenhNhanThongBaoLichKham />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/patient/ho-so-y-te"
+                    element={
+                        <ProtectedRoute allowedRoles={['BENH_NHAN']}>
+                            <HoSoYTeCaNhanPage />
                         </ProtectedRoute>
                     }
                 />

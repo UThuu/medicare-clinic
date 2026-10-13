@@ -9,7 +9,7 @@ import { PatientInvoicesCard } from './patient/PatientInvoicesCard';
 const functions: { kind: IconKind; title: string; description: string; action: string; available?: boolean }[] = [
   { kind: 'calendar', title: 'Đặt lịch khám', description: 'Chọn bác sĩ và thời gian phù hợp', action: 'Đặt lịch', available: true },
   { kind: 'bell', title: 'Thông báo', description: 'Xác nhận lịch hẹn và nhắc lịch khám', action: 'Xem thông báo', available: true },
-  { kind: 'record', title: 'Hồ sơ y tế', description: 'Lịch sử khám, chẩn đoán và đơn thuốc', action: 'Xem hồ sơ' },
+  { kind: 'record', title: 'Hồ sơ y tế', description: 'Lịch sử khám, chẩn đoán và đơn thuốc', action: 'Xem hồ sơ', available: true },
   { kind: 'payment', title: 'Thanh toán', description: 'Xem hóa đơn và thanh toán trực tuyến', action: 'Xem hóa đơn', available: true },
 ];
 
@@ -33,7 +33,12 @@ export function PatientDashboard() {
               </div>
               <div className="mc-patient-function__action">
                 <Button variant={item.available ? 'primary' : 'secondary'} disabled={!item.available}
-                  onClick={item.available ? () => navigate(item.kind === 'calendar' ? '/patient/dat-lich-kham' : item.kind === 'payment' ? '/patient/payment' : '/patient/thong-bao-lich-kham') : undefined}>{item.action}</Button>
+                  onClick={item.available ? () => navigate(
+                    item.kind === 'calendar' ? '/patient/dat-lich-kham' :
+                    item.kind === 'payment' ? '/patient/payment' :
+                    item.kind === 'record' ? '/patient/ho-so-y-te' :
+                    '/patient/thong-bao-lich-kham'
+                  ) : undefined}>{item.action}</Button>
                 {!item.available && <small>Chưa khả dụng</small>}
               </div>
             </Card>
