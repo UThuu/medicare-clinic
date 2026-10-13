@@ -209,18 +209,26 @@ export const DoctorPrescription: React.FC = () => {
     setSaveSuccess(null);
   };
 
+  // Ràng buộc nghiệp vụ: Bắt buộc phải có chẩn đoán trước khi kê đơn
+  const chuaCoChanDoan = !recordData?.chanDoan || recordData.chanDoan.trim() === '';
+
   // Kiểm tra tính hợp lệ trước khi hoàn tất / lưu đơn
   const hasActiveUnconfirmedAllergy = medRows.some(
     r => r.canhBaoDiUng && (!r.daXacNhanTiepTuc || !r.lyDoBoQuaCanhBao || r.lyDoBoQuaCanhBao.trim() === '')
   );
 
   const isFormValid =
+    !chuaCoChanDoan &&
     medRows.length > 0 &&
     medRows.every(r => r.idThuoc && r.soLuong > 0 && r.lieuLuong.trim()) &&
     !hasActiveUnconfirmedAllergy;
 
   // Lưu đơn thuốc (UC-11 Tạo mới hoặc UC-12 Cập nhật)
   const handleSubmit = async () => {
+    if (chuaCoChanDoan) {
+      setSaveError('Lượt khám chưa có chẩn đoán. Vui lòng ghi nhận kết quả khám và chẩn đoán trước khi kê đơn.');
+      return;
+    }
     if (!isFormValid || isSubmitting) return;
 
     try {
@@ -434,6 +442,26 @@ export const DoctorPrescription: React.FC = () => {
           </Card>
         </div>
 
+        {/* Cảnh báo khi chưa có chẩn đoán */}
+        {chuaCoChanDoan && (
+          <div style={{ marginBottom: '16px' }}>
+            <Alert tone="warning" title="Chưa có chẩn đoán kết quả khám">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '6px' }}>
+                <span style={{ fontSize: '14px', color: '#854D0E' }}>
+                  Lượt khám này chưa có kết luận chẩn đoán. Theo quy định khám bệnh, bác sĩ cần hoàn tất kết quả khám và chẩn đoán trước khi kê đơn thuốc.
+                </span>
+                <Button
+                  variant="primary"
+                  onClick={() => navigate(`/staff/medical-record/${idLuotKham}/record-exam`)}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  ← Đi đến Ghi nhận kết quả khám
+                </Button>
+              </div>
+            </Alert>
+          </div>
+        )}
+
         {/* Card 3: Chi tiết đơn thuốc */}
         <Card className="dp-prescription-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
@@ -461,8 +489,19 @@ export const DoctorPrescription: React.FC = () => {
             <div className="dp-empty-box">
               <div className="dp-empty-icon">+</div>
               <h3 className="dp-empty-title">Chưa có thuốc nào trong đơn</h3>
-              <p className="dp-empty-desc">Nhấn "+ Thêm thuốc" để bắt đầu kê đơn.</p>
-              <button type="button" className="dp-add-med-btn" onClick={handleAddMedRow}>
+              <p className="dp-empty-desc">
+                {chuaCoChanDoan
+                  ? 'Vui lòng hoàn tất chẩn đoán khám bệnh trước khi bắt đầu kê đơn.'
+                  : 'Nhấn "+ Thêm thuốc" để bắt đầu kê đơn.'}
+              </p>
+              <button
+                type="button"
+                className="dp-add-med-btn"
+                onClick={handleAddMedRow}
+                disabled={chuaCoChanDoan}
+                style={chuaCoChanDoan ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                title={chuaCoChanDoan ? 'Cần ghi nhận chẩn đoán trước khi thêm thuốc' : undefined}
+              >
                 + Thêm thuốc
               </button>
             </div>
@@ -614,7 +653,14 @@ export const DoctorPrescription: React.FC = () => {
                 </div>
 
                 {/* Nút thêm thuốc nằm trong phạm vi scroll */}
-                <button type="button" className="dp-add-med-btn" onClick={handleAddMedRow}>
+                <button
+                  type="button"
+                  className="dp-add-med-btn"
+                  onClick={handleAddMedRow}
+                  disabled={chuaCoChanDoan}
+                  style={chuaCoChanDoan ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                  title={chuaCoChanDoan ? 'Cần ghi nhận chẩn đoán trước khi thêm thuốc' : undefined}
+                >
                   + Thêm thuốc
                 </button>
               </div>
@@ -641,7 +687,9 @@ export const DoctorPrescription: React.FC = () => {
               <button
                 type="button"
                 className="dp-btn-submit"
-                disabled={!isFormValid || isSubmitting}
+                disabled={!isFormValid || isSubmitting || chuaCoChanDoan}
+                style={chuaCoChanDoan ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                title={chuaCoChanDoan ? 'Cần ghi nhận chẩn đoán trước khi kê đơn' : undefined}
                 onClick={() => void handleSubmit()}
               >
                 {isSubmitting

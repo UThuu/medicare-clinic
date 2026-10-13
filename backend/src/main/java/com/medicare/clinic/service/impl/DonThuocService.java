@@ -198,6 +198,11 @@ public class DonThuocService implements IDonThuocService {
 
         LuotKham luotKham = timLuotKhamTheoIdHoacIdLichKham(request.getIdLuotKham());
 
+        // Kiểm tra điều kiện tiên quyết: Phải có chẩn đoán trước khi kê đơn thuốc
+        if (luotKham.getChanDoan() == null || luotKham.getChanDoan().trim().isEmpty()) {
+            throw new IllegalStateException("Lượt khám chưa có chẩn đoán. Vui lòng ghi nhận kết quả khám và chẩn đoán trước khi kê đơn thuốc.");
+        }
+
         Optional<DonThuoc> existing = donThuocRepository.findByLuotKham_IdLuotKham(luotKham.getIdLuotKham());
         if (existing.isPresent()) {
             throw new IllegalStateException("Lượt khám này đã có đơn thuốc (Mã: " + existing.get().getId() + "). Vui lòng sử dụng chức năng cập nhật.");

@@ -238,4 +238,25 @@ class DonThuocServiceTest {
         assertEquals("LK001", res.getIdLuotKham());
         assertEquals("BN001", res.getIdBenhNhan());
     }
+
+    @Test
+    @DisplayName("Nghiệp vụ: Chặn kê đơn khi lượt khám chưa có chẩn đoán")
+    void testTaoDonThuoc_ChuaCoChanDoan_NemNgoaiLe() {
+        luotKham.setChanDoan(null);
+        when(luotKhamRepository.findById("LK001")).thenReturn(Optional.of(luotKham));
+
+        ChiTietDonThuocRequest item = ChiTietDonThuocRequest.builder()
+                .idThuoc("THUOC01")
+                .soLuong(10)
+                .lieuLuong("1 viên/lần")
+                .build();
+
+        DonThuocRequest req = DonThuocRequest.builder()
+                .idLuotKham("LK001")
+                .chiTietDonThuoc(List.of(item))
+                .build();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> donThuocService.taoDonThuoc(req));
+        assertTrue(ex.getMessage().contains("chưa có chẩn đoán"));
+    }
 }

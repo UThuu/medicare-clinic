@@ -98,6 +98,8 @@ public class DoctorRecordServiceImpl implements IDoctorRecordService {
                         .canNang(sh.getCanNang())
                         .nhietDo(sh.getNhietDo())
                         .thoiDiemDo(sh.getThoiDiemDo())
+                        .maDieuDuong(sh.getDieuDuong() != null ? sh.getDieuDuong().getMaNv() : null)
+                        .tenDieuDuong(sh.getDieuDuong() != null && sh.getDieuDuong().getNhanVien() != null ? sh.getDieuDuong().getNhanVien().getHoTen() : null)
                         .build();
             }
         }
@@ -108,23 +110,28 @@ public class DoctorRecordServiceImpl implements IDoctorRecordService {
         if (!latestVitalsList.isEmpty()) {
             SinhHieu sh = latestVitalsList.get(0);
             latestVitalsInfo = MedicalRecordResponse.LatestVitalsInfo.builder()
-                    .idLuotKhamNguon(sh.getLuotKham().getIdLuotKham())
+                    .idLuotKhamNguon(sh.getLuotKham() != null ? sh.getLuotKham().getIdLuotKham() : null)
                     .huyetApTamThu(sh.getHuyetApTamThu())
                     .huyetApTamTruong(sh.getHuyetApTamTruong())
                     .canNang(sh.getCanNang())
                     .nhietDo(sh.getNhietDo())
                     .thoiDiemDo(sh.getThoiDiemDo())
+                    .maDieuDuong(sh.getDieuDuong() != null ? sh.getDieuDuong().getMaNv() : null)
+                    .tenDieuDuong(sh.getDieuDuong() != null && sh.getDieuDuong().getNhanVien() != null ? sh.getDieuDuong().getNhanVien().getHoTen() : null)
                     .build();
         }
 
         // History Vitals
         List<SinhHieu> allVitals = sinhHieuRepository.findLatestByBenhNhanId(benhNhan.getIdBenhNhan(), org.springframework.data.domain.Pageable.unpaged());
         List<MedicalRecordResponse.VitalsInfo> lichSuSinhHieu = allVitals.stream().map(sh -> MedicalRecordResponse.VitalsInfo.builder()
+                .idLuotKhamNguon(sh.getLuotKham() != null ? sh.getLuotKham().getIdLuotKham() : null)
                 .huyetApTamThu(sh.getHuyetApTamThu())
                 .huyetApTamTruong(sh.getHuyetApTamTruong())
                 .canNang(sh.getCanNang())
                 .nhietDo(sh.getNhietDo())
                 .thoiDiemDo(sh.getThoiDiemDo())
+                .maDieuDuong(sh.getDieuDuong() != null ? sh.getDieuDuong().getMaNv() : null)
+                .tenDieuDuong(sh.getDieuDuong() != null && sh.getDieuDuong().getNhanVien() != null ? sh.getDieuDuong().getNhanVien().getHoTen() : null)
                 .build()).collect(Collectors.toList());
 
         // History

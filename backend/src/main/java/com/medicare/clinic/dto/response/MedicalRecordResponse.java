@@ -64,6 +64,8 @@ public class MedicalRecordResponse {
         private BigDecimal canNang;
         private BigDecimal nhietDo;
         private LocalDateTime thoiDiemDo;
+        private String maDieuDuong;
+        private String tenDieuDuong;
     }
 
     @Data
@@ -75,6 +77,8 @@ public class MedicalRecordResponse {
         private BigDecimal canNang;
         private BigDecimal nhietDo;
         private LocalDateTime thoiDiemDo;
+        private String maDieuDuong;
+        private String tenDieuDuong;
     }
 
     @Data

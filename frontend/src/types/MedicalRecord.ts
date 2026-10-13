@@ -31,6 +31,8 @@ export interface VitalsInfo {
     canNang: number;
     nhietDo: number;
     thoiDiemDo: string;
+    maDieuDuong?: string;
+    tenDieuDuong?: string;
 }
 
 export interface AllergyInfo {

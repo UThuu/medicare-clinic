@@ -279,7 +279,14 @@ export const PatientRecord: React.FC = () => {
                                                     <span className="vital-unit">kg</span>
                                                 </div>
                                             </div>
-                                            <div className="vital-time">Đo lúc: {formatDateTime(sinhHieuMoiNhat.thoiDiemDo)}</div>
+                                            <div className="vital-time">
+                                                Đo lúc: {formatDateTime(sinhHieuMoiNhat.thoiDiemDo)}
+                                                {sinhHieuMoiNhat.tenDieuDuong && (
+                                                    <span style={{ marginLeft: '8px', color: '#0F8B8D', fontWeight: 600 }}>
+                                                        • Người ghi: ĐD. {sinhHieuMoiNhat.tenDieuDuong}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </>
                                     ) : (
                                         <p style={{ color: '#64748B' }}>Chưa có sinh hiệu</p>
@@ -376,6 +383,7 @@ export const PatientRecord: React.FC = () => {
                                         <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 1 }}>
                                             <tr>
                                                 <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Thời điểm đo</th>
+                                                <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Người ghi nhận</th>
                                                 <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Huyết áp (mmHg)</th>
                                                 <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Nhiệt độ (°C)</th>
                                                 <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Cân nặng (kg)</th>
@@ -385,6 +393,11 @@ export const PatientRecord: React.FC = () => {
                                             {record.lichSuSinhHieu.map((sh, idx) => (
                                                 <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                                     <td style={{ padding: '12px 16px' }}>{sh.thoiDiemDo ? formatDateTime(sh.thoiDiemDo) : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa ghi nhận</span>}</td>
+                                                    <td style={{ padding: '12px 16px' }}>
+                                                        {sh.tenDieuDuong 
+                                                            ? <span style={{ color: '#0F8B8D', fontWeight: 500 }}>ĐD. {sh.tenDieuDuong}</span> 
+                                                            : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chưa rõ</span>}
+                                                    </td>
                                                     <td style={{ padding: '12px 16px' }}>
                                                         {sh.huyetApTamThu && sh.huyetApTamTruong 
                                                             ? <strong>{sh.huyetApTamThu}/{sh.huyetApTamTruong}</strong> 
