@@ -24,8 +24,11 @@ import java.util.List;
 import java.util.Locale;
 
 import com.medicare.clinic.dto.response.HoSoYTeCaNhanResponse;
+import com.medicare.clinic.dto.response.MedicalRecordResponse;
 import com.medicare.clinic.entity.*;
 import com.medicare.clinic.repository.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -360,5 +363,67 @@ public class BenhNhanService implements IBenhNhanService {
                 .sinhHieu(sinhHieuDTOs)
                 .lichSuKham(lichSuKhamDTOs)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public List<MedicalRecordResponse.AllergyInfo> themHoacCapNhatDiUng(String idBenhNhan, String thanhPhan, String ghiChu) {
+        if (idBenhNhan == null || idBenhNhan.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID Bệnh nhân không được để trống");
+        }
+        if (thanhPhan == null || thanhPhan.trim().isEmpty()) {
+            throw new IllegalArgumentException("Thành phần dị ứng không được để trống");
+        }
+
+        BenhNhan benhNhan = benhNhanRepository.findById(idBenhNhan.trim())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ bệnh nhân"));
+
+        String sanitizedThanhPhan = thanhPhan.trim();
+        BenhNhanDiUngId id = new BenhNhanDiUngId();
+        id.setIdBenhNhan(benhNhan.getIdBenhNhan());
+        id.setThanhPhan(sanitizedThanhPhan);
+
+        BenhNhanDiUng diUng = benhNhanDiUngRepository.findById(id).orElseGet(() -> {
+            BenhNhanDiUng newDu = new BenhNhanDiUng();
+            newDu.setId(id);
+            newDu.setBenhNhan(benhNhan);
+            return newDu;
+        });
+
+        diUng.setGhiChu(ghiChu != null ? ghiChu.trim() : null);
+        benhNhanDiUngRepository.save(diUng);
+
+        return benhNhanDiUngRepository.findByBenhNhan_IdBenhNhan(benhNhan.getIdBenhNhan()).stream()
+                .map(d -> MedicalRecordResponse.AllergyInfo.builder()
+                        .thanhPhan(d.getId().getThanhPhan())
+                        .ghiChu(d.getGhiChu())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<MedicalRecordResponse.AllergyInfo> xoaDiUng(String idBenhNhan, String thanhPhan) {
+        if (idBenhNhan == null || idBenhNhan.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID Bệnh nhân không được để trống");
+        }
+        if (thanhPhan == null || thanhPhan.trim().isEmpty()) {
+            throw new IllegalArgumentException("Thành phần dị ứng không được để trống");
+        }
+
+        BenhNhanDiUngId id = new BenhNhanDiUngId();
+        id.setIdBenhNhan(idBenhNhan.trim());
+        id.setThanhPhan(thanhPhan.trim());
+
+        if (benhNhanDiUngRepository.existsById(id)) {
+            benhNhanDiUngRepository.deleteById(id);
+        }
+
+        return benhNhanDiUngRepository.findByBenhNhan_IdBenhNhan(idBenhNhan.trim()).stream()
+                .map(d -> MedicalRecordResponse.AllergyInfo.builder()
+                        .thanhPhan(d.getId().getThanhPhan())
+                        .ghiChu(d.getGhiChu())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

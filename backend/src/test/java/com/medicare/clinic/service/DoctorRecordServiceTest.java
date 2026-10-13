@@ -38,6 +38,8 @@ public class DoctorRecordServiceTest {
     private BenhNhanDiUngRepository benhNhanDiUngRepository;
     @Mock
     private DonThuocRepository donThuocRepository;
+    @Mock
+    private BenhNhanRepository benhNhanRepository;
 
     @InjectMocks
     private DoctorRecordServiceImpl doctorRecordService;
@@ -117,6 +119,45 @@ public class DoctorRecordServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, 
             () -> doctorRecordService.getMedicalRecord("NV002", "LK001"));
         assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void themHoacCapNhatDiUng_Success() {
+        when(benhNhanRepository.findById("BN001")).thenReturn(Optional.of(mockBenhNhan));
+
+        BenhNhanDiUng diUng = new BenhNhanDiUng();
+        BenhNhanDiUngId id = new BenhNhanDiUngId();
+        id.setIdBenhNhan("BN001");
+        id.setThanhPhan("Penicillin");
+        diUng.setId(id);
+        diUng.setGhiChu("Nổi mề đay");
+
+        when(benhNhanDiUngRepository.findById(any())).thenReturn(Optional.empty());
+        when(benhNhanDiUngRepository.findByBenhNhan_IdBenhNhan("BN001")).thenReturn(List.of(diUng));
+
+        List<MedicalRecordResponse.AllergyInfo> res = doctorRecordService.themHoacCapNhatDiUng("BN001", "Penicillin", "Nổi mề đay");
+        assertThat(res).hasSize(1);
+        assertThat(res.get(0).getThanhPhan()).isEqualTo("Penicillin");
+        assertThat(res.get(0).getGhiChu()).isEqualTo("Nổi mề đay");
+    }
+
+    @Test
+    void xoaDiUng_Success() {
+        BenhNhanDiUngId id = new BenhNhanDiUngId();
+        id.setIdBenhNhan("BN001");
+        id.setThanhPhan("Penicillin");
+
+        when(benhNhanDiUngRepository.existsById(any())).thenReturn(true);
+        when(benhNhanDiUngRepository.findByBenhNhan_IdBenhNhan("BN001")).thenReturn(Collections.emptyList());
+
+        List<MedicalRecordResponse.AllergyInfo> res = doctorRecordService.xoaDiUng("BN001", "Penicillin");
+        assertThat(res).isEmpty();
+    }
+
+    @Test
+    void themHoacCapNhatDiUng_EmptyThanhPhan_ThrowsException() {
+        assertThrows(IllegalArgumentException.class,
+            () -> doctorRecordService.themHoacCapNhatDiUng("BN001", "   ", "Ghi chu"));
     }
 }
 

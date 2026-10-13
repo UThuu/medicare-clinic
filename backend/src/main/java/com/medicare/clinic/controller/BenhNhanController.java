@@ -1,6 +1,7 @@
 package com.medicare.clinic.controller;
 
 import com.medicare.clinic.dto.response.LoginResponse;
+import com.medicare.clinic.dto.request.BenhNhanDiUngRequest;
 import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
 import com.medicare.clinic.dto.request.BenhNhanTimKiemRequest;
 import com.medicare.clinic.dto.request.BenhNhanTaoMoiRequest;
@@ -66,6 +67,25 @@ public class BenhNhanController {
                     .body(Map.of("message", "Tài khoản của bạn chưa được liên kết với hồ sơ bệnh nhân."));
         }
         return execute(() -> benhnhanService.layHoSoYTeCaNhan(user.getIdBenhNhan()));
+    }
+
+    // CRUD Dị ứng bệnh nhân dùng chung cho cả Bác sĩ (UC-07) và Điều dưỡng (UC-03)
+    @PostMapping("/{idBenhNhan}/di-ung")
+    public ResponseEntity<?> themHoacCapNhatDiUng(@PathVariable String idBenhNhan,
+                                                  @RequestBody BenhNhanDiUngRequest request,
+                                                  HttpServletRequest httpRequest) {
+        ResponseEntity<?> denied = requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
+        if (denied != null) return denied;
+        return execute(() -> benhnhanService.themHoacCapNhatDiUng(idBenhNhan, request.getThanhPhan(), request.getGhiChu()));
+    }
+
+    @DeleteMapping("/{idBenhNhan}/di-ung")
+    public ResponseEntity<?> xoaDiUng(@PathVariable String idBenhNhan,
+                                      @RequestParam String thanhPhan,
+                                      HttpServletRequest httpRequest) {
+        ResponseEntity<?> denied = requireRole(httpRequest, "BAC_SI", "DIEU_DUONG");
+        if (denied != null) return denied;
+        return execute(() -> benhnhanService.xoaDiUng(idBenhNhan, thanhPhan));
     }
 
     private LoginResponse currentUser(HttpServletRequest request) {

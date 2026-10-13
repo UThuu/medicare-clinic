@@ -19,14 +19,7 @@ public class DoctorRecordController {
 
     private final IDoctorRecordService doctorRecordService;
 
-    @GetMapping("/medical-record/{idLichKham}")
-    public ResponseEntity<MedicalRecordResponse> getMedicalRecord(
-            @PathVariable("idLichKham") String idLichKham,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        
-        response.setHeader("Cache-Control", "no-store");
-
+    private LoginResponse kiemTraQuyenBacSi(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
@@ -46,8 +39,20 @@ public class DoctorRecordController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tài khoản không gắn với mã nhân viên");
         }
 
+        return authUser;
+    }
+
+    @GetMapping("/medical-record/{idLichKham}")
+    public ResponseEntity<MedicalRecordResponse> getMedicalRecord(
+            @PathVariable("idLichKham") String idLichKham,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        
+        response.setHeader("Cache-Control", "no-store");
+        LoginResponse authUser = kiemTraQuyenBacSi(request);
+
         try {
-            MedicalRecordResponse recordResponse = doctorRecordService.getMedicalRecord(maNv, idLichKham);
+            MedicalRecordResponse recordResponse = doctorRecordService.getMedicalRecord(authUser.getMaNv(), idLichKham);
             return ResponseEntity.ok(recordResponse);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());

@@ -3,9 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { MainLayout } from '../components/layout/MainLayout';
 import { Button } from '../components/common/Button';
+import { Modal } from '../components/common/Modal';
+import { AllergyManageModal } from '../components/common/AllergyManageModal';
 import { PatientSummary } from '../components/common/PatientSummary';
 import { medicalRecordService } from '../services/medicalRecordService';
-import { MedicalRecordResponse } from '../types/MedicalRecord';
+import { AllergyInfo, MedicalRecordResponse } from '../types/MedicalRecord';
 
 import { getExaminationBlockReason } from './examinationState';
 import './patientRecord.css';
@@ -32,6 +34,13 @@ export const PatientRecord: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('tong_quan');
 
+    // States cho CRUD Dị ứng (UC-07)
+    const [showAllergyModal, setShowAllergyModal] = useState(false);
+    const [editingAllergy, setEditingAllergy] = useState<AllergyInfo | null>(null);
+    const [allergyLoading, setAllergyLoading] = useState(false);
+    const [allergyToast, setAllergyToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
     useEffect(() => {
         if (!idLuotKham) return;
         const fetchRecord = async () => {
@@ -49,6 +58,63 @@ export const PatientRecord: React.FC = () => {
         };
         fetchRecord();
     }, [idLuotKham]);
+
+    const handleOpenAddAllergy = () => {
+        setEditingAllergy(null);
+        setShowAllergyModal(true);
+    };
+
+    const handleOpenEditAllergy = (item: AllergyInfo) => {
+        setEditingAllergy(item);
+        setShowAllergyModal(true);
+    };
+
+    const handleSaveAllergy = async (thanhPhan: string, ghiChu: string) => {
+        const idBenhNhan = record?.benhNhan?.idBenhNhan;
+        if (!idBenhNhan) {
+            throw new Error('Không tìm thấy thông tin mã bệnh nhân');
+        }
+
+        setAllergyLoading(true);
+        try {
+            const updatedAllergies = await medicalRecordService.addAllergy(idBenhNhan, {
+                thanhPhan: thanhPhan.trim(),
+                ghiChu: ghiChu.trim() || undefined,
+            });
+            setRecord(prev => (prev ? { ...prev, diUng: updatedAllergies } : null));
+            setShowAllergyModal(false);
+            setAllergyToast({
+                type: 'success',
+                message: editingAllergy ? 'Cập nhật dị ứng thành công!' : 'Đã thêm dị ứng mới thành công!',
+            });
+            setTimeout(() => setAllergyToast(null), 3000);
+        } finally {
+            setAllergyLoading(false);
+        }
+    };
+
+    const handleDeleteAllergy = async (thanhPhan: string) => {
+        const idBenhNhan = record?.benhNhan?.idBenhNhan;
+        if (!idBenhNhan) return;
+
+        try {
+            setAllergyLoading(true);
+            const updatedAllergies = await medicalRecordService.deleteAllergy(idBenhNhan, thanhPhan);
+            setRecord(prev => (prev ? { ...prev, diUng: updatedAllergies } : null));
+            setDeleteTarget(null);
+            setAllergyToast({
+                type: 'success',
+                message: `Đã xóa dị ứng "${thanhPhan}" thành công!`,
+            });
+            setTimeout(() => setAllergyToast(null), 3000);
+        } catch (err: unknown) {
+            const errorMsg = err instanceof Error ? err.message : 'Lỗi khi xóa dị ứng';
+            setAllergyToast({ type: 'error', message: errorMsg });
+            setTimeout(() => setAllergyToast(null), 3500);
+        } finally {
+            setAllergyLoading(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -363,24 +429,151 @@ export const PatientRecord: React.FC = () => {
                 {activeTab === 'di_ung' && (
                     <div className="bottom-row">
                         <div className="card history-card" style={{ flex: 1 }}>
-                            <div className="card-header">
-                                <h3>CHI TIẾT DỊ ỨNG</h3>
+                            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <h3 style={{ margin: 0 }}>CHI TIẾT DỊ ỨNG</h3>
+                                    {diUng?.length > 0 && (
+                                        <span className="allergy-count-badge">
+                                            {diUng.length} dị ứng
+                                        </span>
+                                    )}
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    onClick={handleOpenAddAllergy}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                    <span>+ Thêm dị ứng</span>
+                                </Button>
                             </div>
+
+                            {allergyToast && (
+                                <div
+                                    className={`allergy-toast allergy-toast--${allergyToast.type}`}
+                                    style={{
+                                        margin: '0.75rem 1rem 0',
+                                        padding: '8px 14px',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontWeight: 500,
+                                        backgroundColor: allergyToast.type === 'success' ? '#DCFCE7' : '#FEE2E2',
+                                        color: allergyToast.type === 'success' ? '#166534' : '#991B1B',
+                                        border: `1px solid ${allergyToast.type === 'success' ? '#86EFAC' : '#FCA5A5'}`
+                                    }}
+                                >
+                                    {allergyToast.type === 'success' ? '✓ ' : '⚠️ '}
+                                    {allergyToast.message}
+                                </div>
+                            )}
+
                             <div className="card-body" style={{ padding: '1rem' }}>
                                 {diUng?.length > 0 ? (
-                                    diUng.map((du, idx) => (
-                                        <div key={idx} className="allergy-badge" style={{ padding: '1rem', borderBottom: '1px solid #E2E8F0' }}>
-                                            <strong>{du.thanhPhan}</strong>: {du.ghiChu}
-                                        </div>
-                                    ))
+                                    <table className="mc-table allergy-table" style={{ width: '100%' }}>
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: '50px', textAlign: 'center' }}>STT</th>
+                                                <th style={{ width: '240px' }}>Thành phần / Hoạt chất</th>
+                                                <th>Biểu hiện phản ứng / Ghi chú</th>
+                                                <th style={{ width: '150px', textAlign: 'center' }}>Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {diUng.map((du, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ textAlign: 'center', color: '#64748B' }}>{idx + 1}</td>
+                                                    <td>
+                                                        <span className="allergy-tag">
+                                                            ⚠️ {du.thanhPhan}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ color: '#334155' }}>
+                                                        {du.ghiChu ? (
+                                                            <span>{du.ghiChu}</span>
+                                                        ) : (
+                                                            <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>Không có ghi chú</span>
+                                                        )}
+                                                    </td>
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                                                            <button
+                                                                type="button"
+                                                                className="allergy-btn-edit"
+                                                                title="Chỉnh sửa ghi chú dị ứng"
+                                                                onClick={() => handleOpenEditAllergy(du)}
+                                                            >
+                                                                ✏️ Sửa
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="allergy-btn-delete"
+                                                                title="Xóa dị ứng này"
+                                                                onClick={() => setDeleteTarget(du.thanhPhan)}
+                                                            >
+                                                                🗑️ Xóa
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 ) : (
-                                    <p style={{ color: '#64748B' }}>Chưa ghi nhận dị ứng</p>
+                                    <div className="allergy-empty-state">
+                                        <div style={{ fontSize: '36px', marginBottom: '8px' }}>🛡️</div>
+                                        <h4 style={{ margin: '0 0 6px', color: '#1E293B', fontSize: '16px' }}>Chưa ghi nhận tiền sử dị ứng</h4>
+                                        <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: '14px' }}>
+                                            Bệnh nhân chưa có thông tin dị ứng thuốc hoặc hoạt chất nào trong hồ sơ.
+                                        </p>
+                                        <Button variant="secondary" onClick={handleOpenAddAllergy}>
+                                            + Thêm dị ứng đầu tiên
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* Modal Thêm / Chỉnh sửa Dị ứng dùng chung */}
+            <AllergyManageModal
+                open={showAllergyModal}
+                editingItem={editingAllergy}
+                loading={allergyLoading}
+                onClose={() => setShowAllergyModal(false)}
+                onSave={handleSaveAllergy}
+            />
+
+            {/* Modal xác nhận xóa dị ứng */}
+            <Modal
+                open={deleteTarget !== null}
+                title="Xác nhận xóa dị ứng"
+                onClose={() => { if (!allergyLoading) setDeleteTarget(null); }}
+                width="sm"
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                        <Button
+                            variant="secondary"
+                            onClick={() => setDeleteTarget(null)}
+                            disabled={allergyLoading}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            variant="primary"
+                            style={{ backgroundColor: '#EF4444', borderColor: '#EF4444' }}
+                            onClick={() => deleteTarget && handleDeleteAllergy(deleteTarget)}
+                            disabled={allergyLoading}
+                        >
+                            {allergyLoading ? 'Đang xóa...' : 'Xóa dị ứng'}
+                        </Button>
+                    </div>
+                }
+            >
+                <p style={{ margin: 0, color: '#334155', lineHeight: 1.6 }}>
+                    Bạn có chắc chắn muốn xóa tiền sử dị ứng với hoạt chất <strong>"{deleteTarget}"</strong> khỏi hồ sơ bệnh nhân này không?
+                </p>
+            </Modal>
 
         </MainLayout>
 

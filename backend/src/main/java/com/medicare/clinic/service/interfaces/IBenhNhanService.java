@@ -8,6 +8,9 @@ import com.medicare.clinic.dto.response.BenhNhanTimKiemResponse;
 import com.medicare.clinic.dto.request.BenhNhanThongBaoLichKhamRequest;
 import com.medicare.clinic.dto.response.BenhNhanThongBaoLichKhamResponse;
 import com.medicare.clinic.dto.response.HoSoYTeCaNhanResponse;
+import com.medicare.clinic.dto.response.MedicalRecordResponse;
+
+import java.util.List;
 
 public interface IBenhNhanService {
 
@@ -16,4 +19,7 @@ public interface IBenhNhanService {
     BenhNhanTimKiemResponse kiemTraSoDienThoai(BenhNhanTimKiemRequest request);
     BenhNhanThongBaoLichKhamResponse thongBaoLichKham(String idBenhNhan, BenhNhanThongBaoLichKhamRequest request);
     HoSoYTeCaNhanResponse layHoSoYTeCaNhan(String idBenhNhan);
+
+    List<MedicalRecordResponse.AllergyInfo> themHoacCapNhatDiUng(String idBenhNhan, String thanhPhan, String ghiChu);
+    List<MedicalRecordResponse.AllergyInfo> xoaDiUng(String idBenhNhan, String thanhPhan);
 }
