@@ -19,6 +19,15 @@ export const medicalRecordService = {
     return response.json();
   },
 
+  getAllergies: async (idBenhNhan: string): Promise<AllergyInfo[]> => {
+    const response = await fetch(`/api/benhnhan/${idBenhNhan}/di-ung`);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'Lỗi khi lấy danh sách dị ứng');
+    }
+    return response.json();
+  },
+
   addAllergy: async (idBenhNhan: string, data: { thanhPhan: string; ghiChu?: string }): Promise<AllergyInfo[]> => {
     const response = await fetch(`/api/benhnhan/${idBenhNhan}/di-ung`, {
       method: 'POST',

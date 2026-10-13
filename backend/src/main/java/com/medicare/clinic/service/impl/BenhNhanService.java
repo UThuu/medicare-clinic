@@ -366,6 +366,20 @@ public class BenhNhanService implements IBenhNhanService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<MedicalRecordResponse.AllergyInfo> layDanhSachDiUng(String idBenhNhan) {
+        if (idBenhNhan == null || idBenhNhan.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID Bệnh nhân không được để trống");
+        }
+        return benhNhanDiUngRepository.findByBenhNhan_IdBenhNhan(idBenhNhan.trim()).stream()
+                .map(d -> MedicalRecordResponse.AllergyInfo.builder()
+                        .thanhPhan(d.getId().getThanhPhan())
+                        .ghiChu(d.getGhiChu())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public List<MedicalRecordResponse.AllergyInfo> themHoacCapNhatDiUng(String idBenhNhan, String thanhPhan, String ghiChu) {
         if (idBenhNhan == null || idBenhNhan.trim().isEmpty()) {

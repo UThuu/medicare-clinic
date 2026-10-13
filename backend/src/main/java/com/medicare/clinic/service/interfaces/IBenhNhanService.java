@@ -20,6 +20,7 @@ public interface IBenhNhanService {
     BenhNhanThongBaoLichKhamResponse thongBaoLichKham(String idBenhNhan, BenhNhanThongBaoLichKhamRequest request);
     HoSoYTeCaNhanResponse layHoSoYTeCaNhan(String idBenhNhan);
 
+    List<MedicalRecordResponse.AllergyInfo> layDanhSachDiUng(String idBenhNhan);
     List<MedicalRecordResponse.AllergyInfo> themHoacCapNhatDiUng(String idBenhNhan, String thanhPhan, String ghiChu);
     List<MedicalRecordResponse.AllergyInfo> xoaDiUng(String idBenhNhan, String thanhPhan);
 }

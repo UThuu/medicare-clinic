@@ -5,6 +5,8 @@ import {
     type FormEvent,
     type MouseEvent,
 } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 import {
     Button,
@@ -14,6 +16,9 @@ import {
 } from "../components";
 
 import { MainLayout } from "../components/layout/MainLayout";
+import { AllergyManageModal } from "../components/common/AllergyManageModal";
+import { medicalRecordService } from "../services/medicalRecordService";
+import type { AllergyInfo } from "../types/MedicalRecord";
 
 import type { BenhNhanCho } from "../types/LuotKham";
 
@@ -177,6 +182,50 @@ export default function GhiNhanSinhHieu({
         };
     }, [benhNhan.idLuotKham]);
 
+    // =========================
+    // DỊ ỨNG BỆNH NHÂN (UC-03)
+    // =========================
+    const [danhSachDiUng, setDanhSachDiUng] = useState<AllergyInfo[]>([]);
+    const [isAllergyModalOpen, setIsAllergyModalOpen] = useState(false);
+    const [editingAllergy, setEditingAllergy] = useState<AllergyInfo | null>(null);
+    const [allergyLoading, setAllergyLoading] = useState(false);
+
+    useEffect(() => {
+        if (!benhNhan?.idBenhNhan) return;
+        medicalRecordService.getAllergies(benhNhan.idBenhNhan)
+            .then((data) => setDanhSachDiUng(data || []))
+            .catch((err) => console.error("Không thể tải danh sách dị ứng:", err));
+    }, [benhNhan?.idBenhNhan]);
+
+    const handleSaveAllergy = async (thanhPhan: string, ghiChu: string) => {
+        setAllergyLoading(true);
+        try {
+            const updated = await medicalRecordService.addAllergy(benhNhan.idBenhNhan, { thanhPhan, ghiChu });
+            setDanhSachDiUng(updated);
+            setIsAllergyModalOpen(false);
+            setEditingAllergy(null);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Lỗi khi lưu dị ứng";
+            alert(msg);
+        } finally {
+            setAllergyLoading(false);
+        }
+    };
+
+    const handleDeleteAllergy = async (thanhPhan: string) => {
+        if (!window.confirm(`Xác nhận xóa dị ứng: "${thanhPhan}"?`)) return;
+        setAllergyLoading(true);
+        try {
+            const updated = await medicalRecordService.deleteAllergy(benhNhan.idBenhNhan, thanhPhan);
+            setDanhSachDiUng(updated);
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : "Lỗi khi xóa dị ứng";
+            alert(msg);
+        } finally {
+            setAllergyLoading(false);
+        }
+    };
+
 
     // =========================
     // KIỂM TRA FORM
@@ -339,32 +388,54 @@ export default function GhiNhanSinhHieu({
     // GIAO DIỆN UC03
     // =========================
 
+    const { user } = useAuth();
+    const tenHienThi = user?.hoTen || user?.tenDangNhap || "Điều dưỡng";
+    const vaiTroHienThi = user?.vaiTro || "Điều dưỡng";
+
+    const sidebarItems = [
+        {
+            label: "Tổng quan",
+            href: "/staff",
+        },
+        {
+            label: "Hàng chờ",
+            href: "/staff/benh-nhan-cho",
+            active: true,
+        },
+    ];
+
     return (
         <MainLayout
-            doctorName="Nguyễn Thùy Trang"
-            roleLabel="Điều dưỡng"
-            hotline="Hotline: 1800 6868"
-
-            sidebarItems={[
-                {
-                    label: "Dashboard",
-                    href: "#",
-                },
-
-                {
-                    label: "Lịch khám",
-                    href: "#",
-                },
-
-                {
-                    label: "Bệnh nhân chờ",
-                    href: "#",
-                    active: true,
-                },
-            ]}
+            doctorName={tenHienThi}
+            roleLabel={vaiTroHienThi}
+            sidebarItems={sidebarItems}
         >
 
-            <div className="ghi-nhan-sinh-hieu">
+            <div className="ghi-nhan-sinh-hieu ghi-nhan-sinh-hieu--compact">
+
+                {/* =========================
+                    BREADCRUMB
+                   ========================= */}
+
+                <div className="ghi-nhan-sinh-hieu__breadcrumb">
+                    <Link to="/staff">
+                        Tổng quan
+                    </Link>
+
+                    <span>/</span>
+
+                    <button
+                        type="button"
+                        className="breadcrumb-button-link"
+                        onClick={onQuayLai}
+                    >
+                        Hàng chờ
+                    </button>
+
+                    <span>/</span>
+
+                    <span>Ghi nhận sinh hiệu</span>
+                </div>
 
                 {/* =========================
                     HEADER
@@ -517,6 +588,77 @@ export default function GhiNhanSinhHieu({
 
                     </div>
 
+                </Card>
+
+                {/* =========================
+                    CARD TIỀN SỬ DỊ ỨNG (UC-03)
+                   ========================= */}
+
+                <Card>
+                    <div className="allergy-card-header">
+                        <div className="allergy-card-header__left">
+                            <h2>⚠️ Tiền sử dị ứng</h2>
+                            {danhSachDiUng.length > 0 ? (
+                                <StatusBadge tone="error">
+                                    Có {danhSachDiUng.length} dị ứng
+                                </StatusBadge>
+                            ) : (
+                                <StatusBadge tone="success">
+                                    Chưa ghi nhận dị ứng
+                                </StatusBadge>
+                            )}
+                        </div>
+
+                        <Button
+                            type="button"
+                            variant="primary"
+                            onClick={() => {
+                                setEditingAllergy(null);
+                                setIsAllergyModalOpen(true);
+                            }}
+                            className="allergy-add-btn"
+                        >
+                            + Thêm dị ứng
+                        </Button>
+                    </div>
+
+                    {danhSachDiUng.length === 0 ? (
+                        <div className="allergy-empty-text">
+                            Bệnh nhân chưa có tiền sử dị ứng nào được ghi nhận. Nhấn <b>"+ Thêm dị ứng"</b> nếu bệnh nhân khai báo có phản ứng thuốc / thức ăn.
+                        </div>
+                    ) : (
+                        <div className="allergy-list-grid">
+                            {danhSachDiUng.map((item, idx) => (
+                                <div key={idx} className="allergy-item">
+                                    <div className="allergy-item__info">
+                                        <strong className="allergy-item__name">{item.thanhPhan}</strong>
+                                        {item.ghiChu && (
+                                            <span className="allergy-item__note">({item.ghiChu})</span>
+                                        )}
+                                    </div>
+                                    <div className="allergy-item__actions">
+                                        <button
+                                            type="button"
+                                            className="allergy-action-btn allergy-action-btn--edit"
+                                            onClick={() => {
+                                                setEditingAllergy(item);
+                                                setIsAllergyModalOpen(true);
+                                            }}
+                                        >
+                                            Sửa
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="allergy-action-btn allergy-action-btn--delete"
+                                            onClick={() => void handleDeleteAllergy(item.thanhPhan)}
+                                        >
+                                            Xóa
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </Card>
 
                 {/* =========================
@@ -752,6 +894,17 @@ export default function GhiNhanSinhHieu({
                 </div>
 
             </div>
+
+            <AllergyManageModal
+                open={isAllergyModalOpen}
+                onClose={() => {
+                    setIsAllergyModalOpen(false);
+                    setEditingAllergy(null);
+                }}
+                onSave={handleSaveAllergy}
+                editingItem={editingAllergy}
+                loading={allergyLoading}
+            />
 
         </MainLayout>
     );

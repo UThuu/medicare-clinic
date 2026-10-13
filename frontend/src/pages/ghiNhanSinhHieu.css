@@ -4,18 +4,56 @@
 
 .ghi-nhan-sinh-hieu {
     width: 100%;
-    max-width: 1180px;
+    max-width: 1400px;
 
     margin: 0 auto;
 
     display: flex;
     flex-direction: column;
 
-    gap: 24px;
+    gap: 16px;
 
     font-family: "Inter", Arial, sans-serif;
 }
 
+
+/* ========================================
+   BREADCRUMB
+   ======================================== */
+
+.ghi-nhan-sinh-hieu__breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.ghi-nhan-sinh-hieu__breadcrumb a {
+    color: #0b7f81;
+    text-decoration: none;
+}
+
+.ghi-nhan-sinh-hieu__breadcrumb span {
+    color: #94a3b8;
+}
+
+.ghi-nhan-sinh-hieu__breadcrumb .breadcrumb-link,
+.ghi-nhan-sinh-hieu__breadcrumb .breadcrumb-button-link {
+    cursor: pointer;
+    color: #0b7f81;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.ghi-nhan-sinh-hieu__breadcrumb .breadcrumb-link:hover,
+.ghi-nhan-sinh-hieu__breadcrumb .breadcrumb-button-link:hover {
+    text-decoration: underline;
+}
 
 /* ========================================
    HEADER
@@ -637,3 +675,216 @@
 .sinh-hieu-header button {
     flex-shrink: 0;
 }
+
+/* ========================================
+   TIỀN SỬ DỊ ỨNG STYLES
+   ======================================== */
+
+.allergy-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+}
+
+.allergy-card-header__left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.allergy-card-header__left h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.allergy-add-btn {
+    font-size: 13px;
+    padding: 6px 12px;
+}
+
+.allergy-empty-text {
+    padding: 12px;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.allergy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.allergy-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+}
+
+.vital-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.vital-input-item label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+.vital-input-with-unit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vital-input-with-unit input {
+    flex: 1;
+}
+
+.vital-unit-text {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+    min-width: 36px;
+}
+
+.allergy-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+}
+
+.allergy-item__name {
+    color: #991b1b;
+    font-size: 14px;
+}
+
+.allergy-item__note {
+    margin-left: 10px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.allergy-item__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.allergy-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.allergy-action-btn--edit {
+    color: #2563eb;
+}
+
+.allergy-action-btn--delete {
+    color: #dc2626;
+}
+
+/* ========================================
+   TỐI ƯU VÙNG TRẮNG (HẠN CHẾ SCROLL)
+   ======================================== */
+
+.ghi-nhan-sinh-hieu--compact {
+    gap: 12px;
+}
+
+.ghi-nhan-sinh-hieu--compact .ghi-nhan-sinh-hieu__header {
+    padding: 0;
+    gap: 12px;
+}
+
+.ghi-nhan-sinh-hieu--compact .ghi-nhan-sinh-hieu__header h1 {
+    font-size: 22px;
+}
+
+.ghi-nhan-sinh-hieu--compact .ghi-nhan-sinh-hieu__header p {
+    margin: 3px 0 0;
+    font-size: 13px;
+}
+
+.ghi-nhan-sinh-hieu--compact .mc-card {
+    padding: 12px 18px;
+}
+
+.ghi-nhan-sinh-hieu--compact .patient-name {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.ghi-nhan-sinh-hieu--compact .patient-heading {
+    margin-bottom: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+}
+
+.ghi-nhan-sinh-hieu--compact .patient-grid > div {
+    min-height: 48px;
+    padding: 6px 12px;
+    gap: 2px;
+}
+
+.ghi-nhan-sinh-hieu--compact .patient-grid strong,
+.ghi-nhan-sinh-hieu--compact .visit-grid strong {
+    font-size: 13px;
+}
+
+.ghi-nhan-sinh-hieu--compact .mc-card__title {
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.ghi-nhan-sinh-hieu--compact .visit-grid > div {
+    min-height: 48px;
+    padding: 6px 12px;
+    gap: 2px;
+}
+
+.ghi-nhan-sinh-hieu--compact .sinh-hieu-header {
+    margin-bottom: 12px;
+}
+
+.ghi-nhan-sinh-hieu--compact .vital-section {
+    gap: 14px;
+}
+
+.ghi-nhan-sinh-hieu--compact .vital-group {
+    gap: 8px;
+}
+
+.ghi-nhan-sinh-hieu--compact .blood-pressure-grid {
+    gap: 12px;
+}
+
+.ghi-nhan-sinh-hieu--compact .vital-unit {
+    min-height: 38px;
+}
+
+.ghi-nhan-sinh-hieu--compact .ghi-nhan-sinh-hieu__actions {
+    margin-top: 14px;
+    padding-top: 10px;
+}
+
+.ghi-nhan-sinh-hieu--compact .ghi-nhan-sinh-hieu__back {
+    margin-top: 0;
+}

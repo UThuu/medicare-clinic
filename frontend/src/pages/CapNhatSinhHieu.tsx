@@ -2,6 +2,8 @@ import {
     useEffect,
     useState,
 } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 import {
     Button,
@@ -363,40 +365,65 @@ export default function CapNhatSinhHieu({
     // GIAO DIỆN
     // =========================
 
+    const { user } = useAuth();
+    const tenHienThi = user?.hoTen || user?.tenDangNhap || "Điều dưỡng";
+    const vaiTroHienThi = user?.vaiTro || "Điều dưỡng";
+
+    const sidebarItems = [
+        {
+            label: "Tổng quan",
+            href: "/staff",
+        },
+        {
+            label: "Hàng chờ",
+            href: "/staff/benh-nhan-cho",
+            active: true,
+        },
+    ];
+
     return (
         <MainLayout
-            doctorName="Nguyễn Minh"
-            roleLabel="Điều dưỡng"
-            hotline="Hotline: 1800 6868"
-
-            sidebarItems={[
-                {
-                    label: "Dashboard",
-                    href: "#",
-                },
-                {
-                    label: "Lịch khám",
-                    href: "#",
-                },
-                {
-                    label: "Bệnh nhân chờ",
-                    href: "#",
-                    active: true,
-                },
-            ]}
+            doctorName={tenHienThi}
+            roleLabel={vaiTroHienThi}
+            sidebarItems={sidebarItems}
         >
 
             <div className="cap-nhat-sinh-hieu">
+
+                {/* BREADCRUMB */}
+
+                <div className="danh-sach-benh-nhan-cho__breadcrumb" style={{ marginBottom: 12 }}>
+                    <Link to="/staff">
+                        Tổng quan
+                    </Link>
+
+                    <span>/</span>
+
+                    <button
+                        type="button"
+                        style={{
+                            background: "none",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                            color: "#0b7f81",
+                            fontSize: 13,
+                        }}
+                        onClick={onQuayLai}
+                    >
+                        Hàng chờ
+                    </button>
+
+                    <span>/</span>
+
+                    <span>Chỉnh sửa sinh hiệu</span>
+                </div>
 
                 {/* HEADER */}
 
                 <div className="cap-nhat-sinh-hieu__header">
 
                     <div>
-
-                        <div className="cap-nhat-sinh-hieu__breadcrumb">
-                            Bệnh nhân chờ / Chỉnh sửa sinh hiệu
-                        </div>
 
                         <h1>
                             Chỉnh sửa sinh hiệu

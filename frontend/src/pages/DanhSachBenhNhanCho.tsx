@@ -381,12 +381,12 @@ export default function DanhSachBenhNhanCho() {
             <div className="danh-sach-benh-nhan-cho">
                 <div className="danh-sach-benh-nhan-cho__breadcrumb">
                     <Link to="/staff">
-                        Dashboard
+                        Tổng quan
                     </Link>
 
                     <span>/</span>
 
-                    <span>Bệnh nhân chờ</span>
+                    <span>Hàng chờ</span>
                 </div>
 
                 <div className="danh-sach-benh-nhan-cho__header">
