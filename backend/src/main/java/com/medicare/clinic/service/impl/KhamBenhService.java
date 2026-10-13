@@ -44,6 +44,20 @@ public class KhamBenhService implements IKhamBenhService {
         luotKham.setTrieuChung(request.getTrieuChung().trim());
         luotKham.setKetQuaKham(request.getKetQuaKham().trim());
         luotKham.setChanDoan(request.getChanDoan().trim());
+        if (Boolean.TRUE.equals(request.getHoanTatKham())) {
+            luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
+        }
+        luotKhamRepository.save(luotKham);
+    }
+
+    @Override
+    @Transactional
+    public void hoanTatKham(String maNv, String idLichKham) {
+        LuotKham luotKham = requireExaminableVisit(maNv, idLichKham);
+        if (isBlank(luotKham.getChanDoan())) {
+            throw new IllegalArgumentException("Cần ghi nhận chẩn đoán trước khi hoàn tất ca khám");
+        }
+        luotKham.setTrangThai(TrangThaiLuotKham.HOAN_TAT);
         luotKhamRepository.save(luotKham);
     }
 

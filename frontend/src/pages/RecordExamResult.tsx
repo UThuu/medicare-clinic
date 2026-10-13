@@ -72,7 +72,7 @@ export const RecordExamResult: React.FC = () => {
         setSuccess(false);
     };
 
-    const handleSave = async () => {
+    const handleSave = async (hoanTat: boolean = false) => {
         if (!canEdit || isSaving || !record) return;
         const saved = { trieuChung: trieuChung.trim(), ketQuaKham: ketQuaKham.trim(), chanDoan: chanDoan.trim() };
         if (!saved.trieuChung || !saved.ketQuaKham || !saved.chanDoan) {
@@ -83,10 +83,10 @@ export const RecordExamResult: React.FC = () => {
             setIsSaving(true);
             setSaveError(null);
             setSuccess(false);
-            await khamBenhService.saveKetQuaKham({ idLichKham: idLuotKham, ...saved });
-            const updated = { ...record, luotKhamHienTai: { ...record.luotKhamHienTai!, ...saved } };
-            setRecord(updated);
-            restoreFields(updated);
+            await khamBenhService.saveKetQuaKham({ idLichKham: idLuotKham, ...saved, hoanTatKham: hoanTat });
+            const freshData = await medicalRecordService.getMedicalRecord(idLuotKham);
+            setRecord(freshData);
+            restoreFields(freshData);
             setSuccess(true);
         } catch (err: unknown) {
             setSaveError(err instanceof Error ? err.message : 'Lưu thất bại. Vui lòng thử lại.');
@@ -208,7 +208,14 @@ export const RecordExamResult: React.FC = () => {
                 </div>
 
                 {blockReason && <Alert tone="warning" title={blockReason} />}
-                {success && <Alert tone="success" title="Lưu kết quả khám thành công" />}
+                {success && (
+                    <Alert 
+                        tone="success" 
+                        title={record?.luotKhamHienTai?.trangThai === 'HOAN_TAT' 
+                            ? "Đã lưu kết quả và hoàn tất ca khám thành công" 
+                            : "Lưu kết quả khám thành công"} 
+                    />
+                )}
                 {/* Kết quả thăm khám */}
                 <Card className="re-result-card">
                     <h3 className="re-card-title">Kết quả thăm khám</h3>
@@ -233,11 +240,20 @@ export const RecordExamResult: React.FC = () => {
                         <Button variant="ghost" onClick={handleReset} disabled={!canEdit || isSaving}>
                             Đặt lại
                         </Button>
-                        <Button variant="primary" onClick={handleSave} disabled={!canEdit || isSaving}>
+                        <Button variant="primary" onClick={() => void handleSave(false)} disabled={!canEdit || isSaving}>
                             {isSaving ? 'Đang lưu...' : 'Lưu kết quả khám'}
                         </Button>
                         <Button variant="secondary" onClick={() => navigate(`/staff/medical-record/${idLuotKham}/prescription`)}>
                             Kê đơn thuốc →
+                        </Button>
+                        <Button 
+                            variant="primary" 
+                            style={{ backgroundColor: '#059669', borderColor: '#059669' }}
+                            onClick={() => void handleSave(true)} 
+                            disabled={!canEdit || isSaving}
+                            title="Lưu kết quả và chuyển lượt khám sang Hoàn tất cho trường hợp không cần kê đơn thuốc"
+                        >
+                            {isSaving ? 'Đang lưu...' : '✓ Hoàn tất khám (Không kê đơn)'}
                         </Button>
                     </div>
                 </Card>

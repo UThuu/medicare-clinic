@@ -8,4 +8,5 @@ public class SaveKhamBenhRequest {
     private String trieuChung;
     private String ketQuaKham;
     private String chanDoan;
+    private Boolean hoanTatKham;
 }
