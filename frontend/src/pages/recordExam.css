@@ -7,7 +7,8 @@
 .re-page {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
+    padding-bottom: 48px;
 }
 
 /* Breadcrumb */
@@ -111,10 +112,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 16px;
-    /* Height: viewport - header(64) - mc-main-padding(64) - breadcrumb(28)
-                - patient-card(~80) - info-row(~100) - card-title(28)
-                - gaps(~80) - actions(52) ≈ 254px  */
-    min-height: 220px;
+    min-height: 110px;
 }
 
 .re-fields .mc-field {
@@ -125,7 +123,8 @@
 
 .re-textarea {
     flex: 1;
-    min-height: 220px;   /* explicit min, no reliance on flex stretch */
+    min-height: 110px;
+    max-height: 240px;
     resize: vertical;    /* allow user to resize if needed */
     border: 1px solid #CBD5E1;
     border-radius: 8px;
@@ -133,7 +132,7 @@
     font-family: inherit;
     font-size: 0.9rem;
     color: #1E293B;
-    line-height: 1.6;
+    line-height: 1.5;
     background: #FFFFFF;
     transition: border-color 0.15s, box-shadow 0.15s;
     box-sizing: border-box;
@@ -151,8 +150,9 @@
 .re-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    padding-top: 12px;
+    gap: 12px;
+    padding-top: 14px;
+    padding-bottom: 6px;
     border-top: 1px solid #F1F5F9;
 }
 

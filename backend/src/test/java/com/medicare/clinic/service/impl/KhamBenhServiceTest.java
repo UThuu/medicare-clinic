@@ -172,4 +172,22 @@ class KhamBenhServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.saveKhamBenh("BS001", request));
         verifyNoInteractions(lichKhamRepository, sinhHieuRepository, luotKhamRepository);
     }
+
+    @Test
+    void saveKhamBenh_WithHoanTatKham_ChuyenTrangThaiHoanTat() {
+        request.setHoanTatKham(true);
+        stubVitals();
+        service.saveKhamBenh("BS001", request);
+        assertEquals(TrangThaiLuotKham.HOAN_TAT, visit.getTrangThai());
+        verify(luotKhamRepository).save(visit);
+    }
+
+    @Test
+    void hoanTatKham_ThanhCong() {
+        visit.setChanDoan("Cảm cúm");
+        stubVitals();
+        service.hoanTatKham("BS001", "LICH1");
+        assertEquals(TrangThaiLuotKham.HOAN_TAT, visit.getTrangThai());
+        verify(luotKhamRepository).save(visit);
+    }
 }

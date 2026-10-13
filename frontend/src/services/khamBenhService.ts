@@ -3,6 +3,7 @@ export interface SaveKhamBenhRequest {
     trieuChung: string;
     ketQuaKham: string;
     chanDoan: string;
+    hoanTatKham?: boolean;
 }
 
 async function post(path: string, body?: SaveKhamBenhRequest): Promise<{ message: string }> {
@@ -23,4 +24,5 @@ async function post(path: string, body?: SaveKhamBenhRequest): Promise<{ message
 export const khamBenhService = {
     startKhamBenh: (idLichKham: string) => post(`/api/khambenh/${encodeURIComponent(idLichKham)}/bat-dau`),
     saveKetQuaKham: (request: SaveKhamBenhRequest) => post('/api/khambenh/ket-qua', request),
+    hoanTatKham: (idLichKham: string) => post(`/api/khambenh/${encodeURIComponent(idLichKham)}/hoan-tat`),
 };

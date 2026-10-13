@@ -25,7 +25,21 @@ public class KhamBenhController {
         String maNv = requireDoctor(httpRequest);
         try {
             khamBenhService.saveKhamBenh(maNv, request);
-            return ResponseEntity.ok(Map.of("message", "Lưu kết quả khám thành công"));
+            String msg = Boolean.TRUE.equals(request.getHoanTatKham())
+                    ? "Đã lưu kết quả và hoàn tất ca khám thành công"
+                    : "Lưu kết quả khám thành công";
+            return ResponseEntity.ok(Map.of("message", msg));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @PostMapping("/{idLichKham}/hoan-tat")
+    public ResponseEntity<?> hoanTatKham(@PathVariable String idLichKham, HttpServletRequest httpRequest) {
+        String maNv = requireDoctor(httpRequest);
+        try {
+            khamBenhService.hoanTatKham(maNv, idLichKham);
+            return ResponseEntity.ok(Map.of("message", "Đã hoàn tất ca khám"));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
