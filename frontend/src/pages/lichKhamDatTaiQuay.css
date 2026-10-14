@@ -1,0 +1,7 @@
+.uc30-page { display:flex; flex-direction:column; gap:22px; color:var(--mc-text, #16345b); }
+.uc30-card { padding:26px; border-radius:16px; overflow-wrap:anywhere; }
+.uc30-card h2 { font-size:21px; margin:18px 0; }
+.uc30-slot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:12px; margin:18px 0; }
+.uc30-confirmation { padding:18px; border:1px solid #cce8e9; border-radius:12px; background:#f1fbfa; margin-top:20px; }
+.uc30-card .uc29-details { margin:22px 0; }
+@media(max-width:700px) { .uc30-card { padding:18px; } .uc30-page .uc28-page-heading { flex-wrap:wrap; gap:16px; } }

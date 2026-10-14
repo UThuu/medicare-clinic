@@ -22,3 +22,27 @@ Thumbs.db
 !backend/mvnw
 !backend/mvnw.cmd
 !backend/.mvn/
+
+# Local review artifacts and session cookie jars
+/compact.py
+/cookies.txt
+/fix_compact.py
+/fix_compact2.py
+/fix_compact3.py
+/fix_compact4.py
+/fix_encoding.py
+/fix_encoding2.py
+/fix_scroll.py
+/fix_scroll2.py
+/fix_scroll_history.py
+/full_backup.patch
+/full_backup_staged.patch
+/restore_record.py
+/restore_record2.py
+/restore_record3.py
+/restore_summary.py
+/test.ps1
+/test2.ps1
+/test3.ps1
+/cookie.txt
+/*.log
