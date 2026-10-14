@@ -43,6 +43,7 @@ public interface IHoaDonService {
      * Lấy danh sách tất cả hóa đơn đã lập
      */
     List<HoaDonResponse> layDanhSachTatCaHoaDon();
+    List<HoaDonResponse> layDanhSachHoaDonCuaBenhNhan(String idBenhNhan);
 
     /**
      * UC-21: Lấy thông tin snapshot in hóa đơn chi tiết (chỉ cho phép khi đã thanh toán)

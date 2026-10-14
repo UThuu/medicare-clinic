@@ -101,9 +101,6 @@ public class ThanhToanServiceTest {
         lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
         when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
-        when(hoaDonService.layChiPhiDuKien("LK-001")).thenReturn(ChiPhiKhamPreviewResponse.builder()
-                .danhSachKhoanThu(new ArrayList<>())
-                .build());
 
         ThongTinThanhToanResponse response = thanhToanService.layThongTinThanhToan("HD-001");
 
@@ -388,7 +385,11 @@ public class ThanhToanServiceTest {
         assertTrue(response.getPaymentUrl().contains("vnpayment.vn"));
         assertNotNull(response.getMaGiaoDich());
         verify(paymentGateway, times(1)).createPaymentRequest(any(PaymentRequest.class));
-        verify(giaoDichThanhToanRepository, times(1)).save(any(GiaoDichThanhToan.class));
+        var saved = org.mockito.ArgumentCaptor.forClass(GiaoDichThanhToan.class);
+        verify(giaoDichThanhToanRepository, atLeastOnce()).save(saved.capture());
+        assertEquals(response.getMaGiaoDich(), saved.getValue().getMaGiaoDich());
+        assertEquals(mockHoaDon.getTongTien(), saved.getValue().getSoTien());
+        assertEquals(TrangThaiXuLyThanhToan.DANG_XU_LY, saved.getValue().getTrangThai());
     }
 
     @Test
@@ -418,9 +419,7 @@ public class ThanhToanServiceTest {
         when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(true);
         lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
         lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
-        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
         when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
-        when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
 
         ThanhToan attemptPayment=new ThanhToan();attemptPayment.setIdThanhToan("TT-001");attemptPayment.setHoaDon(mockHoaDon);attemptPayment.setSoTien(mockHoaDon.getTongTien());attemptPayment.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);
@@ -460,9 +459,6 @@ public class ThanhToanServiceTest {
         when(paymentGateway.verifyPaymentResult(vnpParams)).thenReturn(true);
         lenient().when(hoaDonRepository.findById("HD-001")).thenReturn(Optional.of(mockHoaDon));
         lenient().when(hoaDonRepository.findForPayment("HD-001")).thenReturn(Optional.of(mockHoaDon));
-        when(thanhToanRepository.findByHoaDon_Id("HD-001")).thenReturn(Optional.empty());
-        when(thanhToanRepository.save(any(ThanhToan.class))).thenAnswer(i -> i.getArgument(0));
-        when(giaoDichThanhToanRepository.findByThanhToan_HoaDon_IdOrderByThoiGianDesc("HD-001")).thenReturn(new ArrayList<>());
         when(giaoDichThanhToanRepository.save(any(GiaoDichThanhToan.class))).thenAnswer(i -> i.getArgument(0));
 
         ThanhToan attemptPayment=new ThanhToan();attemptPayment.setIdThanhToan("TT-001");attemptPayment.setHoaDon(mockHoaDon);attemptPayment.setSoTien(mockHoaDon.getTongTien());attemptPayment.setTrangThai(TrangThaiXuLyThanhToan.DANG_XU_LY);

@@ -7,6 +7,9 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, String> {
     boolean existsByLuotKham_IdLuotKham(String id);
     List<HoaDon> findAllByOrderByNgayTaoDesc();
     java.util.Optional<HoaDon> findByIdAndLuotKham_LichKham_BenhNhan_IdBenhNhan(String id, String patientId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {
+        "chiTietHoaDons", "luotKham.lichKham.benhNhan", "luotKham.lichKham.bacSi.nhanVien", "thuNgan.nhanVien"
+    })
     java.util.List<HoaDon> findByLuotKham_LichKham_BenhNhan_IdBenhNhanOrderByNgayTaoDesc(String patientId);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select h from HoaDon h where h.id = :id")

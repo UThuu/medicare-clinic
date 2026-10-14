@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { hoaDonService } from '../../services/hoaDonService';
 import {
   ChiPhiKhamPreviewResponse,
@@ -31,6 +31,7 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
   const [previewData, setPreviewData] = useState<ChiPhiKhamPreviewResponse | null>(null);
   const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const submitInProgress = useRef(false);
 
   // State Modal Xem chi tiết hóa đơn đã lập
   const [selectedInvoice, setSelectedInvoice] = useState<HoaDonResponse | null>(null);
@@ -67,7 +68,8 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
       setDanhSachHoaDon(hoaDonRes);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg('Không thể kết nối đến máy chủ backend. Vui lòng đảm bảo backend đang chạy.');
+      setErrorMsg(err.response?.data?.message || err.response?.data?.error ||
+        (err.response ? 'Không thể tải danh sách hóa đơn.' : 'Không thể kết nối đến máy chủ backend.'));
     } finally {
       setLoading(false);
     }
@@ -94,8 +96,9 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
 
   // Xác nhận tạo hóa đơn (UC-15)
   const handleConfirmCreateInvoice = async () => {
-    if (!previewData) return;
+    if (!previewData || submitInProgress.current) return;
 
+    submitInProgress.current = true;
     setSubmitting(true);
     try {
       const res = await hoaDonService.taoHoaDon({
@@ -112,6 +115,7 @@ export const TaoHoaDonPage: React.FC<TaoHoaDonPageProps> = ({ initialTab = 'cho-
       const msg = err.response?.data?.error || 'Lỗi khi tạo hóa đơn!';
       showToast(msg, 'error');
     } finally {
+      submitInProgress.current = false;
       setSubmitting(false);
     }
   };
