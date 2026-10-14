@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import com.medicare.clinic.service.PrescriptionAccess;
 import jakarta.validation.Valid;
 
 @RestController
@@ -19,10 +21,12 @@ import jakarta.validation.Valid;
 public class DonThuocController {
 
     private final IDonThuocService donThuocService;
+    private final PrescriptionAccess access;
 
     // Lấy danh mục thuốc để bác sĩ chọn kê đơn
     @GetMapping("/danh-muc-thuoc")
-    public ResponseEntity<List<ThuocResponse>> layDanhMucThuoc() {
+    public ResponseEntity<List<ThuocResponse>> layDanhMucThuoc(HttpServletRequest httpRequest) {
+        access.doctor(httpRequest);
         return ResponseEntity.ok(donThuocService.layDanhSachThuoc());
     }
 
@@ -30,19 +34,22 @@ public class DonThuocController {
     @PostMapping("/kiem-tra-di-ung")
     public ResponseEntity<List<CanhBaoDiUngResponse>> kiemTraDiUng(
             @RequestParam String idLuotKham,
-            @RequestBody List<String> danhSachIdThuoc) {
+            @RequestBody List<String> danhSachIdThuoc, HttpServletRequest httpRequest) {
+        access.visit(httpRequest, idLuotKham);
         return ResponseEntity.ok(donThuocService.kiemTraCanhBaoDiUng(idLuotKham, danhSachIdThuoc));
     }
 
     // Lấy thông tin khám & đơn thuốc của lượt khám
     @GetMapping("/luot-kham/{idLuotKham}")
-    public ResponseEntity<DonThuocResponse> layThongTinKeDon(@PathVariable String idLuotKham) {
+    public ResponseEntity<DonThuocResponse> layThongTinKeDon(@PathVariable String idLuotKham, HttpServletRequest httpRequest) {
+        access.visit(httpRequest, idLuotKham);
         return ResponseEntity.ok(donThuocService.layThongTinKeDon(idLuotKham));
     }
 
     // UC11: Tạo đơn thuốc
     @PostMapping
-    public ResponseEntity<DonThuocResponse> taoDonThuoc(@Valid @RequestBody DonThuocRequest request) {
+    public ResponseEntity<DonThuocResponse> taoDonThuoc(@Valid @RequestBody DonThuocRequest request, HttpServletRequest httpRequest) {
+        access.visit(httpRequest, request.getIdLuotKham());
         DonThuocResponse response = donThuocService.taoDonThuoc(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -51,13 +58,15 @@ public class DonThuocController {
     @PutMapping("/{idDonThuoc}")
     public ResponseEntity<DonThuocResponse> capNhatDonThuoc(
             @PathVariable String idDonThuoc,
-            @Valid @RequestBody DonThuocRequest request) {
+            @Valid @RequestBody DonThuocRequest request, HttpServletRequest httpRequest) {
+        access.prescription(httpRequest, idDonThuoc);
         return ResponseEntity.ok(donThuocService.capNhatDonThuoc(idDonThuoc, request));
     }
 
     // UC14: Lấy dữ liệu để xem trước và in đơn thuốc PDF
     @GetMapping("/{idDonThuoc}/in")
-    public ResponseEntity<DonThuocResponse> layDonThuocDeIn(@PathVariable String idDonThuoc) {
+    public ResponseEntity<DonThuocResponse> layDonThuocDeIn(@PathVariable String idDonThuoc, HttpServletRequest httpRequest) {
+        access.prescription(httpRequest, idDonThuoc);
         return ResponseEntity.ok(donThuocService.layDonThuocDeIn(idDonThuoc));
     }
 }
