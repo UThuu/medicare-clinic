@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
 import com.medicare.clinic.service.PrescriptionAccess;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/don-thuoc")
@@ -47,7 +48,7 @@ public class DonThuocController {
 
     // UC11: Tạo đơn thuốc
     @PostMapping
-    public ResponseEntity<DonThuocResponse> taoDonThuoc(@RequestBody DonThuocRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<DonThuocResponse> taoDonThuoc(@Valid @RequestBody DonThuocRequest request, HttpServletRequest httpRequest) {
         access.visit(httpRequest, request.getIdLuotKham());
         DonThuocResponse response = donThuocService.taoDonThuoc(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -57,7 +58,7 @@ public class DonThuocController {
     @PutMapping("/{idDonThuoc}")
     public ResponseEntity<DonThuocResponse> capNhatDonThuoc(
             @PathVariable String idDonThuoc,
-            @RequestBody DonThuocRequest request, HttpServletRequest httpRequest) {
+            @Valid @RequestBody DonThuocRequest request, HttpServletRequest httpRequest) {
         access.prescription(httpRequest, idDonThuoc);
         return ResponseEntity.ok(donThuocService.capNhatDonThuoc(idDonThuoc, request));
     }
