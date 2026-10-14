@@ -18,7 +18,7 @@ class SpaControllerTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"/", "/login", "/patient", "/staff", "/staff/schedules", "/staff/patient-search",
-            "/staff/medical-record/LK001", "/staff/medical-record/LK001/record-exam"})
+            "/patient/ho-so-y-te", "/staff/medical-record/LK001/prescription", "/staff/medical-record/LK001", "/staff/medical-record/LK001/record-exam"})
     void reactRoutesForwardToIndex(String path) throws Exception {
         mvc.perform(get(path)).andExpect(status().isOk())
                 .andExpect(forwardedUrl("/index.html"));

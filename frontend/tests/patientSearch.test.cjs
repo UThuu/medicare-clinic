@@ -121,6 +121,12 @@ test('merged router retains protected UC28 and UC06/07/10 routes and removes pub
         for (const [file, name, label] of [['cashier/TaoHoaDonPage', 'TaoHoaDonPage', 'BILLING'], ['BenhNhanThongBaoLichKham', 'BenhNhanThongBaoLichKham', 'UC25'], ['Login', 'Login', 'LOGIN'], ['PatientDashboard', 'PatientDashboard', 'PATIENT'], ['StaffDashboard', 'StaffDashboard', 'STAFF'], ['DoctorSchedule', 'DoctorSchedule', 'UC06'], ['PatientRecord', 'PatientRecord', 'UC07'], ['RecordExamResult', 'RecordExamResult', 'UC10'], ['BenhNhanTimKiem', 'BenhNhanTimKiem', 'UC28'], ['LichKhamDatTaiQuay', 'LichKhamDatTaiQuay', 'UC30'], ['LichKhamDatTrucTuyen', 'LichKhamDatTrucTuyen', 'UC24']]) {
             deps['./pages/' + file] = { [name]: () => React.createElement('p', null, label) };
         }
+        for (const [file, name] of [['HoSoYTeCaNhanPage', 'HoSoYTeCaNhanPage'], ['DoctorPrescription', 'DoctorPrescription'],
+            ['cashier/CashierBillingPage', 'CashierBillingPage'], ['HoaDonTraCuu', 'HoaDonTraCuu'], ['HoaDonTongDoanhThu', 'HoaDonTongDoanhThu'],
+            ['patient/ThanhToanOnlinePage', 'ThanhToanOnlinePage'], ['cashier/VNPayReturnPage', 'VNPayReturnPage']]) {
+            deps['./pages/' + file] = { [name]: () => React.createElement('p', null, name === 'CashierBillingPage' ? 'BILLING' : name) };
+        }
+        for (const file of ['DanhSachBenhNhanCho', 'TiepNhanBenhNhan']) deps['./pages/' + file] = { default: () => React.createElement('p', null, file) };
         const { default: App } = load('App.tsx', deps); let page;
         try { await act(async () => { page = create(React.createElement(App)); }); assert.ok(text(page.root).includes(expected)); }
         finally { if (page) act(() => page.unmount()); }
