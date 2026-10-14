@@ -22,8 +22,15 @@ function harness(user = { hoTen: 'Tên từ phiên đăng nhập', tenDangNhap: 
     vm.runInNewContext(compiled, { exports, React, Error, ...environment, require: id => {
       if (id === 'react') return React;
       if (id === 'react/jsx-runtime') return require(id);
-      if (id === 'react-router-dom') return { useNavigate: () => (...args) => calls.push({ navigate: args }) };
+      if (id === 'react-router-dom') return {
+        useNavigate: () => (...args) => calls.push({ navigate: args }),
+        useLocation: () => ({ pathname: '/staff', search: '' }),
+        useSearchParams: () => [new URLSearchParams(), () => {}],
+      };
       if (id.endsWith('contexts/AuthContext')) return { useAuth: () => ({ user, logout }) };
+      if (id.endsWith('services/lichKhamDatTaiQuayService')) return { layLichHenTrongNgay: async () => { calls.push({ appointments: true }); return []; } };
+      if (id.endsWith('services/hoaDonService')) return { hoaDonService: { getDanhSachChoLapHoaDon: async () => [], getDanhSachTatCaHoaDon: async () => [] } };
+      if (id.endsWith('services/thanhToanService')) return { thanhToanService: {} };
       if (id.endsWith('cashier/TaoHoaDonPage')) return { TaoHoaDonPage: () => null };
       if (id.endsWith('services/scheduleService')) return { scheduleService: {
         getDoctorSchedule: async () => { calls.push({ schedule: true }); return [
@@ -33,7 +40,8 @@ function harness(user = { hoTen: 'Tên từ phiên đăng nhập', tenDangNhap: 
       if (id.endsWith('.css')) return {};
       if (id.startsWith('.')) {
         const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), id));
-        return load(resolved.endsWith('.tsx') ? resolved : resolved + '.tsx');
+        const candidates = [resolved, resolved + '.tsx', resolved + '.ts', resolved + '/index.ts'];
+        return load(candidates.find(candidate => fs.existsSync(path.join(__dirname, '../src', candidate))) || resolved);
       }
       throw new Error('Unexpected import: ' + id);
     }});
@@ -41,16 +49,16 @@ function harness(user = { hoTen: 'Tên từ phiên đăng nhập', tenDangNhap: 
   };
   return { load, calls };
 }
-test('reception dashboard displays session identity, active reception entry, and disabled unavailable features', async () => {
+test('reception dashboard displays session identity and links to available reception features', async () => {
   const h = harness(); const { StaffDashboard } = h.load('pages/StaffDashboard.tsx'); let page;
   try {
     await act(async () => { page = create(React.createElement(StaffDashboard)); });
     assert.ok(nodeText(page.root).includes('Tên từ phiên đăng nhập'));
     assert.ok(nodeText(page.root).includes('Lễ tân'));
     const sidebar = page.root.findByType('aside');
-    assert.deepEqual(sidebar.findAllByType('a').map(x => x.props.href), ['/staff', '/staff/patient-search', '/staff/lich-kham/dat-tai-quay']);
+    assert.deepEqual(sidebar.findAllByType('a').map(x => x.props.href), ['/staff', '/staff/tiep-nhan', '/staff/lich-kham/dat-tai-quay', '/staff/benh-nhan-cho']);
     const unavailable = sidebar.findAllByType('button').filter(x => x.props.disabled);
-    assert.equal(unavailable.length, 1);
+    assert.equal(unavailable.length, 0);
     for (const button of unavailable) {
       assert.equal(button.props.href, undefined); assert.equal(button.props.onClick, undefined);
       assert.ok(nodeText(button).includes('Chưa khả dụng'));
@@ -58,22 +66,21 @@ test('reception dashboard displays session identity, active reception entry, and
     assert.ok(!nodeText(sidebar).includes('Tìm hồ sơ'));
     assert.ok(!nodeText(sidebar).includes('Tạo hồ sơ'));
     const features = page.root.findAllByProps({ 'aria-disabled': 'true' }).filter(x => x.type === 'section');
-    assert.equal(features.length, 1);
+    assert.equal(features.length, 0);
     for (const feature of features) assert.equal(feature.findByType('button').props.disabled, true);
     const reception = page.root.findAllByType('button').find(x => nodeText(x) === 'Tiếp nhận');
     await act(() => reception.props.onClick());
-    assert.equal(h.calls.at(-1).navigate[0], '/staff/patient-search');
+    assert.equal(h.calls.at(-1).navigate[0], '/staff/tiep-nhan');
     assert.equal(h.calls.filter(x => x.schedule).length, 0);
   } finally { if (page) act(() => page.unmount()); }
 });
-test('unavailable daily appointments are not shown as an empty, loading, or failed API result', async () => {
+test('daily appointments render the actual empty API result and local date', async () => {
   const h = harness(); const { ReceptionDashboard } = h.load('pages/ReceptionDashboard.tsx'); let page;
   try {
     await act(async () => { page = create(React.createElement(ReceptionDashboard)); });
-    const message = nodeText(page.root.findByProps({ role: 'status' }));
-    assert.ok(message.includes('Chức năng đang được hoàn thiện'));
-    assert.ok(!message.includes('Không có lịch')); assert.ok(!message.includes('Đang tải'));
-    assert.ok(!message.includes('lỗi')); assert.equal(h.calls.filter(x => x.schedule).length, 0);
+    const message = nodeText(page.root);
+    assert.ok(message.includes('Chưa có lịch hẹn nào trong ngày hôm nay.'));
+    assert.ok(!message.includes('Đang tải')); assert.equal(h.calls.filter(x => x.appointments).length, 1);
     const expected = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());
     assert.equal(nodeText(page.root.findByType('time')), expected);
   } finally { if (page) act(() => page.unmount()); }

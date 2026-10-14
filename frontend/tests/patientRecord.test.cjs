@@ -42,6 +42,8 @@ async function mount(status = 'CHO_KHAM') {
         '../components/layout/MainLayout': { MainLayout: container('main') },
         '../components/common/Button': { Button: container('button') },
         '../components/common/PatientSummary': { PatientSummary: container('summary') },
+        '../components/common/Modal': { Modal: () => null },
+        '../components/common/AllergyManageModal': { AllergyManageModal: () => null },
         '../services/medicalRecordService': { medicalRecordService: { getMedicalRecord: async () => record } },
         './examinationState': load('examinationState.ts', {}),
     });

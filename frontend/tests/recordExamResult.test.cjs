@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const React = require('react');
 const { create, act } = require('react-test-renderer');
+const text = node => typeof node === 'string' ? node : (node.children || []).map(text).join('');
 
 function fixture() {
     return {
@@ -100,7 +101,8 @@ test('historical or incomplete vitals and completed visits never start examinati
         try {
             assert.deepEqual(page.calls.start, []);
             assert.ok(page.fields().every(field => field.props.disabled));
-            assert.ok(page.buttons().every(button => button.props.disabled));
+            // Viewing a prescription is allowed; controls that mutate the exam stay disabled.
+            assert.ok(page.buttons().filter(button => !text(button).includes('Kê đơn thuốc')).every(button => button.props.disabled));
         } finally { page.close(); }
     }
 });

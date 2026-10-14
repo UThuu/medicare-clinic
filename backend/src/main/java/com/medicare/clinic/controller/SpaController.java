@@ -9,7 +9,8 @@ public class SpaController {
     @GetMapping({"/", "/login", "/patient", "/patient/dat-lich-kham", "/patient/thong-bao-lich-kham", "/staff", "/staff/billing", "/staff/hoadon/tra-cuu", "/staff/hoadon/tong-doanh-thu", "/patient/payment", "/payment/vnpay-return", "/staff/schedules", "/staff/patient-search", "/staff/lich-kham/dat-tai-quay",
             "/staff/benh-nhan-cho", "/staff/tiep-nhan",
             "/staff/medical-record/{id:[^.]+}",
-            "/staff/medical-record/{id:[^.]+}/record-exam"})
+            "/staff/medical-record/{id:[^.]+}/record-exam",
+            "/staff/medical-record/{id:[^.]+}/prescription", "/patient/ho-so-y-te"})
     public String index() {
         return "forward:/index.html";
     }
