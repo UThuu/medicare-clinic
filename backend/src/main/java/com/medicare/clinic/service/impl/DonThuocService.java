@@ -29,6 +29,7 @@ public class DonThuocService implements IDonThuocService {
     private final ThuocRepository thuocRepository;
     private final LuotKhamRepository luotKhamRepository;
     private final BenhNhanDiUngRepository benhNhanDiUngRepository;
+    private final HoaDonRepository hoaDonRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -188,6 +189,7 @@ public class DonThuocService implements IDonThuocService {
     }
 
     @Override
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public DonThuocResponse taoDonThuoc(DonThuocRequest request) {
         if (request.getIdLuotKham() == null || request.getIdLuotKham().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã lượt khám không được để trống.");
@@ -197,6 +199,7 @@ public class DonThuocService implements IDonThuocService {
         }
 
         LuotKham luotKham = timLuotKhamTheoIdHoacIdLichKham(request.getIdLuotKham());
+        requireUnbilledVisit(luotKham);
 
         // Kiểm tra điều kiện tiên quyết: Phải có chẩn đoán trước khi kê đơn thuốc
         if (luotKham.getChanDoan() == null || luotKham.getChanDoan().trim().isEmpty()) {
@@ -235,6 +238,7 @@ public class DonThuocService implements IDonThuocService {
     }
 
     @Override
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public DonThuocResponse capNhatDonThuoc(String idDonThuoc, DonThuocRequest request) {
         if (idDonThuoc == null || idDonThuoc.trim().isEmpty()) {
             throw new IllegalArgumentException("Mã đơn thuốc không được để trống.");
@@ -247,6 +251,7 @@ public class DonThuocService implements IDonThuocService {
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đơn thuốc: " + idDonThuoc));
 
         LuotKham luotKham = donThuoc.getLuotKham();
+        requireUnbilledVisit(luotKham);
 
         // Kiểm tra dị ứng thuốc theo quy tắc UC-13
         kiemTraVaValidateDiUng(luotKham, request.getChiTietDonThuoc());
@@ -274,6 +279,15 @@ public class DonThuocService implements IDonThuocService {
         DonThuoc donThuoc = donThuocRepository.findById(idDonThuoc)
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy đơn thuốc: " + idDonThuoc));
         return layThongTinKeDon(donThuoc.getLuotKham().getIdLuotKham());
+    }
+
+    private void requireUnbilledVisit(LuotKham visit) {
+        // Invoice creation acquires the same visit lock before calculating charges.
+        luotKhamRepository.findForBilling(visit.getIdLuotKham())
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy lượt khám."));
+        if (hoaDonRepository.existsByLuotKham_IdLuotKham(visit.getIdLuotKham())) {
+            throw new IllegalStateException("Lượt khám đã có hóa đơn. Không thể tạo hoặc sửa đơn thuốc.");
+        }
     }
 
     private ChiTietDonThuoc taoChiTietDonThuoc(DonThuoc donThuoc, ChiTietDonThuocRequest itemReq, int index) {
