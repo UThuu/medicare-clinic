@@ -40,6 +40,8 @@ class DonThuocServiceTest {
 
     @Mock
     private BenhNhanDiUngRepository benhNhanDiUngRepository;
+    @Mock
+    private HoaDonRepository hoaDonRepository;
 
     @InjectMocks
     private DonThuocService donThuocService;
@@ -65,6 +67,7 @@ class DonThuocServiceTest {
         luotKham.setLichKham(lichKham);
         luotKham.setTrangThai(TrangThaiLuotKham.DANG_KHAM);
         luotKham.setChanDoan("Viêm họng cấp");
+        lenient().when(luotKhamRepository.findForBilling("LK001")).thenReturn(Optional.of(luotKham));
 
         thuocParacetamol = new Thuoc();
         thuocParacetamol.setIdThuoc("THUOC01");
