@@ -17,6 +17,7 @@ public interface ISinhHieuService {
 
     SinhHieuResponse capNhatSinhHieu(
             String idLuotKham,
+            String maDieuDuong,
             SinhHieuRequest request
     );
 }

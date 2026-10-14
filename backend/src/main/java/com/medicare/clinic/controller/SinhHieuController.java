@@ -146,7 +146,7 @@ public class SinhHieuController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã lượt khám không được để trống.");
         }
 
-        SinhHieuResponse ketQua = sinhHieuService.capNhatSinhHieu(idLuotKham, requestBody);
+        SinhHieuResponse ketQua = sinhHieuService.capNhatSinhHieu(idLuotKham, user.getMaNv(), requestBody);
         return ResponseEntity.ok(ketQua);
     }
 }

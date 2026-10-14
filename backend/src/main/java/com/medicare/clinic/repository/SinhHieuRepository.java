@@ -12,6 +12,9 @@ import java.util.List;
 
 @Repository
 public interface SinhHieuRepository extends JpaRepository<SinhHieu, String> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select s from SinhHieu s where s.luotKham.idLuotKham = :visit")
+    java.util.Optional<SinhHieu> findForUpdate(@org.springframework.data.repository.query.Param("visit") String visit);
 
     Optional<SinhHieu> findByLuotKham_IdLuotKham(String idLuotKham);
 
