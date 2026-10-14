@@ -15,6 +15,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(jakarta.persistence.EntityNotFoundException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage() == null ? "Không tìm thấy dữ liệu." : ex.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleConstraintViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        return buildErrorResponse(HttpStatus.CONFLICT, "Dữ liệu xung đột với bản ghi hiện có hoặc vượt giới hạn cho phép.");
+    }
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
