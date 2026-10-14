@@ -79,6 +79,7 @@ export default function GhiNhanSinhHieu({
                                             onQuayLai,
                                             onLuuThanhCong,
                                         }: GhiNhanSinhHieuProps) {
+    const { user } = useAuth();
 
     // =========================
     // UC05 - CHỈNH SỬA SINH HIỆU
@@ -388,7 +389,6 @@ export default function GhiNhanSinhHieu({
     // GIAO DIỆN UC03
     // =========================
 
-    const { user } = useAuth();
     const tenHienThi = user?.hoTen || user?.tenDangNhap || "Điều dưỡng";
     const vaiTroHienThi = user?.vaiTro || "Điều dưỡng";
 

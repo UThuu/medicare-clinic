@@ -86,7 +86,6 @@ export const DoctorSchedule: React.FC = () => {
 
   useEffect(() => {
     void fetchSchedules(date);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
   // Tải sinh hiệu theo mã lượt khám
