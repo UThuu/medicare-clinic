@@ -16,7 +16,7 @@ Shared UI này bám theo MediCare Clinic Mini Design System trong Figma của nh
 
 ## Components
 - Layout: Header, Sidebar, MainLayout
-- Common: Button, Input, Select, Modal, ConfirmDialog, Table, SearchBox, StatusBadge, Card
+- Common: Button, Input, Select, Modal, Table, SearchBox, StatusBadge, Card
 
 ## Scope rule
 Các component chỉ chứa UI dùng chung. Không đặt business logic của UC02–UC05 hoặc UC27 vào Shared UI.

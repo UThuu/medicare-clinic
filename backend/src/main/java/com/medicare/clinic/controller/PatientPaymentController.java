@@ -7,7 +7,6 @@ import com.medicare.clinic.dto.response.VNPayPaymentResponse;
 import com.medicare.clinic.service.PaymentAccess;
 import com.medicare.clinic.service.interfaces.IThanhToanService;
 import com.medicare.clinic.service.interfaces.IHoaDonService;
-import com.medicare.clinic.repository.HoaDonRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -20,17 +19,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientPaymentController {
     private final PaymentAccess access;
-    private final HoaDonRepository invoices;
     private final IHoaDonService billing;
     private final IThanhToanService payment;
 
     @GetMapping
     public ResponseEntity<List<HoaDonResponse>> list(HttpServletRequest request) {
         String patientId = access.patient(request).getIdBenhNhan();
-        List<HoaDonResponse> result = invoices.findByLuotKham_LichKham_BenhNhan_IdBenhNhanOrderByNgayTaoDesc(patientId)
-                .stream()
-                .map(h -> billing.layHoaDonTheoId(h.getId()))
-                .toList();
+        List<HoaDonResponse> result = billing.layDanhSachHoaDonCuaBenhNhan(patientId);
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(result);
     }
 

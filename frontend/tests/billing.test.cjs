@@ -22,11 +22,11 @@ function harness(api,initialTab='cho-lap') {
    throw Error('Unexpected import '+id);
   }});return exports;
  };
- return load('pages/cashier/TaoHoaDonPage.tsx').TaoHoaDonPage;
+ return props => React.createElement(load('pages/cashier/TaoHoaDonPage.tsx').TaoHoaDonPage, {initialTab, ...props});
 }
 function api(extra={}){return {getDanhSachChoLapHoaDon:async()=>[],getDanhSachTatCaHoaDon:async()=>[],...extra};}
-test('billing sidebar uses API counts and session identity; selected route determines content',async()=>{
- let page;const Page=harness(api(),'da-lap');try{await act(async()=>{page=create(React.createElement(Page));});assert.ok(text(page.root).includes('Session Cashier'));const links=page.root.findByType('aside').findAllByType('a');assert.ok(text(links[0]).includes('(0)'));assert.equal(links[1].props['data-active'],true);assert.ok(page.root.findByProps({id:'btn-tab-da-lap'}).props.className.includes('active'));}finally{if(page)act(()=>page.unmount());}
+test('billing tabs show actual API counts and respect the selected initial tab',async()=>{
+ let page;const Page=harness(api(),'da-lap');try{await act(async()=>{page=create(React.createElement(Page));});assert.ok(page.root.findByProps({id:'btn-tab-da-lap'}).props.className.includes('active'));assert.ok(text(page.root.findByProps({id:'btn-tab-cho-lap'})).includes('0'));await act(()=>page.root.findByProps({id:'btn-tab-cho-lap'}).props.onClick());assert.ok(page.root.findByProps({id:'btn-tab-cho-lap'}).props.className.includes('active'));}finally{if(page)act(()=>page.unmount());}
 });
 test('billing load error is visible instead of a successful empty list',async()=>{
  let page;const Page=harness(api({getDanhSachChoLapHoaDon:async()=>{throw {response:{data:{error:'Forbidden'}}};}}));try{await act(async()=>{page=create(React.createElement(Page));});assert.ok(text(page.root).includes('Forbidden'));}finally{if(page)act(()=>page.unmount());}

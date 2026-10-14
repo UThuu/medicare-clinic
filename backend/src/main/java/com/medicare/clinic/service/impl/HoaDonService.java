@@ -155,6 +155,12 @@ public class HoaDonService implements IHoaDonService {
     }
 
     @Override @Transactional(readOnly = true)
+    public List<HoaDonResponse> layDanhSachHoaDonCuaBenhNhan(String patientId) {
+        return hoaDonRepository.findByLuotKham_LichKham_BenhNhan_IdBenhNhanOrderByNgayTaoDesc(id(patientId))
+                .stream().map(this::response).toList();
+    }
+
+    @Override @Transactional(readOnly = true)
     public InHoaDonResponse layThongTinInHoaDon(String invoiceId) {
         HoaDon h = hoaDonRepository.findById(id(invoiceId)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Không tìm thấy hóa đơn"));
         if(h.getTrangThai()!=TrangThaiHoaDon.DA_THANH_TOAN) throw new IllegalStateException("Vui lòng hoàn tất thanh toán trước khi in");
