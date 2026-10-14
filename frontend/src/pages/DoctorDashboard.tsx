@@ -101,7 +101,6 @@ export const DoctorDashboard: React.FC = () => {
       // Đảm bảo không ghi đè state khi unmount bằng cách tăng fetchId
       fetchIdRef.current += 1;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRowClick = (e: React.MouseEvent | React.KeyboardEvent, idLichKham: string) => {

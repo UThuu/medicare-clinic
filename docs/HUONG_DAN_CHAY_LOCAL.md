@@ -129,6 +129,7 @@ Các lệnh kiểm tra từ thư mục tương ứng:
 
 # Trong frontend/
 npm test
+npm run lint
 npm run build
 ```
 
