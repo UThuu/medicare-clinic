@@ -5,6 +5,8 @@ import com.medicare.clinic.dto.response.SinhHieuResponse;
 import com.medicare.clinic.entity.DieuDuong;
 import com.medicare.clinic.entity.LuotKham;
 import com.medicare.clinic.entity.SinhHieu;
+import com.medicare.clinic.entity.LichSuSinhHieu;
+import com.medicare.clinic.repository.LichSuSinhHieuRepository;
 import com.medicare.clinic.repository.DieuDuongRepository;
 import com.medicare.clinic.repository.LuotKhamRepository;
 import com.medicare.clinic.repository.SinhHieuRepository;
@@ -25,6 +27,7 @@ public class SinhHieuService implements ISinhHieuService {
     private final SinhHieuRepository sinhHieuRepository;
     private final LuotKhamRepository luotKhamRepository;
     private final DieuDuongRepository dieuDuongRepository;
+    private final LichSuSinhHieuRepository lichSuSinhHieuRepository;
 
     // =========================================================
     // UC03 - GHI NHẬN SINH HIỆU
@@ -200,6 +203,7 @@ public class SinhHieuService implements ISinhHieuService {
     @Transactional
     public SinhHieuResponse capNhatSinhHieu(
             String idLuotKham,
+            String maDieuDuong,
             SinhHieuRequest request
     ) {
 
@@ -208,7 +212,7 @@ public class SinhHieuService implements ISinhHieuService {
         // ==============================
 
         SinhHieu sinhHieu = sinhHieuRepository
-                .findByLuotKham_IdLuotKham(idLuotKham)
+                .findForUpdate(idLuotKham)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Lượt khám này chưa có sinh hiệu để cập nhật."
@@ -262,8 +266,26 @@ public class SinhHieuService implements ISinhHieuService {
         }
 
         // ==============================
-        // 4. Cập nhật giá trị mới
+        // 4. Ghi lịch sử trong cùng transaction, giữ nguyên người đo ban đầu.
         // ==============================
+
+        DieuDuong editor = dieuDuongRepository.findById(maDieuDuong)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy điều dưỡng đang sửa sinh hiệu."));
+        LocalDateTime changedAt = LocalDateTime.now();
+        LichSuSinhHieu history = new LichSuSinhHieu();
+        history.setId(UUID.randomUUID().toString());
+        history.setSinhHieu(sinhHieu);
+        history.setDieuDuong(editor);
+        history.setThoiGianSua(changedAt);
+        history.setHuyetApTamThuCu(sinhHieu.getHuyetApTamThu());
+        history.setHuyetApTamTruongCu(sinhHieu.getHuyetApTamTruong());
+        history.setCanNangCu(sinhHieu.getCanNang());
+        history.setNhietDoCu(sinhHieu.getNhietDo());
+        history.setHuyetApTamThuMoi(request.getHuyetApTamThu());
+        history.setHuyetApTamTruongMoi(request.getHuyetApTamTruong());
+        history.setCanNangMoi(request.getCanNang());
+        history.setNhietDoMoi(request.getNhietDo());
+        lichSuSinhHieuRepository.save(history);
 
         sinhHieu.setHuyetApTamThu(
                 request.getHuyetApTamThu()
@@ -286,7 +308,7 @@ public class SinhHieuService implements ISinhHieuService {
         // ==============================
 
         sinhHieu.setThoiDiemDo(
-                LocalDateTime.now()
+                changedAt
         );
 
         // ==============================
