@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/don-thuoc")
@@ -41,7 +42,7 @@ public class DonThuocController {
 
     // UC11: Tạo đơn thuốc
     @PostMapping
-    public ResponseEntity<DonThuocResponse> taoDonThuoc(@RequestBody DonThuocRequest request) {
+    public ResponseEntity<DonThuocResponse> taoDonThuoc(@Valid @RequestBody DonThuocRequest request) {
         DonThuocResponse response = donThuocService.taoDonThuoc(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -50,7 +51,7 @@ public class DonThuocController {
     @PutMapping("/{idDonThuoc}")
     public ResponseEntity<DonThuocResponse> capNhatDonThuoc(
             @PathVariable String idDonThuoc,
-            @RequestBody DonThuocRequest request) {
+            @Valid @RequestBody DonThuocRequest request) {
         return ResponseEntity.ok(donThuocService.capNhatDonThuoc(idDonThuoc, request));
     }
 
